@@ -10,7 +10,7 @@
       "worker": "rts_dg_squire",
       "startingWorkers": 5,
       "startingUnits": [],
-      "mechanic": "Squires stay to raise each building; extra squires build it faster."
+      "mechanic": "Squires stay to raise each building and extra squires build it faster; Sun Shrines heal nearby units; Masonry hardens every building."
     }
   ],
   "units": [
@@ -32,7 +32,7 @@
       "visionNight": 10,
       "goldCost": 400,
       "lumberCost": 180,
-      "buildTime": 110,
+      "buildTime": 85,
       "model": "core_dawn",
       "modelScale": 0.72,
       "height": 9,
@@ -47,7 +47,10 @@
       "trains": [
         "rts_dg_squire"
       ],
-      "hotkey": "C"
+      "hotkey": "C",
+      "research": [
+        "rts_dg_up_masonry"
+      ]
     },
     {
       "id": "rts_dg_squire",
@@ -98,7 +101,7 @@
     {
       "id": "rts_dg_sun_shrine",
       "name": "Sun Shrine",
-      "description": "Provides 8 supply.",
+      "description": "Provides 8 supply. Allied units nearby regenerate 3 health per second.",
       "kind": "Building",
       "attackType": "Melee",
       "maxHp": 600,
@@ -113,7 +116,7 @@
       "visionNight": 8,
       "goldCost": 80,
       "lumberCost": 20,
-      "buildTime": 30,
+      "buildTime": 22,
       "model": "fountain_dawn",
       "modelScale": 0.55,
       "height": 4,
@@ -123,7 +126,10 @@
         "structure"
       ],
       "supplyProvided": 8,
-      "hotkey": "H"
+      "hotkey": "H",
+      "abilities": [
+        "rts_dg_shrine_light"
+      ]
     },
     {
       "id": "rts_dg_barracks",
@@ -143,7 +149,7 @@
       "visionNight": 8,
       "goldCost": 160,
       "lumberCost": 60,
-      "buildTime": 55,
+      "buildTime": 42,
       "model": "barracks_dawn_melee",
       "modelScale": 0.85,
       "height": 6,
@@ -156,7 +162,12 @@
         "rts_dg_footman",
         "rts_dg_arbalist"
       ],
-      "hotkey": "B"
+      "hotkey": "B",
+      "research": [
+        "rts_dg_up_blades_1",
+        "rts_dg_up_blades_2",
+        "rts_dg_up_plate"
+      ]
     },
     {
       "id": "rts_dg_watchtower",
@@ -176,7 +187,7 @@
       "visionNight": 10,
       "goldCost": 110,
       "lumberCost": 80,
-      "buildTime": 45,
+      "buildTime": 35,
       "model": "tower_dawn_t1",
       "modelScale": 0.7,
       "height": 7,
@@ -213,7 +224,7 @@
       "visionNight": 8,
       "goldCost": 140,
       "lumberCost": 140,
-      "buildTime": 60,
+      "buildTime": 45,
       "model": "barracks_dawn_ranged",
       "modelScale": 0.85,
       "height": 6,
@@ -228,7 +239,10 @@
       "requires": [
         "rts_dg_barracks"
       ],
-      "hotkey": "W"
+      "hotkey": "W",
+      "research": [
+        "rts_dg_up_bolts"
+      ]
     },
     {
       "id": "rts_dg_sanctum",
@@ -248,7 +262,7 @@
       "visionNight": 8,
       "goldCost": 200,
       "lumberCost": 160,
-      "buildTime": 80,
+      "buildTime": 60,
       "model": "tower_dawn_t4",
       "modelScale": 0.75,
       "height": 10,
@@ -409,6 +423,186 @@
         "rts",
         "elite"
       ]
+    }
+  ],
+  "abilities": [
+    {
+      "id": "rts_dg_shrine_light",
+      "name": "Sunlight",
+      "description": "Allied units within 7 m regenerate 3 health per second.",
+      "targeting": "Passive",
+      "maxLevel": 1,
+      "aura": {
+        "radius": 7,
+        "team": "AllyOrSelf",
+        "types": "Units",
+        "status": "rts_dg_sunlit"
+      }
+    }
+  ],
+  "statuses": [
+    {
+      "id": "rts_dg_sunlit",
+      "name": "Sunlit",
+      "description": "Regenerating 3 health per second near a Sun Shrine.",
+      "isDebuff": false,
+      "dispel": "None",
+      "hidden": false,
+      "modifiers": [
+        {
+          "stat": "HpRegen",
+          "value": 3
+        }
+      ],
+      "icon": "status_fountain"
+    },
+    {
+      "id": "rts_dg_up_blades_1_status",
+      "name": "Forged Blades",
+      "description": "+2 attack damage.",
+      "isDebuff": false,
+      "dispel": "None",
+      "hidden": true,
+      "modifiers": [
+        {
+          "stat": "BonusDamage",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "rts_dg_up_blades_2_status",
+      "name": "Sunsteel Blades",
+      "description": "+3 attack damage.",
+      "isDebuff": false,
+      "dispel": "None",
+      "hidden": true,
+      "modifiers": [
+        {
+          "stat": "BonusDamage",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "rts_dg_up_plate_status",
+      "name": "Tempered Plate",
+      "description": "+2 armor.",
+      "isDebuff": false,
+      "dispel": "None",
+      "hidden": true,
+      "modifiers": [
+        {
+          "stat": "Armor",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "rts_dg_up_bolts_status",
+      "name": "Heavy Bolts",
+      "description": "+3 attack damage.",
+      "isDebuff": false,
+      "dispel": "None",
+      "hidden": true,
+      "modifiers": [
+        {
+          "stat": "BonusDamage",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "rts_dg_up_masonry_status",
+      "name": "Masonry",
+      "description": "+30% maximum health and +2 armor.",
+      "isDebuff": false,
+      "dispel": "None",
+      "hidden": true,
+      "modifiers": [
+        {
+          "stat": "MaxHpPct",
+          "value": 0.3
+        },
+        {
+          "stat": "Armor",
+          "value": 2
+        }
+      ]
+    }
+  ],
+  "upgrades": [
+    {
+      "id": "rts_dg_up_blades_1",
+      "name": "Forged Blades",
+      "description": "Footmen and paladins deal 2 more damage.",
+      "hotkey": "D",
+      "goldCost": 100,
+      "lumberCost": 50,
+      "researchTime": 40,
+      "appliesTo": [
+        "melee"
+      ],
+      "status": "rts_dg_up_blades_1_status"
+    },
+    {
+      "id": "rts_dg_up_blades_2",
+      "name": "Sunsteel Blades",
+      "description": "Footmen and paladins deal 3 more damage.",
+      "hotkey": "E",
+      "goldCost": 175,
+      "lumberCost": 100,
+      "researchTime": 60,
+      "appliesTo": [
+        "melee"
+      ],
+      "status": "rts_dg_up_blades_2_status",
+      "requires": [
+        "rts_dg_sanctum"
+      ],
+      "requiresUpgrades": [
+        "rts_dg_up_blades_1"
+      ]
+    },
+    {
+      "id": "rts_dg_up_plate",
+      "name": "Tempered Plate",
+      "description": "All soldiers gain 2 armor.",
+      "hotkey": "G",
+      "goldCost": 100,
+      "lumberCost": 75,
+      "researchTime": 40,
+      "appliesTo": [
+        "soldier"
+      ],
+      "status": "rts_dg_up_plate_status"
+    },
+    {
+      "id": "rts_dg_up_bolts",
+      "name": "Heavy Bolts",
+      "description": "Arbalists and ballistae deal 3 more damage.",
+      "hotkey": "V",
+      "goldCost": 125,
+      "lumberCost": 75,
+      "researchTime": 45,
+      "appliesTo": [
+        "ranged",
+        "siege"
+      ],
+      "status": "rts_dg_up_bolts_status"
+    },
+    {
+      "id": "rts_dg_up_masonry",
+      "name": "Masonry",
+      "description": "Buildings gain 30% health and 2 armor.",
+      "hotkey": "M",
+      "goldCost": 125,
+      "lumberCost": 150,
+      "researchTime": 50,
+      "appliesTo": [
+        "building"
+      ],
+      "status": "rts_dg_up_masonry_status"
     }
   ]
 }

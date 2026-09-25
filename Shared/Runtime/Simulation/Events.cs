@@ -63,6 +63,8 @@ namespace Bloodfall.Simulation
         MineDepleted = 51,
         /// <summary>A player lost every building (OtherId = player id).</summary>
         PlayerEliminated = 52,
+        /// <summary>Research finished (UnitId = building, Key = upgrade id). Private to the owner.</summary>
+        ResearchComplete = 53,
     }
 
     /// <summary>

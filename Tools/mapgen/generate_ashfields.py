@@ -294,7 +294,9 @@ def main():
     camp_json = []
     for i, (kind, pos) in enumerate(camps):
         side = "Dawn" if pos[0] + pos[1] < SIZE - 0.1 else "Dusk" if pos[0] + pos[1] > SIZE + 0.1 else "Neutral"
-        camp_json.append(dict(id=f"camp_{side.lower()}_{kind[5:]}_{i}", campType=kind, position=[round(pos[0], 2), round(pos[1], 2)], spawnBoxRadius=3.2, side=side))
+        # Expansion camps guard their veins; the centre camp only fights when attacked, so armies can meet beside it.
+        camp_json.append(dict(id=f"camp_{side.lower()}_{kind[5:]}_{i}", campType=kind, position=[round(pos[0], 2), round(pos[1], 2)], spawnBoxRadius=3.2, side=side,
+                              guards=kind != "camp_ancient"))
     map_def = dict(
         id="map_rts_ashfields",
         name="Ashfields",

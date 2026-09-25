@@ -32,6 +32,7 @@ namespace Bloodfall.Data
         public readonly Dictionary<string, GameModeDef> Modes = new Dictionary<string, GameModeDef>();
         public readonly Dictionary<Faction, FactionDef> Factions = new Dictionary<Faction, FactionDef>();
         public readonly Dictionary<string, RtsFactionDef> RtsFactions = new Dictionary<string, RtsFactionDef>();
+        public readonly Dictionary<string, UpgradeDef> Upgrades = new Dictionary<string, UpgradeDef>();
         public readonly List<string> RtsFactionOrder = new List<string>();
         public readonly List<string> ShopCategories = new List<string>();
         public RulesDef Rules = new RulesDef();
@@ -108,6 +109,15 @@ namespace Bloodfall.Data
                             if (RtsFactions.ContainsKey(rf.Id)) Errors.Add($"{f.Path}: duplicate RTS faction id '{rf.Id}'");
                             else RtsFactionOrder.Add(rf.Id);
                             RtsFactions[rf.Id] = rf;
+                        }
+                        break;
+                    case "upgrades":
+                        foreach (var n in kv.Value.ArrayValue ?? new List<JsonNode>())
+                        {
+                            var up = JsonMapper.FromNode<UpgradeDef>(n);
+                            if (string.IsNullOrEmpty(up.Id)) { Errors.Add($"{f.Path}: upgrade without id"); continue; }
+                            if (Upgrades.ContainsKey(up.Id)) Errors.Add($"{f.Path}: duplicate upgrade id '{up.Id}'");
+                            Upgrades[up.Id] = up;
                         }
                         break;
                     case "shopCategories": foreach (var n in kv.Value.ArrayValue ?? new List<JsonNode>()) { var s = n.AsString(); if (!ShopCategories.Contains(s)) ShopCategories.Add(s); } break;
@@ -258,8 +268,20 @@ namespace Bloodfall.Data
                 Refs(u.Id, "requires", u.Requires, d => d.Kind == UnitKind.Building);
                 if (u.Kind == UnitKind.Worker && u.GatherGold <= 0 && u.GatherLumber <= 0) Warnings.Add($"Worker '{u.Id}' gathers nothing");
             }
+            foreach (var u in Units.Values)
+                if (u.Research != null)
+                    foreach (var r in u.Research)
+                        if (!Upgrades.ContainsKey(r ?? "")) Errors.Add($"Unit '{u.Id}' researches unknown upgrade '{r}'");
+            foreach (var up in Upgrades.Values)
+            {
+                if (!Statuses.ContainsKey(up.Status ?? "")) Errors.Add($"Upgrade '{up.Id}' applies unknown status '{up.Status}'");
+                foreach (var req in up.Requires ?? new List<string>()) if (!Units.ContainsKey(req)) Errors.Add($"Upgrade '{up.Id}' requires unknown building '{req}'");
+                foreach (var req in up.RequiresUpgrades ?? new List<string>()) if (!Upgrades.ContainsKey(req)) Errors.Add($"Upgrade '{up.Id}' requires unknown upgrade '{req}'");
+            }
             foreach (var f in RtsFactions.Values)
             {
+                if (f.RaiseUnit != null && !Units.ContainsKey(f.RaiseUnit)) Errors.Add($"RTS faction '{f.Id}' raises unknown unit '{f.RaiseUnit}'");
+                if (f.NightStatus != null && !Statuses.ContainsKey(f.NightStatus)) Errors.Add($"RTS faction '{f.Id}' uses unknown night status '{f.NightStatus}'");
                 if (!Units.TryGetValue(f.Hall ?? "", out var hall) || hall.Kind != UnitKind.Building) Errors.Add($"RTS faction '{f.Id}' hall '{f.Hall}' is not a building");
                 else if (!hall.DropOffGold || !hall.DropOffLumber) Errors.Add($"RTS faction '{f.Id}' hall '{f.Hall}' must accept gold and lumber");
                 if (!Units.TryGetValue(f.Worker ?? "", out var w) || w.Kind != UnitKind.Worker) Errors.Add($"RTS faction '{f.Id}' worker '{f.Worker}' is not a worker");

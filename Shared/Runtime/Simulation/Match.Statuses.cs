@@ -246,7 +246,7 @@ namespace Bloodfall.Simulation
             for (int i = 0; i < Units.Count; i++)
             {
                 var u = Units[i];
-                if (!u.IsAlive) continue;
+                if (!u.IsAlive || u.UnderConstruction) continue;
                 foreach (var ab in u.Abilities)
                 {
                     if (ab.Def.Aura == null || ab.Level <= 0 || u.HasFlag(StatusFlags.BreakPassives)) continue;

@@ -584,6 +584,7 @@ namespace Bloodfall.Simulation
             u.RecomputeStats(Rules);
             u.LastPosition = position;
             RegisterUnit(u);
+            if (IsRts && owner != null) ApplyOwnedRtsStatuses(u);
             return u;
         }
 

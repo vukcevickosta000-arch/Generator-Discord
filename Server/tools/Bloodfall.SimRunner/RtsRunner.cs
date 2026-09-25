@@ -45,7 +45,7 @@ namespace Bloodfall.SimRunner
                     m.Events.Clear();
                     if (games == 1 && m.Time >= nextReport)
                     {
-                        nextReport += trace ? 30f : 120f;
+                        nextReport += trace ? (float.TryParse(Environment.GetEnvironmentVariable("RTS_STEP"), out var st) ? st : 30f) : 120f;
                         foreach (var p in m.Players) Console.WriteLine($"[{m.Time / 60f,5:0.0}m] {Line(m, p)}");
                     }
                 }
@@ -57,8 +57,12 @@ namespace Bloodfall.SimRunner
                 sideWins[m.Winner] = sideWins.TryGetValue(m.Winner, out var sw2) ? sw2 + 1 : 1;
                 if (m.Winner != Team.None) lengths.Add(m.EndTime / 60f);
                 Console.WriteLine($"Game {game + 1}: seed {cfg.Seed}, {string.Join(" vs ", m.Players.Select(p => $"{p.Team}={p.RtsFaction.Id}/{p.BotDifficulty}"))}, winner {winner} at {m.MatchSeconds / 60f:0.0} min");
+                if (m.Winner == Team.None)
+                    foreach (var p in m.Players)
+                        Console.WriteLine($"   {p.Team} still has: " + string.Join(", ", m.Units.Where(u => u.Owner == p && u.IsAlive && u.Kind == UnitKind.Building)
+                            .Select(u => $"{u.Name}{(u.UnderConstruction ? " (unfinished)" : "")} at ({u.Position.X:0},{u.Position.Y:0})").Take(8)));
                 foreach (var p in m.Players)
-                    Console.WriteLine($"   {p.RtsFaction.Id,-13} mined {p.GoldMined,6} lumber {p.LumberHarvested,5} trained {p.UnitsTrained,3} lost {p.UnitsLost,3} killed {p.UnitsKilled,3} built {p.BuildingsBuilt,2} lostB {p.BuildingsLost,2} razed {p.BuildingsRazed,2}");
+                    Console.WriteLine($"   {p.RtsFaction.Id,-13} mined {p.GoldMined,6} lumber {p.LumberHarvested,5} trained {p.UnitsTrained,3} lost {p.UnitsLost,3} killed {p.UnitsKilled,3} built {p.BuildingsBuilt,2} lostB {p.BuildingsLost,2} razed {p.BuildingsRazed,2} raised {p.UnitsRaised,3}");
             }
             sw.Stop();
             Console.WriteLine($"Simulated {games} game(s), {ticks} ticks in {sw.ElapsedMilliseconds} ms ({sw.Elapsed.TotalMilliseconds / Math.Max(1, ticks):0.000} ms/tick)");
@@ -84,7 +88,7 @@ namespace Bloodfall.SimRunner
                                   .GroupBy(t => t.Name + (t.Team == p.Team ? "(own)" : "")).Select(g => $"{g.Key}×{g.Count()}");
                 armyInfo = $" army@({c.X:0},{c.Y:0}) {string.Join(" ", orders)} targets: {string.Join(" ", targets)}";
             }
-            if (m.Time > 0 && System.Environment.GetEnvironmentVariable("RTS_ARMY") == "1") return $"{p.Team} {armyInfo}";
+            if (m.Time > 0 && System.Environment.GetEnvironmentVariable("RTS_ARMY") == "1") return $"{p.Team} [{m.RtsAiOf(p)?.DebugState}] {armyInfo}";
             return $"{p.Team,-4} {p.RtsFaction.Id,-13} gold {p.Gold,5} lumber {p.Lumber,4} supply {p.SupplyUsed,3}/{p.SupplyCap,-3} workers {workers,2} army {soldiers,2} [{m.RtsAiOf(p)?.DebugState}] {string.Join(", ", buildings)}";
         }
     }

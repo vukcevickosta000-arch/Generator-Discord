@@ -168,6 +168,8 @@ namespace Bloodfall.Simulation
         public int LaneIndex = -1;
         public int WaypointIndex;
         public string CampId;
+        /// <summary>RTS neutral: attacks intruders near its camp instead of only retaliating (CampPlacement.Guards).</summary>
+        public bool CampGuards;
         public Vector2 HomePosition;
         public float LeashRange;
         public int AggroTargetId;

@@ -59,6 +59,10 @@ namespace Bloodfall.Simulation
         public int BuildingsBuilt, BuildingsLost, BuildingsRazed;
         /// <summary>True once the player has lost every building (RTS defeat).</summary>
         public bool Eliminated;
+        /// <summary>Completed RTS research.</summary>
+        public readonly HashSet<string> Upgrades = new HashSet<string>();
+        public int UnitsRaised, BloodPriceEarned;
+        public float NextRaiseAt;
 
         public bool IsActiveHuman => !IsBot && Connection == PlayerConnection.Connected;
 

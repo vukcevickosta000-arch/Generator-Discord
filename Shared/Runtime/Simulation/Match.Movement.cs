@@ -136,7 +136,8 @@ namespace Bloodfall.Simulation
         {
             var t = GetUnit(u.AttackTargetId);
             if (t != null && (!CanAttackTarget(u, t, out bool deny) || deny || Vector2.Distance(u.Position, t.Position) > u.AcquisitionRange + AttackReach(u, t) + 1.5f)) t = null;
-            if (t == null && (Tick + u.Id) % 3 == 0) t = FindAttackTarget(u, u.AcquisitionRange);
+            // RTS: an army attack-moving past a camp that does not guard its ground leaves it alone unless it fights.
+            if (t == null && (Tick + u.Id) % 3 == 0) t = FindAttackTarget(u, u.AcquisitionRange, skipPassiveNeutrals: IsRts);
             if (t != null && u.CanAttack)
             {
                 u.AttackTargetId = t.Id;
@@ -162,7 +163,7 @@ namespace Bloodfall.Simulation
         }
 
         /// <summary>Default target acquisition: closest attackable enemy, preferring non-structures.</summary>
-        public Unit FindAttackTarget(Unit u, float range, bool ignoreNeutrals = false)
+        public Unit FindAttackTarget(Unit u, float range, bool ignoreNeutrals = false, bool skipPassiveNeutrals = false)
         {
             var list = RentList();
             float search = range <= 0f ? u.Stats.AttackRange + 2f : range;
@@ -175,6 +176,7 @@ namespace Bloodfall.Simulation
                 if (t.Invulnerable || t.Kind == UnitKind.Fountain) continue;
                 if (u.Team == Team.Neutral && t.Team == Team.Neutral) continue;
                 if (ignoreNeutrals && t.Team == Team.Neutral) continue;
+                if (skipPassiveNeutrals && t.Team == Team.Neutral && !t.CampGuards && t.AggroTargetId == 0) continue;
                 float d = Vector2.Distance(u.Position, t.Position);
                 if (range <= 0f && d > AttackReach(u, t)) continue;
                 if (d > search + t.Radius) continue;

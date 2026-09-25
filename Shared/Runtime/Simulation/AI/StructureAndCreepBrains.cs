@@ -127,6 +127,8 @@ namespace Bloodfall.Simulation
     /// <summary>Jungle creatures: sleep at camp, retaliate as a group, leash back home.</summary>
     public sealed class NeutralBrain : IUnitBrain
     {
+        /// <summary>RTS: how close to its camp an enemy may come before the camp attacks.</summary>
+        public const float GuardRadius = 6f;
         private float _returningUntil;
 
         public void Think(Match m, Unit u, float dt)
@@ -149,6 +151,26 @@ namespace Bloodfall.Simulation
                     u.AggroTargetId = attacker.Id;
                     u.AggroUntil = m.Time + 4f;
                     m.AlertCamp(u, attacker);
+                }
+            }
+
+            // RTS camps guard their ground: anyone walking into it is attacked (MOBA camps, and RTS camps marked as
+            // not guarding, only retaliate).
+            if (m.IsRts && u.CampGuards && u.AggroTargetId == 0 && (m.Tick + u.Id) % 6 == 0)
+            {
+                Unit intruder = null;
+                float best = GuardRadius;
+                foreach (var e in m.UnitsInRadius(u.HomePosition, GuardRadius))
+                {
+                    if (e.Team == Team.Neutral || e.IsImmobile || e.Flying || !m.CanAttackTarget(u, e, out _)) continue;
+                    float d = Vector2.Distance(e.Position, u.HomePosition);
+                    if (d < best) { best = d; intruder = e; }
+                }
+                if (intruder != null)
+                {
+                    u.AggroTargetId = intruder.Id;
+                    u.AggroUntil = m.Time + 4f;
+                    m.AlertCamp(u, intruder);
                 }
             }
 

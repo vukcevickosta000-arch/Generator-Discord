@@ -388,6 +388,8 @@ namespace Bloodfall.Data
         public List<string> Trains;
         /// <summary>Workers: building ids this worker can construct.</summary>
         public List<string> Builds;
+        /// <summary>Buildings: upgrade ids researched here.</summary>
+        public List<string> Research;
         /// <summary>Completed buildings the owner must have before this can be built or trained (tech tree).</summary>
         public List<string> Requires;
         /// <summary>Buildings: workers may return gold / lumber here.</summary>
@@ -474,6 +476,8 @@ namespace Bloodfall.Data
         /// <summary>Area that must be free of units for the camp to respawn (blocking).</summary>
         public float SpawnBoxRadius = 3f;
         public Team Side = Team.Neutral;
+        /// <summary>RTS: the camp attacks anyone who walks into its ground (false: it only fights back when attacked).</summary>
+        public bool Guards = true;
     }
 
     public sealed class CampTypeDef
@@ -677,6 +681,36 @@ namespace Bloodfall.Data
         /// <summary>Faction mechanic, one line for the UI.</summary>
         public string Mechanic;
         public bool Playable = true;
+        /// <summary>Ashen Legion: fallen living units near one of the faction's soldiers rise as this unit.</summary>
+        public string RaiseUnit;
+        public float RaiseRadius = 8f;
+        /// <summary>Seconds a raised unit lasts (0 = permanent).</summary>
+        public float RaiseLifetime;
+        /// <summary>Minimum seconds between two raises for one player.</summary>
+        public float RaiseCooldown;
+        /// <summary>Wild Covenant: status every faction soldier has while it is night.</summary>
+        public string NightStatus;
+        /// <summary>Crimson Court: fraction of a slain enemy unit's blood-iron cost paid to the killer's owner.</summary>
+        public float BloodPrice;
+    }
+
+    /// <summary>RTS research: a permanent status for every current and future unit it applies to.</summary>
+    public sealed class UpgradeDef
+    {
+        public string Id;
+        public string Name;
+        public string Description;
+        public string Hotkey;
+        public int GoldCost;
+        public int LumberCost;
+        public float ResearchTime = 30f;
+        /// <summary>Completed buildings required to start the research.</summary>
+        public List<string> Requires;
+        /// <summary>Upgrades that must be researched first (earlier levels).</summary>
+        public List<string> RequiresUpgrades;
+        /// <summary>Unit ids, unit tags, or: soldier, melee, ranged, siege, worker, building.</summary>
+        public List<string> AppliesTo = new List<string>();
+        public string Status;
     }
 
     public sealed class FactionDef

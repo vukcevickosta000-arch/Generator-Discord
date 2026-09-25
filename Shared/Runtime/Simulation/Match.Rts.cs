@@ -102,8 +102,11 @@ namespace Bloodfall.Simulation
 
         // =================================================================== per tick
 
+        private bool _rtsNightApplied;
+
         private void UpdateRts(float dt)
         {
+            if (IsNight != _rtsNightApplied) { _rtsNightApplied = IsNight; ApplyNightStatuses(); }
             for (int i = 0; i < Units.Count; i++)
             {
                 var b = Units[i];
@@ -137,7 +140,7 @@ namespace Bloodfall.Simulation
                     if (!u.UnderConstruction) p.SupplyCap += u.UnitDef.SupplyProvided;
                     if (u.TrainQueue != null)
                         foreach (var q in u.TrainQueue)
-                            if (Data.Units.TryGetValue(q, out var qd)) p.SupplyUsed += qd.SupplyCost;
+                            if (!Data.Upgrades.ContainsKey(q) && Data.Units.TryGetValue(q, out var qd)) p.SupplyUsed += qd.SupplyCost;
                 }
                 else p.SupplyUsed += u.UnitDef.SupplyCost;
             }
@@ -154,7 +157,7 @@ namespace Bloodfall.Simulation
                 case OrderType.Train: TryTrain(unit, o.ItemId); return true;
                 case OrderType.SetRally: SetRally(unit, o); return true;
                 case OrderType.CancelQueue: CancelQueue(unit, o.Slot); return true;
-                case OrderType.Research: EmitError(unit, "Research is not available yet."); return true;
+                case OrderType.Research: TryResearch(unit, o.ItemId); return true;
                 default: return false;
             }
         }
@@ -408,6 +411,15 @@ namespace Bloodfall.Simulation
 
         private void UpdateTraining(Unit b, float dt)
         {
+            if (Data.Upgrades.TryGetValue(b.TrainQueue[0], out var up))
+            {
+                b.TrainProgress += dt / Math.Max(0.1f, up.ResearchTime);
+                if (b.TrainProgress < 1f) return;
+                b.TrainProgress = 0f;
+                b.TrainQueue.RemoveAt(0);
+                CompleteUpgrade(b.Owner, up, b);
+                return;
+            }
             if (!Data.Units.TryGetValue(b.TrainQueue[0], out var d)) { b.TrainQueue.RemoveAt(0); return; }
             b.TrainProgress += dt / Math.Max(0.1f, d.BuildTime);
             if (b.TrainProgress < 1f) return;
@@ -473,7 +485,8 @@ namespace Bloodfall.Simulation
             }
             if (b.TrainQueue == null || b.TrainQueue.Count == 0) return;
             int i = slot < 0 || slot >= b.TrainQueue.Count ? b.TrainQueue.Count - 1 : slot;
-            if (Data.Units.TryGetValue(b.TrainQueue[i], out var d)) Refund(b.Owner, d, 1f);
+            if (Data.Upgrades.TryGetValue(b.TrainQueue[i], out var up)) { b.Owner.Gold += up.GoldCost; b.Owner.Lumber += up.LumberCost; b.Owner.GoldSpent -= up.GoldCost; b.Owner.LumberSpent -= up.LumberCost; }
+            else if (Data.Units.TryGetValue(b.TrainQueue[i], out var d)) Refund(b.Owner, d, 1f);
             b.TrainQueue.RemoveAt(i);
             if (i == 0) b.TrainProgress = 0f;
             UpdateSupply();
@@ -739,6 +752,11 @@ namespace Bloodfall.Simulation
         private void OnRtsDeath(Unit victim, Player killerPlayer)
         {
             ReleaseFootprint(victim);
+            if (!victim.IsStructure && victim.Kind != UnitKind.Resource)
+            {
+                TryRaiseDead(victim, killerPlayer);
+                PayBloodPrice(victim, killerPlayer);
+            }
             var owner = victim.Owner;
             if (owner == null || victim.IsIllusion) return;
             bool enemyKill = killerPlayer != null && killerPlayer.Team != owner.Team;
@@ -772,6 +790,153 @@ namespace Bloodfall.Simulation
                 var team = Players.Where(p => (int)p.Team == t).ToList();
                 if (team.Count > 0 && team.All(p => p.Eliminated)) { EndMatch(t == 0 ? Team.Dusk : Team.Dawn); return; }
             }
+        }
+    
+        // =================================================================== research
+
+        public bool TryResearch(Unit b, string upgradeId)
+        {
+            var p = b?.Owner;
+            if (p == null || !IsRts || b.Kind != UnitKind.Building || b.Dead) return false;
+            string err = null;
+            if (b.UnderConstruction) err = "The building is not finished.";
+            else if (b.UnitDef.Research == null || !b.UnitDef.Research.Contains(upgradeId ?? "") || !Data.Upgrades.TryGetValue(upgradeId, out _)) err = "Can't research that here.";
+            else if (p.Upgrades.Contains(upgradeId)) err = "Already researched.";
+            else if (Units.Any(u => u.Owner == p && u.IsAlive && u.TrainQueue != null && u.TrainQueue.Contains(upgradeId))) err = "Already being researched.";
+            else if ((b.TrainQueue?.Count ?? 0) >= Rules.RtsTrainQueueMax) err = "The queue is full.";
+            if (err == null)
+            {
+                var up = Data.Upgrades[upgradeId];
+                foreach (var req in up.RequiresUpgrades ?? new List<string>())
+                    if (!p.Upgrades.Contains(req)) { err = "Requires " + (Data.Upgrades.TryGetValue(req, out var ru) ? ru.Name : req) + "."; break; }
+                if (err == null)
+                    foreach (var req in up.Requires ?? new List<string>())
+                        if (!HasCompletedBuilding(p, req)) { err = "Requires " + (Data.Units.TryGetValue(req, out var rd) ? rd.Name : req) + "."; break; }
+                if (err == null && p.Gold < up.GoldCost) err = "Not enough blood-iron.";
+                if (err == null && p.Lumber < up.LumberCost) err = "Not enough lumber.";
+                if (err == null)
+                {
+                    p.Gold -= up.GoldCost;
+                    p.Lumber -= up.LumberCost;
+                    p.GoldSpent += up.GoldCost;
+                    p.LumberSpent += up.LumberCost;
+                    (b.TrainQueue ??= new List<string>()).Add(upgradeId);
+                    return true;
+                }
+            }
+            EmitError(b, err);
+            return false;
+        }
+
+        private void CompleteUpgrade(Player p, UpgradeDef up, Unit at)
+        {
+            if (p == null || !p.Upgrades.Add(up.Id)) return;
+            foreach (var u in Units)
+                if (u.Owner == p && u.IsAlive && u.UnitDef != null && UpgradeApplies(up, u.UnitDef))
+                    ApplyStatus(u, up.Status, null, 1, -1f);
+            EmitPrivate(new SimEvent { Type = SimEventType.ResearchComplete, UnitId = at.Id, Key = up.Id, Point = at.Position, Team = at.Team }, p.Id);
+            LogLine($"{p.Name} researched {up.Name}");
+        }
+
+        /// <summary>Selectors: a unit id, a unit tag, or soldier / melee / ranged / siege / worker / building.</summary>
+        public static bool UpgradeApplies(UpgradeDef up, UnitDef d)
+        {
+            foreach (var sel in up.AppliesTo ?? new List<string>())
+            {
+                bool siege = d.Tags != null && d.Tags.Contains("siege");
+                switch (sel)
+                {
+                    case "soldier": if (d.Kind == UnitKind.Soldier) return true; break;
+                    case "melee": if (d.Kind == UnitKind.Soldier && d.AttackType == AttackType.Melee) return true; break;
+                    case "ranged": if (d.Kind == UnitKind.Soldier && d.AttackType == AttackType.Ranged && !siege) return true; break;
+                    case "siege": if (siege) return true; break;
+                    case "worker": if (d.Kind == UnitKind.Worker) return true; break;
+                    case "building": if (d.Kind == UnitKind.Building) return true; break;
+                    default:
+                        if (d.Id == sel || (d.Tags != null && d.Tags.Contains(sel))) return true;
+                        break;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>New units join with their owner's research (and, for the Covenant, the night's strength).</summary>
+        private void ApplyOwnedRtsStatuses(Unit u)
+        {
+            var p = u.Owner;
+            if (p == null || u.UnitDef == null) return;
+            foreach (var id in p.Upgrades)
+                if (Data.Upgrades.TryGetValue(id, out var up) && UpgradeApplies(up, u.UnitDef)) ApplyStatus(u, up.Status, null, 1, -1f);
+            if (IsNight && p.RtsFaction?.NightStatus != null && u.Kind == UnitKind.Soldier) ApplyStatus(u, p.RtsFaction.NightStatus, null, 1, -1f);
+        }
+
+        // =================================================================== faction mechanics
+
+        /// <summary>Wild Covenant: soldiers take their night form when night falls and lose it at dawn.</summary>
+        private void ApplyNightStatuses()
+        {
+            foreach (var p in Players)
+            {
+                var status = p.RtsFaction?.NightStatus;
+                if (status == null || !Data.Statuses.TryGetValue(status, out var def)) continue;
+                foreach (var u in Units)
+                {
+                    if (u.Owner != p || !u.IsAlive || u.Kind != UnitKind.Soldier) continue;
+                    if (IsNight) ApplyStatus(u, def, null, 1, -1f, 1, false, null, true);
+                    else
+                        for (int i = u.Statuses.Count - 1; i >= 0; i--)
+                            if (u.Statuses[i].Def == def) RemoveStatus(u, u.Statuses[i], false);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Ashen Legion: a living (not undead, not siege) unit that falls near a Legion soldier rises as a temporary
+        /// skeleton (RtsFactionDef.RaiseUnit) for that Legion player, at most once per RaiseCooldown and if supply allows.
+        /// </summary>
+        private void TryRaiseDead(Unit victim, Player killer)
+        {
+            var vd = victim.UnitDef;
+            if (vd == null || victim.IsIllusion || victim.Kind == UnitKind.Resource || victim.IsNeutral && victim.Kind == UnitKind.Boss) return;
+            if (vd.Tags != null && (vd.Tags.Contains("undead") || vd.Tags.Contains("siege"))) return;
+            // The side that made the kill raises the body; failing that, whoever has a soldier standing closest to it.
+            Player raiser = null;
+            UnitDef raiserDef = null;
+            float best = float.MaxValue;
+            foreach (var p in Players)
+            {
+                var f = p.RtsFaction;
+                if (f?.RaiseUnit == null || p.Eliminated || Time < p.NextRaiseAt || !Data.Units.TryGetValue(f.RaiseUnit, out var raise)) continue;
+                if (p.SupplyUsed + raise.SupplyCost > p.SupplyCap) continue;
+                float near = float.MaxValue;
+                foreach (var u in Units)
+                    if (u.Owner == p && u.IsAlive && u.Kind == UnitKind.Soldier) near = Math.Min(near, Vector2.Distance(u.Position, victim.Position));
+                if (near > f.RaiseRadius) continue;
+                if (p == killer) near = -1f;
+                if (near < best) { best = near; raiser = p; raiserDef = raise; }
+            }
+            if (raiser == null) return;
+            var faction = raiser.RtsFaction;
+            var risen = CreateUnit(raiserDef, raiser.Team, Grid.NearestWalkable(victim.Position), victim.Facing, raiser);
+            if (faction.RaiseLifetime > 0f) risen.Lifetime = faction.RaiseLifetime;
+            raiser.NextRaiseAt = Time + faction.RaiseCooldown;
+            raiser.SupplyUsed += raiserDef.SupplyCost;
+            raiser.UnitsRaised++;
+            Emit(new SimEvent { Type = SimEventType.EffectVisual, Key = "raise_dead", UnitId = risen.Id, Point = victim.Position, PlayerId = -1 });
+        }
+
+        /// <summary>Crimson Court: every enemy unit its forces slay pays part of its cost in blood-iron.</summary>
+        private void PayBloodPrice(Unit victim, Player killerPlayer)
+        {
+            if (killerPlayer?.RtsFaction == null || killerPlayer.RtsFaction.BloodPrice <= 0f || victim.UnitDef == null) return;
+            if (victim.Owner != null && victim.Owner.Team == killerPlayer.Team) return;
+            int cost = victim.Owner != null ? victim.UnitDef.GoldCost : victim.UnitDef.BountyGoldMax * 2;
+            int pay = (int)(cost * killerPlayer.RtsFaction.BloodPrice);
+            if (pay <= 0) return;
+            killerPlayer.Gold += pay;
+            killerPlayer.GoldEarned += pay;
+            killerPlayer.BloodPriceEarned += pay;
+            EmitPrivate(new SimEvent { Type = SimEventType.ResourcesDelivered, UnitId = victim.Id, Value = pay, Point = victim.Position, Key = "blood_price" }, killerPlayer.Id);
         }
     }
 }

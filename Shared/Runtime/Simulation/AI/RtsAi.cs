@@ -34,6 +34,10 @@ namespace Bloodfall.Simulation
         private Vector2 _objective;
         private float _lastOrderRefresh;
         private float _lastRetarget;
+        /// <summary>Attack phase 1: gather at the midpoint and hold there before pushing (0 = pushing).</summary>
+        private float _holdUntil;
+        private Vector2 _forward;
+        private const float HoldTime = 20f;
         /// <summary>Enemy buildings we have seen (id → position), forgotten when seen destroyed or found missing.</summary>
         private readonly Dictionary<int, Vector2> _knownEnemyBuildings = new Dictionary<int, Vector2>();
         /// <summary>Largest enemy army (supply) seen recently, decaying slowly when out of sight.</summary>
@@ -48,8 +52,13 @@ namespace Bloodfall.Simulation
         private int WorkersPerVein => Beginner ? 3 : 5;
         private readonly HashSet<int> _rallied = new HashSet<int>();
         private int _scoutIndex;
+        private float _scoutBest = float.MaxValue, _scoutBestAt;
+        private readonly List<Vector2> _path = new List<Vector2>();
+        private readonly HashSet<string> _passedCamps = new HashSet<string>();
+        private string _detourCamp;
+        private Vector2 _detourPoint, _detourFor;
 
-        public string DebugState => $"{_stance} wave {_wave}";
+        public string DebugState => $"{_stance} wave {_wave} -> ({_objective.X:0},{_objective.Y:0}) known {_knownEnemyBuildings.Count}";
 
         public RtsAi(Match m, Player p)
         {
@@ -91,6 +100,7 @@ namespace Bloodfall.Simulation
             else Economy(m, halls, workers);
             Construction(m, halls, workers);
             Production(m, halls, workers.Count);
+            Research(m);
             Army(m);
         }
 
@@ -344,6 +354,34 @@ namespace Bloodfall.Simulation
             }
         }
 
+        /// <summary>
+        /// Research when the economy allows: from the ninth minute (early spending loses the first big fight), one
+        /// upgrade at a time at an idle building, only with blood-iron to spare.
+        /// </summary>
+        private void Research(Match m)
+        {
+            if (Minutes(m) < 9f || _p.Gold < 450) return;
+            if (m.Units.Any(u => u.Owner == _p && u.IsAlive && u.TrainQueue != null && u.TrainQueue.Any(q => m.Data.Upgrades.ContainsKey(q)))) return;
+            // Whole-army upgrades first, then melee/ranged, then siege, then buildings. Research may wait behind one
+            // unit in a busy barracks' queue.
+            var options = new List<(Unit b, string id, int priority)>();
+            foreach (var b in m.Units.Where(u => u.Owner == _p && u.IsAlive && u.Kind == UnitKind.Building && !u.UnderConstruction && u.UnitDef.Research != null))
+                foreach (var id in b.UnitDef.Research)
+                    if (m.Data.Upgrades.TryGetValue(id, out var o))
+                        options.Add((b, id, o.AppliesTo.Contains("soldier") ? 0 : o.AppliesTo.Contains("melee") || o.AppliesTo.Contains("ranged") ? 1 : o.AppliesTo.Contains("building") ? 3 : 2));
+            foreach (var (b, id, _) in options.OrderBy(x => x.priority))
+            {
+                if ((b.TrainQueue?.Count ?? 0) > 1) continue;
+                {
+                    if (_p.Upgrades.Contains(id) || !m.Data.Upgrades.TryGetValue(id, out var up)) continue;
+                    if ((up.RequiresUpgrades ?? new List<string>()).Any(r => !_p.Upgrades.Contains(r))) continue;
+                    if ((up.Requires ?? new List<string>()).Any(r => !m.HasCompletedBuilding(_p, r))) continue;
+                    if (_p.Gold - up.GoldCost < 250 || _p.Lumber < up.LumberCost) continue;
+                    if (m.TryResearch(b, id)) return;
+                }
+            }
+        }
+
         private UnitDef PickUnit(Match m, Unit building)
         {
             var options = building.UnitDef.Trains.Where(m.Data.Units.ContainsKey).Select(id => m.Data.Units[id]).Where(d => m.RequirementsMet(_p, d, out _)).ToList();
@@ -385,7 +423,10 @@ namespace Bloodfall.Simulation
             var army = Own(m, UnitKind.Soldier);
             int supply = army.Sum(u => u.UnitDef.SupplyCost);
             UpdateEnemyArmyEstimate(m);
-            var threat = ThreatNearBase(m);
+            var (threat, weight) = ThreatNearBase(m);
+            // A lone raider does not recall an attacking army (towers and a few defenders handle it); a real
+            // counter-attack does.
+            if (threat != null && _stance == Stance.Attack && weight < Math.Max(3f, 0.3f * supply)) threat = null;
             if (threat != null)
             {
                 if (_stance != Stance.Defend) { _stance = Stance.Defend; _lastOrderRefresh = -99f; }
@@ -408,7 +449,12 @@ namespace Bloodfall.Simulation
                     _stance = Stance.Attack;
                     _wave++;
                     _waveStartSupply = supply;
-                    _objective = AttackTarget(m);
+                    _scoutBest = float.MaxValue;
+                    // First to the midpoint: the army regroups there with its stragglers and meets a counter-attack
+                    // on open ground instead of walking straight under the enemy's towers.
+                    _forward = m.Grid.NearestWalkable(Vector2.Lerp(_home, _enemyHome, 0.5f));
+                    _holdUntil = float.MaxValue;
+                    _objective = _forward;
                     _lastOrderRefresh = -99f;
                 }
             }
@@ -421,6 +467,17 @@ namespace Bloodfall.Simulation
             {
                 if (supply < _waveStartSupply * 0.35f || (!Beginner && EnemyNearArmy(m, army) > supply * 1.6f))
                 { _stance = Stance.Gather; _lastOrderRefresh = -99f; }
+                else if (_holdUntil > 0f)
+                {
+                    var c = army.Count > 0 ? army.Aggregate(Vector2.Zero, (sum, u) => sum + u.Position) / army.Count : _home;
+                    if (_holdUntil == float.MaxValue && Vector2.Distance(c, _forward) < 10f) _holdUntil = m.Time + HoldTime;
+                    if (m.Time >= _holdUntil)
+                    {
+                        _holdUntil = 0f;
+                        _objective = AttackTarget(m);
+                        _lastOrderRefresh = -99f;
+                    }
+                }
                 else if (m.Time - _lastRetarget > 5f)
                 {
                     var next = AttackTarget(m);
@@ -431,7 +488,7 @@ namespace Bloodfall.Simulation
             if (Expert) Micro(m, army);
             if (m.Time - _lastOrderRefresh < 3f) return;
             _lastOrderRefresh = m.Time;
-            var stage = StagePoint(m, army);
+            var stage = _stance == Stance.Attack ? StagePoint(m, army) : _objective;
             foreach (var u in army)
             {
                 var goal = _stance == Stance.Gather ? _rally : _stance == Stance.Attack ? stage : _objective;
@@ -482,8 +539,9 @@ namespace Bloodfall.Simulation
         }
 
         /// <summary>
-        /// Attacks advance in stages: the whole army attack-moves to a point a short way ahead of its centre, so fast
-        /// units do not arrive alone and the siege keeps up. Close to the objective it goes straight in.
+        /// Attacks advance in stages: the whole army attack-moves to a point a short way ahead of its centre along the
+        /// ground path, so fast units do not arrive alone and the siege keeps up. Close to the objective it goes
+        /// straight in.
         /// </summary>
         private Vector2 StagePoint(Match m, List<Unit> army)
         {
@@ -491,11 +549,67 @@ namespace Bloodfall.Simulation
             var marching = army.Where(u => u.CurrentOrder.Type != OrderType.AttackUnit).ToList();
             if (marching.Count == 0) return _objective;
             var c = marching.Aggregate(Vector2.Zero, (s, u) => s + u.Position) / marching.Count;
-            float d = Vector2.Distance(c, _objective);
-            if (d < 18f) return _objective;
-            float spread = marching.Max(u => Vector2.Distance(u.Position, c));
-            float step = spread > 10f ? 4f : 14f; // strung out: let the tail catch up
-            return m.Grid.NearestWalkable(c + (_objective - c) / d * step);
+            var from = m.Grid.NearestWalkable(c);
+            m.Grid.FindPath(from, _objective, _path);
+            var goal = CampDetour(m, from) ?? _objective;
+            if (goal != _objective) m.Grid.FindPath(from, goal, _path);
+            if (Vector2.Distance(c, goal) < 18f || _path.Count == 0) return goal;
+            // Strung out (most of the army far from its centre, allowing for a big army's size): let the tail catch up.
+            var dists = marching.Select(u => Vector2.Distance(u.Position, c)).OrderBy(x => x).ToList();
+            float spread = dists[Math.Min(dists.Count - 1, (int)(dists.Count * 0.8f))];
+            float step = spread > 6f + 1.2f * (float)Math.Sqrt(marching.Count) ? 4f : 14f;
+            // Along the path, not the straight line: a straight step stalls against cliffs and forest edges.
+            var prev = from;
+            foreach (var p in _path)
+            {
+                float seg = Vector2.Distance(prev, p);
+                if (seg >= step) return prev + (p - prev) / seg * step;
+                step -= seg;
+                prev = p;
+            }
+            return prev;
+        }
+
+        /// <summary>
+        /// An attack does not march through a live neutral camp that guards its ground: when the path ahead passes one, the army goes round
+        /// it first. The side is fixed in world space, so on a mirrored map both armies take the same way round and
+        /// still meet. A camp the army has walked round (or is past) is not avoided again during this attack.
+        /// </summary>
+        private Vector2? CampDetour(Match m, Vector2 from)
+        {
+            // Camp creatures stand up to ~3 m from the camp centre and attack anyone within GuardRadius of them.
+            const float clearance = NeutralBrain.GuardRadius + 6f;
+            if (_detourCamp != null)
+            {
+                if (Vector2.Distance(from, _detourPoint) > 8f && Vector2.Distance(_objective, _detourFor) < 1f) return _detourPoint;
+                if (Vector2.Distance(_objective, _detourFor) < 1f) _passedCamps.Add(_detourCamp);
+                _detourCamp = null;
+            }
+            if (Vector2.Distance(_objective, _detourFor) >= 1f) { _passedCamps.Clear(); _detourFor = _objective; }
+            var prev = from;
+            float walked = 0f;
+            foreach (var p in _path)
+            {
+                foreach (var camp in m.Map.Camps)
+                {
+                    var cp = (Vector2)camp.Position;
+                    if (!camp.Guards || _passedCamps.Contains(camp.Id) || Vector2.Distance(cp, _objective) < clearance || Vector2.Distance(cp, from) < clearance) continue;
+                    if (DistToSegment(cp, prev, p) >= clearance) continue;
+                    if (!m.Units.Any(n => n.IsNeutral && n.IsAlive && Vector2.Distance(n.HomePosition, cp) < 8f)) continue;
+                    var dir = MathUtil.SafeNormalize(p - prev, Vector2.UnitX);
+                    var side = new Vector2(-dir.Y, dir.X);
+                    if (side.X - side.Y < -1e-3f || (Math.Abs(side.X - side.Y) <= 1e-3f && side.X + side.Y < 0f)) side = -side;
+                    var point = cp + side * (clearance + 3f);
+                    if (!m.Grid.IsWalkable(point)) point = m.Grid.IsWalkable(cp - side * (clearance + 3f)) ? cp - side * (clearance + 3f) : m.Grid.NearestWalkable(point);
+                    _detourCamp = camp.Id;
+                    _detourPoint = point;
+                    return point;
+                }
+                walked += Vector2.Distance(prev, p);
+                prev = p;
+                if (walked > 60f) break;
+            }
+            return null;
         }
 
         /// <summary>A unit mid-swing or fighting under attack-move: a new order now would only cancel its attack.</summary>
@@ -531,15 +645,20 @@ namespace Bloodfall.Simulation
             return sum;
         }
 
-        private Vector2? ThreatNearBase(Match m)
+        /// <summary>The first visible enemy near one of our buildings, and the total weight (supply, at least 1 each) of all of them.</summary>
+        private (Vector2? at, float weight) ThreatNearBase(Match m)
         {
             var mine = m.Units.Where(u => u.Owner == _p && u.IsAlive && u.Kind == UnitKind.Building).ToList();
+            Vector2? first = null;
+            float weight = 0f;
             foreach (var e in m.Units)
             {
                 if (!e.IsAlive || e.Team == _p.Team || e.Team == Team.Neutral || e.IsImmobile || !m.IsVisibleTo(e, _p.Team)) continue;
-                if (mine.Any(b => Vector2.Distance(b.Position, e.Position) < 18f)) return e.Position;
+                if (!mine.Any(b => Vector2.Distance(b.Position, e.Position) < 18f)) continue;
+                first ??= e.Position;
+                weight += Math.Max(1, e.UnitDef?.SupplyCost ?? 1);
             }
-            return null;
+            return (first, weight);
         }
 
         /// <summary>
@@ -552,9 +671,23 @@ namespace Bloodfall.Simulation
             var army = Own(m, UnitKind.Soldier);
             var centroid = army.Count > 0 ? army.Aggregate(Vector2.Zero, (s, u) => s + u.Position) / army.Count : _home;
             if (_knownEnemyBuildings.Count > 0)
+            {
+                _scoutBest = float.MaxValue;
                 return _knownEnemyBuildings.OrderBy(kv => Vector2.Distance(kv.Value, centroid)).ThenBy(kv => kv.Key).First().Value;
+            }
             var spots = ScoutSpots(m);
-            if (Vector2.Distance(centroid, spots[_scoutIndex % spots.Count]) < 8f) _scoutIndex++;
+            // Move on once the spot is seen, or when the army has stopped getting closer to it for 30 s (blocked
+            // ground, a fight on the way that it keeps losing ground in).
+            float dist = Vector2.Distance(centroid, spots[_scoutIndex % spots.Count]);
+            // Time spent fighting on the way is not time stuck.
+            bool fighting = army.Any(u => u.Action == ActionState.AttackWindup || u.Action == ActionState.AttackBackswing);
+            if (dist < _scoutBest - 2f || fighting) { _scoutBest = Math.Min(_scoutBest, dist); _scoutBestAt = m.Time; }
+            if (dist < 8f || m.Time - _scoutBestAt > 30f)
+            {
+                _scoutIndex++;
+                _scoutBest = Vector2.Distance(centroid, spots[_scoutIndex % spots.Count]);
+                _scoutBestAt = m.Time;
+            }
             return spots[_scoutIndex % spots.Count];
         }
 

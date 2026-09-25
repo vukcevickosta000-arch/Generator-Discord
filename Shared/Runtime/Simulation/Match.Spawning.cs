@@ -174,6 +174,7 @@ namespace Bloodfall.Simulation
                     var pos = Grid.NearestWalkable(camp.Position + MathUtil.FromAngle(i * 2.1f) * (i == 0 ? 0f : 1.3f));
                     var n = CreateUnit(def, Team.Neutral, pos, Rng.Range(0f, MathUtil.TwoPi));
                     n.CampId = camp.Id;
+                    n.CampGuards = camp.Guards;
                     n.HomePosition = pos;
                     n.LeashRange = 9f;
                     n.CreepUpgradeLevel = upgrade;
