@@ -1,0 +1,23 @@
+{
+  "panel_frame": 34,
+  "panel_frame_solid": 34,
+  "panel_frame_thin": 14,
+  "panel_card": 16,
+  "panel_highlight": 16,
+  "panel_header": 14,
+  "dialog_frame": 38,
+  "btn_steel": 12,
+  "btn_primary": 12,
+  "btn_danger": 12,
+  "btn_ghost": 12,
+  "input": 8,
+  "tab": 10,
+  "scroll": 6,
+  "hud_plate": 26,
+  "hud_slot": 10,
+  "hud_slot_ult": 11,
+  "hud_portrait": 16,
+  "hud_bar": 8,
+  "hud_minimap": 18,
+  "tooltip": 10
+}

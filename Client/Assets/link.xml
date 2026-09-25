@@ -1,0 +1,6 @@
+<!-- IL2CPP: the JSON mapper and game data use reflection on these assemblies. -->
+<linker>
+  <assembly fullname="Bloodfall.Shared" preserve="all" />
+  <assembly fullname="Bloodfall.Client" preserve="all" />
+  <assembly fullname="LiteNetLib" preserve="all" />
+</linker>

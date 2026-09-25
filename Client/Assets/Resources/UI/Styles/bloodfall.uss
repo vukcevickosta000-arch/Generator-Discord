@@ -1,0 +1,334 @@
+/* =====================================================================================================
+   BLOODFALL - master stylesheet (UI Toolkit USS)
+   Obsidian panels framed in blackened iron and worn bronze, blood-lacquer primary actions,
+   engraved serif capitals for headings, humanist sans for reading. Dense, PC-first layout.
+   Textures: Resources/Textures/UI (Tools/art/generate_ui.py). Slice sizes: Textures/UI/slices.json.
+   ===================================================================================================== */
+
+.bf-root {
+    flex-grow: 1;
+    -unity-font-definition: resource("Fonts/AlegreyaSans-Regular");
+    font-size: 15px;
+    color: rgb(222, 212, 196);
+}
+
+/* ------------------------------------------------------------------ typography */
+.t-display { -unity-font-definition: resource("Fonts/CinzelDecorative-Black"); color: rgb(214, 42, 46); font-size: 44px; letter-spacing: 2px; -unity-text-outline-width: 1px; -unity-text-outline-color: rgb(30, 6, 8); }
+.t-title { -unity-font-definition: resource("Fonts/MarcellusSC-Regular"); font-size: 26px; color: rgb(226, 186, 110); letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9); }
+.t-heading { -unity-font-definition: resource("Fonts/MarcellusSC-Regular"); font-size: 18px; color: rgb(232, 220, 196); letter-spacing: 1px; }
+.t-subheading { -unity-font-definition: resource("Fonts/AlegreyaSansSC-Bold"); font-size: 14px; color: rgb(190, 150, 96); letter-spacing: 1px; }
+.t-label { -unity-font-definition: resource("Fonts/AlegreyaSansSC-Medium"); font-size: 13px; color: rgb(168, 150, 128); letter-spacing: 1px; }
+.t-body { font-size: 15px; color: rgb(214, 204, 186); white-space: normal; }
+.t-small { font-size: 12px; color: rgb(170, 158, 140); }
+.t-bold { -unity-font-definition: resource("Fonts/AlegreyaSans-Bold"); }
+.t-muted { color: rgb(130, 120, 108); }
+.t-gold { color: rgb(226, 186, 110); }
+.t-red { color: rgb(226, 64, 58); }
+.t-green { color: rgb(112, 204, 96); }
+.t-blue { color: rgb(110, 160, 240); }
+.t-center { -unity-text-align: middle-center; }
+.t-right { -unity-text-align: middle-right; }
+.t-gothic { -unity-font-definition: resource("Fonts/PirataOne-Regular"); }
+.t-wrap { white-space: normal; }
+
+/* ------------------------------------------------------------------ layout helpers */
+.row { flex-direction: row; align-items: center; }
+.col { flex-direction: column; }
+.grow { flex-grow: 1; }
+.shrink0 { flex-shrink: 0; }
+.center { align-items: center; justify-content: center; }
+.space-between { justify-content: space-between; }
+.fill { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.hidden { display: none; }
+.m-s { margin: 4px; }
+.m-m { margin: 8px; }
+.mt-m { margin-top: 8px; }
+.mt-l { margin-top: 16px; }
+.mb-m { margin-bottom: 8px; }
+.ml-m { margin-left: 8px; }
+.mr-m { margin-right: 8px; }
+.p-m { padding: 8px; }
+.p-l { padding: 16px; }
+
+/* ------------------------------------------------------------------ panels */
+.panel {
+    background-image: resource("Textures/UI/panel_frame");
+    -unity-slice-left: 34; -unity-slice-right: 34; -unity-slice-top: 34; -unity-slice-bottom: 34;
+    padding: 30px;
+}
+.panel-solid {
+    background-image: resource("Textures/UI/panel_frame_solid");
+    -unity-slice-left: 34; -unity-slice-right: 34; -unity-slice-top: 34; -unity-slice-bottom: 34;
+    padding: 30px;
+}
+.panel-thin {
+    background-image: resource("Textures/UI/panel_frame_thin");
+    -unity-slice-left: 14; -unity-slice-right: 14; -unity-slice-top: 14; -unity-slice-bottom: 14;
+    padding: 10px;
+}
+.card {
+    background-image: resource("Textures/UI/panel_card");
+    -unity-slice-left: 16; -unity-slice-right: 16; -unity-slice-top: 16; -unity-slice-bottom: 16;
+    padding: 12px;
+}
+.card--highlight {
+    background-image: resource("Textures/UI/panel_highlight");
+}
+.card--clickable:hover { -unity-background-image-tint-color: rgb(255, 220, 200); scale: 1.01 1.01; }
+.card--clickable { transition-property: scale, -unity-background-image-tint-color; transition-duration: 0.12s; }
+.panel-header {
+    background-image: resource("Textures/UI/panel_header");
+    -unity-slice-left: 14; -unity-slice-right: 14; -unity-slice-top: 14; -unity-slice-bottom: 14;
+    height: 44px;
+    padding-left: 18px; padding-right: 18px;
+    flex-direction: row; align-items: center;
+}
+.dialog {
+    background-image: resource("Textures/UI/dialog_frame");
+    -unity-slice-left: 38; -unity-slice-right: 38; -unity-slice-top: 38; -unity-slice-bottom: 38;
+    padding: 36px;
+    min-width: 420px;
+}
+.tooltip {
+    background-image: resource("Textures/UI/tooltip");
+    -unity-slice-left: 10; -unity-slice-right: 10; -unity-slice-top: 10; -unity-slice-bottom: 10;
+    padding: 12px;
+    max-width: 380px;
+}
+.divider {
+    background-image: resource("Textures/UI/divider");
+    height: 24px;
+    -unity-background-scale-mode: scale-to-fit;
+    margin-top: 4px; margin-bottom: 4px;
+}
+.stone-bg { background-image: resource("Textures/UI/bg_stone"); -unity-background-scale-mode: scale-and-crop; }
+.vignette { background-image: resource("Textures/UI/vignette"); -unity-background-scale-mode: stretch-to-fill; }
+.fade-bottom { background-image: resource("Textures/UI/fade_bottom"); -unity-background-scale-mode: stretch-to-fill; }
+.fade-top { background-image: resource("Textures/UI/fade_top"); -unity-background-scale-mode: stretch-to-fill; }
+.shade { background-color: rgba(4, 3, 4, 0.72); }
+
+/* ------------------------------------------------------------------ buttons */
+.btn {
+    background-image: resource("Textures/UI/btn_steel_normal");
+    -unity-slice-left: 12; -unity-slice-right: 12; -unity-slice-top: 12; -unity-slice-bottom: 12;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    height: 42px;
+    min-width: 110px;
+    padding-left: 18px; padding-right: 18px;
+    margin: 3px;
+    -unity-font-definition: resource("Fonts/MarcellusSC-Regular");
+    font-size: 16px;
+    color: rgb(232, 214, 184);
+    letter-spacing: 1px;
+    -unity-text-align: middle-center;
+    text-shadow: 0 1px 2px rgb(0, 0, 0);
+    transition-property: scale, color;
+    transition-duration: 0.08s;
+}
+.btn:hover { background-image: resource("Textures/UI/btn_steel_hover"); color: rgb(255, 236, 206); }
+.btn:active { background-image: resource("Textures/UI/btn_steel_pressed"); scale: 0.98 0.98; }
+.btn:disabled { background-image: resource("Textures/UI/btn_steel_disabled"); color: rgb(110, 100, 92); }
+.btn--primary { background-image: resource("Textures/UI/btn_primary_normal"); color: rgb(255, 232, 200); font-size: 18px; }
+.btn--primary:hover { background-image: resource("Textures/UI/btn_primary_hover"); }
+.btn--primary:active { background-image: resource("Textures/UI/btn_primary_pressed"); }
+.btn--primary:disabled { background-image: resource("Textures/UI/btn_primary_disabled"); }
+.btn--danger { background-image: resource("Textures/UI/btn_danger_normal"); }
+.btn--danger:hover { background-image: resource("Textures/UI/btn_danger_hover"); }
+.btn--danger:active { background-image: resource("Textures/UI/btn_danger_pressed"); }
+.btn--ghost { background-image: resource("Textures/UI/btn_ghost_normal"); }
+.btn--ghost:hover { background-image: resource("Textures/UI/btn_ghost_hover"); }
+.btn--ghost:active { background-image: resource("Textures/UI/btn_ghost_pressed"); }
+.btn--small { height: 30px; min-width: 70px; font-size: 13px; padding-left: 10px; padding-right: 10px; }
+.btn--large { height: 64px; font-size: 26px; min-width: 260px; }
+.btn--huge { height: 78px; font-size: 32px; min-width: 300px; letter-spacing: 3px; }
+.btn--icon { min-width: 34px; width: 34px; height: 30px; padding: 0; }
+
+.link { color: rgb(200, 150, 90); font-size: 14px; -unity-font-definition: resource("Fonts/AlegreyaSans-Medium"); }
+.link:hover { color: rgb(255, 196, 120); }
+
+/* ------------------------------------------------------------------ inputs */
+.field { margin-top: 2px; margin-bottom: 10px; }
+.field > Label { -unity-font-definition: resource("Fonts/AlegreyaSansSC-Medium"); font-size: 13px; color: rgb(170, 146, 110); min-width: 0; margin-bottom: 3px; letter-spacing: 1px; }
+.field .unity-base-text-field__input {
+    background-image: resource("Textures/UI/input");
+    -unity-slice-left: 8; -unity-slice-right: 8; -unity-slice-top: 8; -unity-slice-bottom: 8;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    height: 38px;
+    padding-left: 10px; padding-right: 10px;
+    font-size: 16px;
+    color: rgb(236, 226, 206);
+}
+.field:focus .unity-base-text-field__input { background-image: resource("Textures/UI/input_focus"); }
+.field--column { flex-direction: column; }
+.field--error .unity-base-text-field__input { background-image: resource("Textures/UI/input_focus"); }
+.field-error { color: rgb(236, 82, 70); font-size: 13px; margin-top: -6px; margin-bottom: 8px; white-space: normal; }
+
+.checkbox { flex-direction: row; align-items: center; margin: 4px; }
+.checkbox .unity-toggle__checkmark {
+    background-image: resource("Textures/UI/checkbox_off");
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    width: 22px; height: 22px;
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+}
+.checkbox:checked .unity-toggle__checkmark { background-image: resource("Textures/UI/checkbox_on"); }
+.checkbox Label { color: rgb(200, 186, 160); font-size: 14px; }
+
+.dropdown .unity-base-popup-field__input, .dropdown .unity-popup-field__input {
+    background-image: resource("Textures/UI/input");
+    -unity-slice-left: 8; -unity-slice-right: 8; -unity-slice-top: 8; -unity-slice-bottom: 8;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    height: 32px;
+    color: rgb(236, 226, 206);
+}
+.slider .unity-base-slider__tracker { background-color: rgb(40, 32, 30); border-color: rgb(110, 80, 50); height: 6px; }
+.slider .unity-base-slider__dragger { background-color: rgb(196, 150, 86); border-color: rgb(60, 40, 20); width: 14px; height: 18px; border-radius: 2px; }
+
+/* ------------------------------------------------------------------ tabs */
+.tabbar { flex-direction: row; }
+.tab {
+    background-image: resource("Textures/UI/tab");
+    -unity-slice-left: 10; -unity-slice-right: 10; -unity-slice-top: 10; -unity-slice-bottom: 10;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    height: 40px;
+    min-width: 110px;
+    margin: 0 2px;
+    padding-left: 14px; padding-right: 14px;
+    -unity-font-definition: resource("Fonts/MarcellusSC-Regular");
+    font-size: 16px;
+    color: rgb(176, 160, 136);
+    letter-spacing: 1px;
+}
+.tab:hover { color: rgb(246, 226, 196); }
+.tab--active { background-image: resource("Textures/UI/tab_active"); color: rgb(255, 222, 170); }
+.nav-tab { height: 50px; min-width: 124px; font-size: 18px; }
+
+/* ------------------------------------------------------------------ scroll views */
+.unity-scroller--vertical { width: 12px; }
+.unity-scroller .unity-base-slider__tracker { background-image: resource("Textures/UI/scroll_track"); -unity-slice-top: 6; -unity-slice-bottom: 6; background-color: rgba(0, 0, 0, 0); border-width: 0; }
+.unity-scroller .unity-base-slider__dragger { background-image: resource("Textures/UI/scroll_thumb"); -unity-slice-top: 6; -unity-slice-bottom: 6; background-color: rgba(0, 0, 0, 0); border-width: 0; }
+.unity-scroller .unity-repeat-button { display: none; }
+
+/* ------------------------------------------------------------------ lists / tables */
+.table-header { flex-direction: row; height: 30px; align-items: center; background-color: rgba(60, 14, 20, 0.85); border-bottom-width: 1px; border-color: rgb(120, 84, 48); }
+.table-header Label { -unity-font-definition: resource("Fonts/AlegreyaSansSC-Bold"); font-size: 13px; color: rgb(226, 186, 110); padding-left: 6px; }
+.table-header .sortable:hover { color: rgb(255, 230, 190); }
+.list-row { flex-direction: row; align-items: center; min-height: 30px; padding-left: 4px; border-bottom-width: 1px; border-color: rgba(90, 70, 50, 0.35); }
+.list-row:hover { background-color: rgba(120, 30, 30, 0.35); }
+.list-row--selected { background-color: rgba(150, 30, 34, 0.55); border-left-width: 3px; border-color: rgb(226, 186, 110); }
+.list-row--alt { background-color: rgba(255, 255, 255, 0.025); }
+.list-row Label { padding-left: 6px; }
+.cell { overflow: hidden; }
+
+/* ------------------------------------------------------------------ status dots / badges */
+.dot { width: 10px; height: 10px; border-radius: 5px; margin-right: 8px; }
+.dot--online { background-color: rgb(96, 204, 96); }
+.dot--ingame { background-color: rgb(226, 186, 110); }
+.dot--away { background-color: rgb(220, 150, 60); }
+.dot--queue { background-color: rgb(120, 160, 240); }
+.dot--lobby { background-color: rgb(180, 110, 240); }
+.dot--offline { background-color: rgb(80, 74, 70); }
+.badge { background-color: rgb(140, 18, 26); border-radius: 8px; padding-left: 6px; padding-right: 6px; font-size: 11px; color: rgb(255, 230, 220); -unity-font-definition: resource("Fonts/AlegreyaSans-Bold"); }
+.pill { border-width: 1px; border-color: rgb(120, 84, 48); border-radius: 3px; padding: 1px 6px; font-size: 11px; color: rgb(214, 180, 120); margin-right: 4px; background-color: rgba(30, 20, 18, 0.9); }
+.status-online { color: rgb(112, 204, 96); }
+.status-degraded { color: rgb(236, 176, 70); }
+.status-offline { color: rgb(226, 64, 58); }
+
+/* ------------------------------------------------------------------ chat */
+.chat-line { white-space: normal; font-size: 14px; margin-bottom: 1px; }
+.chat-time { color: rgb(110, 100, 90); font-size: 12px; }
+.chat-name { color: rgb(226, 186, 110); -unity-font-definition: resource("Fonts/AlegreyaSans-Bold"); }
+.chat-system { color: rgb(236, 176, 70); }
+.chat-whisper { color: rgb(220, 140, 220); }
+.chat-party { color: rgb(120, 180, 250); }
+.chat-clan { color: rgb(130, 214, 130); }
+
+/* ------------------------------------------------------------------ toasts, overlays */
+.toast { background-color: rgba(18, 12, 14, 0.94); border-left-width: 4px; border-color: rgb(196, 40, 40); padding: 10px 14px; margin-top: 6px; min-width: 300px; max-width: 460px; }
+.toast--info { border-color: rgb(196, 150, 86); }
+.toast--success { border-color: rgb(96, 190, 90); }
+.overlay-shade { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.66); align-items: center; justify-content: center; }
+
+/* ------------------------------------------------------------------ portraits / icons */
+.portrait { background-color: rgb(10, 8, 10); -unity-background-scale-mode: scale-and-crop; border-width: 2px; border-color: rgb(120, 84, 48); }
+.portrait--dawn { border-color: rgb(210, 170, 90); }
+.portrait--dusk { border-color: rgb(190, 40, 40); }
+.icon { -unity-background-scale-mode: scale-to-fit; }
+.hero-tile { width: 76px; height: 96px; margin: 3px; border-width: 2px; border-color: rgb(70, 54, 38); background-color: rgb(12, 10, 12); }
+.hero-tile:hover { border-color: rgb(226, 186, 110); scale: 1.05 1.05; }
+.hero-tile--selected { border-color: rgb(236, 60, 50); }
+.hero-tile--taken { opacity: 0.3; }
+.hero-tile--locked { opacity: 0.55; }
+.hero-tile { transition-property: scale, border-color; transition-duration: 0.1s; }
+
+/* ------------------------------------------------------------------ HUD */
+.hud-plate {
+    background-image: resource("Textures/UI/hud_plate");
+    -unity-slice-left: 26; -unity-slice-right: 26; -unity-slice-top: 26; -unity-slice-bottom: 26;
+    padding: 18px;
+}
+.hud-slot {
+    background-image: resource("Textures/UI/hud_slot");
+    -unity-slice-left: 10; -unity-slice-right: 10; -unity-slice-top: 10; -unity-slice-bottom: 10;
+    width: 58px; height: 58px; margin: 3px;
+}
+.hud-slot--ult { background-image: resource("Textures/UI/hud_slot_ult"); }
+.hud-slot--item { width: 48px; height: 40px; }
+.hud-slot--disabled { -unity-background-image-tint-color: rgb(120, 110, 110); }
+.hud-key { position: absolute; left: 3px; top: 1px; font-size: 12px; color: rgb(240, 226, 196); -unity-font-definition: resource("Fonts/AlegreyaSans-Bold"); text-shadow: 0 1px 1px rgb(0, 0, 0); }
+.hud-cost { position: absolute; right: 3px; bottom: 1px; font-size: 11px; color: rgb(120, 170, 250); -unity-font-definition: resource("Fonts/AlegreyaSans-Bold"); text-shadow: 0 1px 1px rgb(0, 0, 0); }
+.hud-cost--hp { color: rgb(236, 90, 80); }
+.hud-cd { position: absolute; left: 0; right: 0; top: 0; bottom: 0; -unity-text-align: middle-center; font-size: 20px; color: rgb(255, 255, 255); -unity-font-definition: resource("Fonts/AlegreyaSans-Bold"); text-shadow: 0 1px 2px rgb(0, 0, 0); }
+.hud-levelup { position: absolute; top: -18px; left: 16px; width: 26px; height: 20px; background-color: rgb(210, 160, 60); border-radius: 3px; -unity-text-align: middle-center; color: rgb(30, 16, 8); font-size: 16px; -unity-font-definition: resource("Fonts/AlegreyaSans-Bold"); }
+.hud-pips { position: absolute; left: 4px; right: 4px; bottom: -8px; height: 5px; flex-direction: row; justify-content: center; }
+.hud-pip { width: 8px; height: 4px; margin: 0 1px; background-color: rgb(60, 50, 40); }
+.hud-pip--on { background-color: rgb(236, 186, 90); }
+.bar { height: 20px; background-image: resource("Textures/UI/bar_bg"); -unity-background-scale-mode: stretch-to-fill; border-width: 1px; border-color: rgb(80, 60, 40); overflow: hidden; }
+.bar-fill { position: absolute; left: 0; top: 0; bottom: 0; -unity-background-scale-mode: stretch-to-fill; }
+.bar-fill--hp { background-image: resource("Textures/UI/bar_hp"); }
+.bar-fill--mana { background-image: resource("Textures/UI/bar_mana"); }
+.bar-fill--xp { background-image: resource("Textures/UI/bar_xp"); }
+.bar-fill--enemy { background-image: resource("Textures/UI/bar_hp_enemy"); }
+.bar-text { position: absolute; left: 0; right: 0; top: 0; bottom: 0; -unity-text-align: middle-center; font-size: 13px; color: rgb(255, 255, 255); -unity-font-definition: resource("Fonts/AlegreyaSans-Bold"); text-shadow: 0 1px 2px rgb(0, 0, 0); }
+.bar-regen { position: absolute; right: 6px; top: 0; bottom: 0; -unity-text-align: middle-right; font-size: 11px; color: rgb(200, 255, 190); }
+.minimap-frame {
+    background-image: resource("Textures/UI/hud_minimap");
+    -unity-slice-left: 18; -unity-slice-right: 18; -unity-slice-top: 18; -unity-slice-bottom: 18;
+    padding: 12px;
+}
+.killfeed-row { flex-direction: row; align-items: center; background-color: rgba(8, 6, 8, 0.82); padding: 3px 8px; margin-bottom: 3px; border-left-width: 3px; }
+.killfeed-row--dawn { border-color: rgb(210, 170, 90); }
+.killfeed-row--dusk { border-color: rgb(196, 40, 40); }
+.announcer {
+    -unity-font-definition: resource("Fonts/CinzelDecorative-Black");
+    font-size: 54px;
+    color: rgb(236, 50, 46);
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 2px;
+    -unity-text-outline-color: rgb(20, 4, 6);
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 1);
+    letter-spacing: 4px;
+}
+.announcer-sub { -unity-font-definition: resource("Fonts/MarcellusSC-Regular"); font-size: 22px; color: rgb(236, 220, 190); -unity-text-align: middle-center; text-shadow: 0 2px 6px rgba(0, 0, 0, 1); }
+.floating { position: absolute; -unity-font-definition: resource("Fonts/AlegreyaSans-Bold"); font-size: 18px; color: rgb(255, 255, 255); -unity-text-outline-width: 1px; -unity-text-outline-color: rgb(0, 0, 0); }
+.floating--crit { font-size: 26px; color: rgb(255, 70, 50); }
+.floating--gold { color: rgb(255, 210, 90); font-size: 16px; }
+.floating--magic { color: rgb(150, 160, 255); }
+.floating--pure { color: rgb(255, 240, 200); }
+.floating--heal { color: rgb(110, 240, 110); }
+.floating--deny { color: rgb(200, 200, 200); font-size: 26px; }
+.floating--miss { color: rgb(200, 200, 200); font-size: 15px; }
+.floating--xp { color: rgb(190, 140, 255); font-size: 14px; }
+.scoreboard-row { flex-direction: row; align-items: center; height: 38px; border-bottom-width: 1px; border-color: rgba(90, 70, 50, 0.4); }
+.scoreboard-row Label { -unity-text-align: middle-center; }
+.shop-item { width: 56px; height: 48px; margin: 3px; border-width: 1px; border-color: rgb(80, 60, 40); background-color: rgb(14, 12, 14); -unity-background-scale-mode: scale-and-crop; }
+.shop-item:hover { border-color: rgb(236, 186, 90); }
+.shop-item--owned { border-color: rgb(96, 190, 90); }
+.shop-item--unaffordable { -unity-background-image-tint-color: rgb(140, 120, 120); }
+.buff { width: 26px; height: 26px; margin: 1px; border-width: 1px; border-color: rgb(96, 190, 90); -unity-background-scale-mode: scale-and-crop; background-color: rgb(20, 18, 20); }
+.buff--debuff { border-color: rgb(220, 60, 50); }
+.buff-time { position: absolute; bottom: -1px; right: 1px; font-size: 10px; color: rgb(255, 255, 255); -unity-text-outline-width: 1px; -unity-text-outline-color: rgb(0, 0, 0); }

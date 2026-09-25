@@ -1,0 +1,7 @@
+{
+  "$comment": "Client service endpoints. Development builds talk to the local stack started by Tools/dev/run-local. Production builds override these via -bloodfall-backend or the BLOODFALL_BACKEND environment variable.",
+  "clientVersion": "0.1.0",
+  "backendUrl": "http://localhost:5080",
+  "environment": "Development",
+  "regions": ["eu", "na-east", "na-west", "asia", "oce", "sa", "dev-local"]
+}
