@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Compiles the engine-independent Shared/Runtime sources (the same files the Unity client compiles through the
+    com.bloodfall.shared local package). netstandard2.1 + C# 9 keeps us honest about Unity compatibility.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <RootNamespace>Bloodfall</RootNamespace>
+    <AssemblyName>Bloodfall.Shared</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>$(NoWarn);CS0649;CS0169;CS0414</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(BloodfallRoot)Shared/Runtime/**/*.cs" />
+    <None Include="$(BloodfallRoot)Shared/Runtime/Resources/GameData/**/*.json" LinkBase="GameData" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

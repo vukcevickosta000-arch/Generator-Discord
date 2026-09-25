@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
+    <BloodfallRoot>$(MSBuildThisFileDirectory)..\</BloodfallRoot>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,48 @@
+# Unity
+Client/[Ll]ibrary/
+Client/[Tt]emp/
+Client/[Oo]bj/
+Client/[Bb]uild/
+Client/[Bb]uilds/
+Client/[Ll]ogs/
+Client/[Uu]ser[Ss]ettings/
+Client/MemoryCaptures/
+Client/*.csproj
+Client/*.sln
+Client/*.slnx
+Client/.vs/
+Client/.idea/
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+sysinfo.txt
+crashlytics-build.properties
+
+# .NET
+Server/**/bin/
+Server/**/obj/
+Server/artifacts/
+Tools/**/bin/
+Tools/**/obj/
+*.user
+*.suo
+.vs/
+.idea/
+
+# Local dev data
+Server/**/data/*.db
+Server/**/data/*.db-*
+*.sqlite
+.env
+.env.local
+dev-secrets.json
+
+# Python / Blender
+__pycache__/
+*.pyc
+Blender/output/
+*.blend1
+
+# OS
+.DS_Store
+Thumbs.db

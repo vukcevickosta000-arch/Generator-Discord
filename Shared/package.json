@@ -1,0 +1,8 @@
+{
+  "name": "com.bloodfall.shared",
+  "version": "0.1.0",
+  "displayName": "Bloodfall Shared Core",
+  "description": "Engine-independent Bloodfall simulation, game data, network protocol and service contracts. Compiled by both the Unity client and the .NET dedicated server / backend.",
+  "unity": "2021.3",
+  "author": { "name": "Bloodfall Team" }
+}
