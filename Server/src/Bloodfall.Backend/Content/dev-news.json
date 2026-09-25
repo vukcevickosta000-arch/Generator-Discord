@@ -1,0 +1,43 @@
+[
+  {
+    "category": "Events",
+    "title": "The Blood Moon Rises",
+    "summary": "Beneath Velmoragh, something vast turns in its chains. Development build 0.1 opens the ruins to the first battles.",
+    "body": "This is a development build of Bloodfall: War of the Ancients. The Velmoragh battlefield, creep waves, towers, neutral camps, bots and the first heroes are playable offline and on local dedicated servers. Vharoth's prison is sealed - for now.",
+    "imageKey": "banner_blood_moon",
+    "pinned": true,
+    "author": "Bloodfall Development"
+  },
+  {
+    "category": "PatchNotes",
+    "title": "Development Build 0.1.0",
+    "summary": "Authoritative dedicated servers, accounts, lobbies, matchmaking, and the first two heroes.",
+    "body": "- Velmoragh: three lanes, river, jungle camps, secret shops, Vharoth's pit\n- Heroes: Vorak, the Blood Tyrant and Ilyra, the Blood Witch\n- 38 items including recipes, consumables and wards\n- Bots (Beginner to Nightmare)\n- Accounts, friends, parties, chat, clans, custom games, server browser, matchmaking\n- Match history, ratings and leaderboards",
+    "imageKey": "banner_patch",
+    "author": "Bloodfall Development"
+  },
+  {
+    "category": "HeroSpotlight",
+    "title": "Hero Spotlight: Vorak, the Blood Tyrant",
+    "summary": "An ancient warlord who charges into the fray and ends fights with a crimson meteor of his own making.",
+    "body": "Crimson Charge breaks the first hero it meets. Blood Rend bleeds everything around him. Every fourth blow of Sovereign's Wrath crushes. And when Vorak leaps into the sky, Bloodfall answers.",
+    "imageKey": "spotlight_vorak",
+    "author": "Bloodfall Development"
+  },
+  {
+    "category": "HeroSpotlight",
+    "title": "Hero Spotlight: Ilyra, the Blood Witch",
+    "summary": "She pays for her spells in blood - and collects the debt from you.",
+    "body": "Ilyra's basic spells cost health instead of mana. Blood Lance pierces a line of enemies, Hemorrhage Field erupts after a short delay, and Exsanguinate drains a single victim until their blood boils.",
+    "imageKey": "spotlight_ilyra",
+    "author": "Bloodfall Development"
+  },
+  {
+    "category": "ServerNotices",
+    "title": "Running your own local servers",
+    "summary": "Development builds connect to services on this machine. Start the backend and a game server with Tools/dev/run-local.",
+    "body": "See SERVER_DEPLOYMENT.md for the ports and configuration used by the local service stack.",
+    "imageKey": "banner_servers",
+    "author": "Bloodfall Development"
+  }
+]

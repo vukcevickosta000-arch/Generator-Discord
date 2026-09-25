@@ -48,6 +48,10 @@ namespace Bloodfall.Protocol
         public event Action<string> Log;
         /// <summary>Hard cap on commands per second per player (anti-spam).</summary>
         public int MaxCommandsPerSecond = 40;
+        /// <summary>Earliest match time (seconds) at which a team may concede. Dev servers may lower it.</summary>
+        public float ConcedeMinTime = 900f;
+        private readonly Dictionary<Team, HashSet<int>> _concedeVotes = new Dictionary<Team, HashSet<int>>();
+        private float _concedeStarted = -999f;
         public bool Finished { get; private set; }
         public MatchResult Result { get; private set; }
 
@@ -221,6 +225,7 @@ namespace Bloodfall.Protocol
         {
             if (string.IsNullOrWhiteSpace(text)) return;
             text = text.Trim();
+            if ((text == "-ff" || text == "/concede" || text == "/ff") && s.PlayerId >= 0) { VoteConcede(s); return; }
             if (text.Length > 200) text = text.Substring(0, 200);
             var p = Match.GetPlayer(s.PlayerId);
             var msg = new ChatMessage { PlayerId = s.PlayerId, Name = p?.Name ?? "Spectator", TeamOnly = teamOnly, Team = s.Team, Text = text };
@@ -238,6 +243,30 @@ namespace Bloodfall.Protocol
         {
             if (string.IsNullOrEmpty(text)) return;
             s.Peer.Send(Codec.ChatBroadcast(new ChatMessage { PlayerId = -1, Name = "System", Text = text, Team = Team.None }), true);
+        }
+
+        /// <summary>Concede vote: every connected human on the team must agree within 60 seconds.</summary>
+        private void VoteConcede(Session s)
+        {
+            var p = Match.GetPlayer(s.PlayerId);
+            bool devAnytime = ConcedeMinTime <= 0f && Match.Phase == MatchPhase.PreGame;
+            if (p == null || (Match.Phase != MatchPhase.Playing && !devAnytime)) return;
+            if (ConcedeMinTime > 0f && Match.Time < ConcedeMinTime) { SendSystem(s, $"You can concede after {ConcedeMinTime / 60f:0} minutes."); return; }
+            if (!_concedeVotes.TryGetValue(p.Team, out var votes) || Match.Time - _concedeStarted > 60f)
+            {
+                votes = new HashSet<int>();
+                _concedeVotes[p.Team] = votes;
+                _concedeStarted = Match.Time;
+            }
+            votes.Add(p.Id);
+            var needed = Match.Players.Where(x => x.Team == p.Team && !x.IsBot && x.Connection == PlayerConnection.Connected).Select(x => x.Id).ToList();
+            foreach (var o in _sessions.Values.Where(o => o.Welcomed && o.Team == p.Team))
+                SendSystem(o, $"{p.Name} voted to concede ({votes.Count(v => needed.Contains(v))}/{needed.Count}). Type -ff to agree.");
+            if (needed.All(votes.Contains))
+            {
+                Log?.Invoke($"{p.Team} conceded");
+                Match.EndMatch(Simulation.Match.OtherTeam(p.Team));
+            }
         }
 
         public void Abandon(Player p, string reason)

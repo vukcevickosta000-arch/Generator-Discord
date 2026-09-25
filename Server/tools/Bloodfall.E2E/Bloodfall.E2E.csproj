@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="LiteNetLib" Version="1.3.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Bloodfall.Shared/Bloodfall.Shared.csproj" />
+    <!-- Same transport source the Unity client compiles. -->
+    <Compile Include="../../../Client/Assets/Scripts/Networking/LiteNetClientTransport.cs" Link="Linked/LiteNetClientTransport.cs" />
+  </ItemGroup>
+</Project>
