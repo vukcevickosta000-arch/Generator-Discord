@@ -142,6 +142,40 @@ namespace Bloodfall.Tests
         }
 
         [Fact]
+        public void Rts_Research_TravelsOverTheWire()
+        {
+            var data = TestUtil.Data;
+            var cfg = new MatchConfig { ModeId = "rts_1v1", MapId = "map_rts_ashfields", Seed = 6, PreGameTimeOverride = 0.5f, DisableNeutrals = true };
+            cfg.Players.Add(new PlayerSetup { AccountId = OfflineSession.LocalAccountId, Name = "Me", Team = Team.Dawn, RtsFaction = "dawnguard" });
+            cfg.Players.Add(new PlayerSetup { Name = "Other", Team = Team.Dusk, IsBot = true, RtsFaction = "ashen_legion" });
+            var host = OfflineSession.CreateHost(data, cfg);
+            var link = new LoopbackConnection(host);
+            var client = new GameClient(data, link, new HelloInfo { Ticket = MatchTickets.OfflinePrefix + "Me", ClientVersion = "test" });
+            client.Connect();
+            Pump(host, client, 0.2f);
+            client.SendLoadProgress(1f);
+            Pump(host, client, 1.5f);
+            var me = host.Match.Players[0];
+            var hall = host.Match.Units.Single(u => u.DefId == "rts_dg_citadel");
+            var barracks = host.Match.CreateUnit(data.Units["rts_dg_barracks"], Team.Dawn, host.Match.Grid.NearestWalkable(hall.Position + new Vector2(9, 3)), 0f, me);
+            me.Gold = 1000;
+            me.Lumber = 1000;
+            Pump(host, client, 0.2f);
+
+            client.SendOrder(new Order { Type = OrderType.Research, UnitId = barracks.Id, ItemId = "rts_dg_up_plate" });
+            client.SendOrder(new Order { Type = OrderType.Train, UnitId = barracks.Id, ItemId = "rts_dg_footman" });
+            Pump(host, client, 0.5f);
+            var b = client.Latest.Entities.Single(e => e.Id == barracks.Id);
+            Assert.Equal(new[] { "rts_dg_up_plate", "rts_dg_footman" }, b.TrainQueue); // research and units share the queue, each tagged
+            Assert.Equal(1000 - 100 - 135, client.Latest.Rts.Gold);
+            Assert.Empty(client.Latest.Rts.Upgrades);
+
+            Pump(host, client, data.Upgrades["rts_dg_up_plate"].ResearchTime + 1f);
+            Assert.Equal(new[] { "rts_dg_up_plate" }, client.Latest.Rts.Upgrades);
+            Assert.Equal(new[] { "rts_dg_footman" }, client.Latest.Entities.Single(e => e.Id == barracks.Id).TrainQueue);
+        }
+
+        [Fact]
         public void Reconnect_RestoresPlayer_AndGraceAbandons()
         {
             var data = TestUtil.Data;

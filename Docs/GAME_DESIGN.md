@@ -194,10 +194,11 @@ health bar while Vharoth is visible.
   - *Wild Covenant:* shapeshifting units empowered at night.
   - *Dawnguard:* fortifications and healing auras.
 
-### 11.1 As implemented (phase R1)
+### 11.1 As implemented (phases R1–R5 and R2 part 1)
 
 The rules below run in the shared simulation (`Shared/Runtime/Simulation/Match.Rts.cs`) and are covered by
-`RtsTests`. They cannot be played from the Unity client yet (TODO T-032, T-033).
+`RtsTests` and `RtsFactionTests`. The Unity RTS interface (R5) exposes all of them, but it has only been
+compile-checked, never run in Unity (TODO T-002).
 
 **Start.** Each player gets their faction's hall and five workers on their own plateau of **Ashfields**
 (`map_rts_ashfields`), plus 500 blood-iron and 150 lumber. There are no heroes, creep waves or passive income.
@@ -220,8 +221,9 @@ The rules below run in the shared simulation (`Shared/Runtime/Simulation/Match.R
 - A building starts at 10% HP and gains HP as it progresses. It grants supply, trains and shoots only when finished.
 - Cancelling a building under construction refunds 75%.
 
-**Training.**
-- Queues hold 5 units. Cost and supply are paid when a unit is queued, and cancelling refunds both in full.
+**Training and research.**
+- Queues hold 5 entries, units and research mixed. Cost (and supply, for units) is paid when an entry is queued,
+  and cancelling refunds it in full.
 - Supply cap is the sum of finished buildings, capped at 100.
 - Rally points:
   - a point: the new unit moves there;
@@ -229,13 +231,40 @@ The rules below run in the shared simulation (`Shared/Runtime/Simulation/Match.R
   - a unit: the new unit follows an ally or attacks an enemy.
   - Halls with no rally send new workers to their vein.
 
+**Research.**
+- Researched at a finished building that lists it, one at a time per player: it cannot be queued twice or
+  researched again.
+- Some research needs other research first (level 2 blades), some needs a building (the Sanctum or Crypt).
+- An upgrade is permanent. It applies at once to every unit it covers, alive now or trained later.
+- Selectors: a unit id or tag, or soldier, melee, ranged, siege, worker or building.
+
+| Dawnguard | Cost | Time | Effect | Where |
+|---|---|---|---|---|
+| Forged Blades | 100/50 | 40 s | melee +2 damage | Barracks |
+| Sunsteel Blades | 175/100 | 60 s | melee +3 damage (needs Forged Blades and a Sanctum) | Barracks |
+| Tempered Plate | 100/75 | 40 s | soldiers +2 armor | Barracks |
+| Heavy Bolts | 125/75 | 45 s | arbalists and ballistae +3 damage | Siege Workshop |
+| Masonry | 125/150 | 50 s | buildings +30% HP, +2 armor | Dawn Citadel |
+
+| Ashen Legion | Cost | Time | Effect | Where |
+|---|---|---|---|---|
+| Bone Claws | 100/50 | 40 s | melee +2 damage | Bone Pit |
+| Grave Talons | 175/100 | 60 s | melee +3 damage (needs Bone Claws and a Crypt) | Bone Pit |
+| Bone Carapace | 100/75 | 40 s | soldiers +1 armor, +10% HP | Bone Pit |
+| Unholy Frenzy | 150/100 | 50 s | melee +10 attack speed (needs a Crypt) | Crypt of Horrors |
+| Ossified Stone | 100/100 | 45 s | buildings +20% HP | Necropolis |
+
 **Combat.**
 - Soldiers engage enemies within their acquisition range, and fight back when hit.
-- They do not walk into neutral camps on their own.
+- They do not walk into neutral camps on their own. Under attack-move they also pass camps that are not guarding
+  and not fighting.
 - Watchtowers shoot once finished.
 
 **Neutrals and victory.**
-- Neutral camps guard the expansions. They spawn once and do not respawn, and their bounty goes to the killer's owner.
+- Neutral camps guard the expansions and attack any unit that walks within 6 m of a camp creature's post. The
+  Ashfields centre camp (the Ancient Nightwyrms) does not guard: it only fights back, so armies can meet beside it.
+  The flag is `guards` on each camp in the map data.
+- Camps spawn once and do not respawn. Their bounty goes to the killer's owner.
 - A player with no buildings left (finished or not) is eliminated. A team whose players are all eliminated loses.
 
 **Factions in R1.**
@@ -249,17 +278,31 @@ The rules below run in the shared simulation (`Shared/Runtime/Simulation/Match.R
 | Defence | Watchtower | Spirit Spire |
 | Siege (needs barracks) | Siege Workshop: Ballista | Charnel Works: Corpse Catapult |
 | Elite (needs barracks) | Sanctum of Dawn: Sun Paladin | Crypt of Horrors: Crypt Horror |
-| Mechanic | Squires stay to build; each extra squire adds +50% speed | Acolytes only summon; buildings rise on their own |
+| Construction | Squires stay to build; each extra squire adds +50% speed | Acolytes only summon; buildings rise on their own |
+| Mechanic | Sun Shrines heal allied units within 7 m by 3 HP/s | Raising the dead (below) |
 
-Legion units are slightly cheaper, faster and frailer than their Dawnguard counterparts. The Crimson Court, the Wild
-Covenant, hero altars and research follow in phase R2 (TODO T-030).
+**Raising the dead (Ashen Legion).**
+- When a living unit falls within 8 m of a Legion soldier (any owner, neutrals included), it rises as a Risen
+  Skeleton for that Legion player.
+- The skeleton has 100 HP, deals 6–8 damage, costs no supply and crumbles after 30 s.
+- At most one rises per player every 25 s. Undead and siege engines never rise.
+- If several Legion players qualify, the one who made the kill raises; otherwise the one with the closest soldier.
+
+The two factions' line units share costs, stats within a few percent and speeds by role. Their differences are the
+construction style and the mechanic. The Crimson Court, the Wild Covenant and hero altars follow in phase R2
+(TODO T-030).
 
 **Bots.** The RTS AI plays by the same rules and knowledge as a player. Its plan:
 1. Saturate the vein and keep a lumber crew.
 2. Build supply ahead of need, then barracks, tower, siege and elite buildings.
 3. Clear the camp guarding the nearest free vein, then expand to it.
-4. Attack in waves that grow each time, advancing in stages so the army arrives together. Retreat from lost fights,
-   defend its buildings, and hunt down remembered enemy buildings.
+4. Research from minute 9, army upgrades first.
+5. Attack in waves that grow each time:
+   - The army first gathers at the map midpoint and holds for 20 s.
+   - It then advances in stages along the ground path, so it arrives together, and walks round guarding camps.
+   - It retreats from lost fights, defends its buildings, and hunts down remembered enemy buildings.
+   - With none known, it scouts the enemy start and then every vein, moving on from any spot it stops getting closer
+     to.
 
 Difficulty levels:
 - **Beginner:** slower reactions, fewer workers, a late expansion and no tower.

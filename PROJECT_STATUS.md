@@ -16,10 +16,10 @@ This file is the honest source of truth for what works. Status labels:
 | Check | Result | How to reproduce |
 |---|---|---|
 | Server solution build (`Server/Bloodfall.sln`) | ✅ builds, 0 warnings-as-errors | `dotnet build Server/Bloodfall.sln` |
-| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 95 / 95 pass | `dotnet test Server/tests/Bloodfall.Tests` |
+| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 102 / 102 pass | `dotnet test Server/tests/Bloodfall.Tests` |
 | End-to-end online test (real backend + game server over UDP): a MOBA match, then an RTS match | ✅ **E2E PASSED** | `Tools/dev/run-e2e.sh` |
 | 20-minute 5v5 bot simulation (all eight heroes) | ✅ runs, 0.28 ms/tick | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- 20 11` |
-| RTS bot games (Ashfields, 24 games) | ✅ decided in 19–24 min on average, factions and start sides even, 0.06–0.08 ms/tick | `... SimRunner -- 30 500 --rts --games 24` |
+| RTS bot games (Ashfields, 40-game series) | ✅ decided in 16–17 min on average, factions 44–34 over 78 games, start sides even in both mirrors, 0–1 draws per 40 games, about 0.05 ms/tick | `... SimRunner -- 30 5000 --rts --games 40` |
 | Unity client scripts compile check (UnityEngine 2021.3 reference assemblies) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck` |
 | Unity editor scripts compile check (Unity3D.SDK 2021.1) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck/Editor` |
 | Unity 6 editor import / Play mode / Windows player build | ⛔ **not run** (no Unity editor available) | see BUILD_INSTRUCTIONS.md |
@@ -38,7 +38,7 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
 | 5 | Client / account / lobby / server flow | Backend **WORKING** (E2E). Unity screens IMPLEMENTED (unverified). |
 | 6 | Multiple heroes and items | PARTIAL: **8 of 96 heroes** playable (all eight concept heroes: Vorak, Ilyra, Nyxara, Malgrave, Ardyn, Fenrax, Morwen, Thael), each with kit tests and bot usage. 38 items. |
 | 7 | Vharoth event | **WORKING** in simulation: seals, awakening, three boss phases, Blood Moon, Heart of Vharoth with revive, bots that break seals and kill him. 13 tests. Unity presentation (models, effects, HUD boss bar, Blood Moon lighting, corpse): IMPLEMENTED (unverified). |
-| 8 | RTS match | PARTIAL.<br>**Server side WORKING** (R1, R3, R4: 20 simulation tests, 2 protocol tests, E2E section 5): harvesting, construction, training, supply, rally points, victory by razing, the Ashfields map, an RTS AI at four difficulties, protocol v5, lobby factions and the strategy queue, all played over UDP.<br>**Unity interface IMPLEMENTED (unverified)** (R5): selection, control groups, command card, placement ghost, resource HUD, practice vs AI, Strategy queue and lobby factions. It compiles against the reference assemblies but has never been run in Unity.<br>Two of four factions (Dawnguard, Ashen Legion). R2 in progress: research, Legion corpse raising, Dawnguard healing shrines and guarding camps work in the simulation and the bots use them; research cannot be ordered from the client yet (needs protocol v6). Still missing: the other two factions and hero altars. |
+| 8 | RTS match | PARTIAL.<br>**Server side WORKING** (R1–R4 and R2 part 1: 26 simulation tests, 3 protocol tests, E2E section 5): harvesting, construction, training, supply, rally points, victory by razing, the Ashfields map, an RTS AI at four difficulties, protocol v6, lobby factions and the strategy queue, all played over UDP.<br>**Unity interface IMPLEMENTED (unverified)** (R5): selection, control groups, command card, placement ghost, resource HUD, practice vs AI, Strategy queue and lobby factions. It compiles against the reference assemblies but has never been run in Unity.<br>Two of four factions (Dawnguard, Ashen Legion). R2 part 1 done: research (protocol v6, command-card buttons), Legion corpse raising, Dawnguard healing shrines and camps that guard the expansions, covered by 6 faction tests, a protocol test and the E2E. Still missing: the other two factions and hero altars. |
 | 9 | Content expansion | PLANNED |
 | 10 | Polish | PLANNED |
 

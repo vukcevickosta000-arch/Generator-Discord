@@ -194,6 +194,12 @@ namespace Bloodfall.Client.Match
             var rs = R("respawn"); rs.Add(Rising("soft_glow", holy, gold, 30, 1f, 6f, 0.6f, 1.2f)).Add(GroundRing("ring", holy, 3f, 1f, 1.5f)); rs.Duration = 1.6f; rs.HeightFraction = 0f;
             R("spawn").Add(Smoke(new Color(0.2f, 0.15f, 0.2f, 0.6f), 5, 1.4f, 1f)).Duration = 1.2f;
             R("summon").Add(Rising("soft_glow", shadow, blood, 30, 0.8f, 3f, 0.4f, 0.8f)).Add(GroundRing("rune_circle", shadow, 2.5f, 1f, 1.3f)).Duration = 1.3f;
+            // Ashen Legion: a fallen unit claws its way back up as a skeleton.
+            var rd = R("raise_dead");
+            rd.Add(Rising("soft_glow", new Color(0.45f, 0.95f, 0.55f), shadow, 26, 0.7f, 3f, 0.35f, 0.8f))
+              .Add(Burst("dot", new Color(0.85f, 0.8f, 0.7f), new Color(0.6f, 0.55f, 0.45f), 14, 1.5f, 3.5f, 0.05f, 0.12f, 0.7f, false, 3f))
+              .Add(GroundRing("rune_circle", new Color(0.35f, 0.85f, 0.45f), 2f, 0.9f, 1.2f));
+            rd.Duration = 1.3f; rd.HeightFraction = 0f;
             R("gold_coins").Add(Burst("dot", gold, new Color(1f, 0.95f, 0.6f), 8, 2f, 4f, 0.06f, 0.12f, 0.8f, true, 3f)).Duration = 1f;
             R("deny").Add(Burst("spark", Color.white, new Color(0.8f, 0.8f, 1f), 10, 2f, 4f, 0.08f, 0.14f, 0.5f)).Duration = 0.8f;
             R("buyback").Add(Rising("spark", gold, Color.white, 60, 1.2f, 8f, 0.3f, 1f)).Add(Flash(gold, 5f, 0.5f)).Duration = 1.5f;

@@ -14,12 +14,12 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
     - Crimson Court: blood economy (buildings or units convert HP into blood-iron).
     - Wild Covenant: shapeshifters stronger at night.
     - Altars that recruit up to three MOBA heroes per player; the heroes level from kills via ShareXp.
-    - Research. *Simulation and AI done* (`UpgradeDef`, `Match.TryResearch`, five upgrades per faction, the bot
-      researches from minute 9). **Still missing:** protocol support (upgrade indices in commands, queue entries
-      and the private block) and the research buttons in the Unity command card, so players cannot research yet.
-    - Faction mechanics. *Done in the simulation:* Ashen Legion raises fallen living units as 30 s skeletons (the
-      killer's side first, one per 25 s); Dawnguard Sun Shrines heal nearby units. Not yet shown in the client
-      (no raise effect, no aura indicator).
+    - Research. *Done:* five upgrades per faction (`UpgradeDef`, `Match.TryResearch`), protocol v6, command-card
+      buttons and queue tiles in Unity (compile-checked only), and the bot researches from minute 9.
+    - Faction mechanics. *Done:*
+      - Ashen Legion raises fallen living units as 30 s skeletons (the killer's side first, one per 25 s), with a
+        `raise_dead` effect in the client.
+      - Dawnguard Sun Shrines heal nearby units; the shrine's status shows on healed units.
     - Neutral camps. *Done:* RTS expansion camps attack units that walk into their ground (`CampPlacement.Guards`);
       the Ashfields centre camp only fights back, so armies can meet beside it.
   - **T-031 (R3) RTS AI.** *Done (`Shared/Runtime/Simulation/AI/RtsAi.cs`, BALANCE_NOTES.md §5).* Follow-ups:

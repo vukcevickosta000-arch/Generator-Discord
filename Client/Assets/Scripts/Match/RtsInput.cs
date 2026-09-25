@@ -324,6 +324,41 @@ namespace Bloodfall.Client.Match
             SendGroup(new Order { Type = OrderType.Train, ItemId = unitId }, buildings.Select(v => v.Id));
         }
 
+        public void Research(string upgradeId)
+        {
+            var building = SelectedOwn().FirstOrDefault(v => v.IsStructure && v.State != null && !v.State.UnderConstruction && v.Unit?.Research != null && v.Unit.Research.Contains(upgradeId));
+            if (building == null || !_world.Data.Upgrades.TryGetValue(upgradeId, out var up)) return;
+            if (!CanResearch(up, out var err)) { Error(err); return; }
+            Mc.SendOrder(new Order { Type = OrderType.Research, UnitId = building.Id, ItemId = upgradeId });
+        }
+
+        public bool Researched(string upgradeId) => Frame?.Rts?.Upgrades != null && Frame.Rts.Upgrades.Contains(upgradeId);
+
+        /// <summary>Mirrors Match.TryResearch with what the client knows (the server's check is final).</summary>
+        public bool CanResearch(UpgradeDef up, out string error)
+        {
+            error = null;
+            var rts = Frame?.Rts;
+            if (Researched(up.Id)) { error = "Already researched."; return false; }
+            if (Frame != null && Frame.Entities.Any(e => e.OwnerPlayer == Me && e.TrainQueue != null && e.TrainQueue.Contains(up.Id))) { error = "Already being researched."; return false; }
+            foreach (var req in up.RequiresUpgrades ?? new List<string>())
+            {
+                if (Researched(req)) continue;
+                error = "Requires " + (_world.Data.Upgrades.TryGetValue(req, out var ru) ? ru.Name : req) + ".";
+                return false;
+            }
+            foreach (var req in up.Requires ?? new List<string>())
+            {
+                bool have = Frame != null && Frame.Entities.Any(e => e.OwnerPlayer == Me && e.DefId == req && !e.UnderConstruction && !e.Has(EntityFlags.Dead));
+                if (have) continue;
+                error = "Requires " + (_world.Data.Units.TryGetValue(req, out var rd) ? rd.Name : req) + ".";
+                return false;
+            }
+            if (rts != null && rts.Gold < up.GoldCost) { error = "Not enough blood-iron."; return false; }
+            if (rts != null && rts.Lumber < up.LumberCost) { error = "Not enough lumber."; return false; }
+            return true;
+        }
+
         public void CancelQueue(int buildingId, int slot) => Mc.SendOrder(new Order { Type = OrderType.CancelQueue, UnitId = buildingId, Slot = slot });
 
         public void BeginPlacement(string buildingId)

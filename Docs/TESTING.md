@@ -4,7 +4,7 @@
 
 | Suite | Command | What it covers |
 |---|---|---|
-| Unit and simulation tests (95) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
+| Unit and simulation tests (102) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
 | End-to-end online | `Tools/dev/run-e2e.sh` | Real backend (fresh SQLite database) and a real game server over UDP; see §3 |
 | Bot soak | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- <minutes> <seed> [--deaths] [--trace N] [--mirror \| --heroes id1,id2]` | Full 5v5 bot matches (every playable hero by default): stability, performance, balance numbers |
 | RTS bot soak | `... SimRunner -- <minutes> <seed> --rts [--games N] [--factions a,b] [--difficulty X,Y] [--trace] [--log]` | 1v1 RTS bot games on Ashfields: wins per faction and per start side, economy and army statistics, AI errors |
@@ -17,7 +17,9 @@ What the unit and simulation tests cover:
   statuses, items and recipes, XP and levels, respawn, fog of war, bots.
 - **Protocol:** buffers, tickets, snapshot visibility, host join/reject/reconnect flows. RTS tests cover:
   - unit ids in Train/Build commands and the group cap;
-  - a loopback RTS match with private economy, building state, training queue, rally point, group moves and fog.
+  - a loopback RTS match with private economy, building state, training queue, rally point, group moves and fog;
+  - research over the wire: an upgrade index in the command, units and research tagged in one queue, and completed
+    research in the private block (v6).
 - **Data:** the index is current, a client-style load gives the same hash, model and icon keys are declared, and
   every model key has an FBX from the Blender pipeline.
 - **Hero kits** (`HeroKitTests.cs`): every ability of Nyxara, Malgrave, Ardyn, Fenrax, Morwen and Thael, and the
@@ -46,6 +48,14 @@ What the unit and simulation tests cover:
   - determinism and data validity (every requirement buildable by the worker)
   - a complete Normal-vs-Beginner bot game (economy, production, razing; fewer than 60 rejected bot orders)
   - attack-move after a target dies mid-swing (regression)
+- **RTS factions** (`RtsFactionTests.cs`, 6 tests):
+  - research: cost, queue, no double research, effect on existing and new units, melee-only selector
+  - the right building, prerequisites (research and buildings), cancel refunds, "not enough" errors
+  - Legion raising: supply-free 30 s skeletons, the cooldown, no undead or siege, and the killer's side first in a
+    mirror
+  - Sun Shrine healing near the shrine only
+  - expansion camps attacking intruders, while the centre camp is left alone by passers-by and attack-move but
+    fights back when hit
 
 ## 2. What the compile checks do *not* cover
 
@@ -84,6 +94,7 @@ These need a Unity 6000.0.40f1 editor. See the manual checklist below and BUGS.m
    - A single group order sends all five workers to mine; training is queued and paid.
    - The opponent's Train and Cancel orders on this player's hall are ignored.
    - Mined blood-iron and the vein's decline show in snapshots.
+   - Masonry is researched at the hall over the wire: queued, and paid with all the starting lumber.
    - A concede ends the match. The result carries the faction and economy; match history shows the RTS win; no
      empty hero statistics are created.
 

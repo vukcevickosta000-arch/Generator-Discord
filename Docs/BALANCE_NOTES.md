@@ -102,7 +102,7 @@ Creeps upgrade every 7.5 min (+HP, +damage, +gold).
 - Recipes cost 10–25% of the total.
 - Build-ups should read clearly: 3 tiers at most.
 
-## 5. RTS economy (phase R1 numbers, 2026-09-25)
+## 5. RTS economy (phase R1 numbers, 2026-09-25; R2 changes at the end of this section)
 
 These are design targets checked by `RtsTests`.
 
@@ -139,6 +139,39 @@ History of the fixes behind these numbers:
 - Legion line units were buffed after the first series (Dawnguard 12–3). Thrall 400 HP for 120, Bone Archer 290 HP
   for 125, Catapult 580 HP for 170, Crypt Horror 1000 HP for 260.
 - Map symmetry fixes (BUGS.md F-018, F-019) removed a start-side advantage of up to 22–2 in mirrors.
+
+### R2 part 1 (research, faction mechanics, guarding camps), 2026-09-25
+
+Data changes:
+- **Line units.** Both factions pay the same: 135 for the melee and ranged soldiers, 180/60 for siege, 280/80 for
+  elites. Speeds are equal by role: soldiers 3.6, elites and workers 3.4, siege 2.6.
+  - In mirror-AI games, fights react steeply to small edges. Arrival order decided the first clash, and the first
+    clash decided the game.
+- **Dawnguard build times.** Shortened to offset the squires who stay to build: Citadel 85 s, Sun Shrine 22,
+  Barracks 42, Watchtower 35, Workshop 45, Sanctum 60.
+- **Research.** See GAME_DESIGN §11.1. The bot researches from minute 9 once it has over 450 blood-iron, army
+  upgrades first.
+- **Legion raising.** One skeleton per 25 s, lasting 30 s. With a 30 s cooldown the Legion won about 40% of games.
+
+Bot and simulation fixes found by measuring:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Legion mirror won by the Dawn start 32–6 | The raise went to the first player in the list | Killer's side first, then the closest soldier |
+| After camps started guarding, the first army to the centre lost | It fought the centre camp, then the enemy | Centre camp does not guard; attack-move ignores passive camps; the bot walks round guarding camps |
+| About 20% of games drawn at 30 min | Armies stuck on unreachable scout spots or straight-line staging against cliffs | Staging along the nav path; scouting moves on after 30 s without progress (fighting excluded) |
+| Big armies crawled 4 m every 3 s | "Strung out" measured by the farthest unit | 80th percentile against a threshold that grows with army size |
+| The faster bot's first wave died under the enemy's tower | It walked straight into the base | Waves gather and hold at the midpoint for 20 s first |
+
+Measured after these changes (SimRunner `--rts`, 40 games per row, 30-minute cap):
+
+| Series | Result |
+|---|---|
+| Dawnguard vs Ashen Legion, seeds 5000+ and 900+ | Dawnguard 23–16 and 21–18: 44–34 in total (56%) |
+| Dawnguard mirror, seeds 3000+ | Start sides 22–18, no draws |
+| Legion mirror, seeds 2000+ | Start sides 18–22, no draws |
+| Normal vs Beginner, 20 games | 20–0 |
+| Veteran vs Normal, 20 games per faction pairing | 12–7 and 11–8 (the edge is smaller than R3's 7–2 and 6–3) |
 
 ## 6. Process
 

@@ -240,6 +240,9 @@ namespace Bloodfall.Client.UI.Screens
                     if (world.TryGetView(e.UnitId, out var b) && b.State?.OwnerPlayer == world.LocalPlayerId)
                         Alert((b.Unit?.Name ?? El.Pretty(e.Key)).ToUpperInvariant() + " COMPLETE", "");
                     break;
+                case SimEventType.ResearchComplete:
+                    Alert("RESEARCH COMPLETE", _mc.Data.Upgrades.TryGetValue(e.Key ?? "", out var done) ? done.Name : El.Pretty(e.Key));
+                    break;
                 case SimEventType.PlayerEliminated:
                 {
                     var p = _mc.Players.FirstOrDefault(x => x.Id == e.OtherId);
@@ -428,9 +431,9 @@ namespace Bloodfall.Client.UI.Screens
                 {
                     int slot = i;
                     var id = s.TrainQueue[i];
-                    var tile = El.Btn(Short(_mc.Data.Units.TryGetValue(id ?? "", out var qd) ? qd.Name : id), () => Rts?.CancelQueue(v.Id, slot), "btn--small");
+                    var tile = El.Btn(Short(QueueName(id)), () => Rts?.CancelQueue(v.Id, slot), "btn--small");
                     tile.style.width = 70;
-                    UI.AttachTooltip(tile, qd?.Name ?? id, "Click to cancel and get a full refund.");
+                    UI.AttachTooltip(tile, QueueName(id), "Click to cancel and get a full refund.");
                     row.Add(tile);
                 }
                 _selection.Add(row);
@@ -449,7 +452,8 @@ namespace Bloodfall.Client.UI.Screens
             string detail;
             if (v.Kind == UnitKind.Resource) detail = $"Blood-iron left: {s.ResourceAmount:N0}";
             else if (s.UnderConstruction) detail = $"Under construction: {Mathf.RoundToInt(s.BuildProgress * 100)}%";
-            else if (s.TrainQueue != null && s.TrainQueue.Length > 0) detail = $"Training {(_mc.Data.Units.TryGetValue(s.TrainQueue[0] ?? "", out var td) ? td.Name : s.TrainQueue[0])}: {Mathf.RoundToInt(s.TrainProgress * 100)}%";
+            else if (s.TrainQueue != null && s.TrainQueue.Length > 0)
+                detail = $"{(_mc.Data.Upgrades.ContainsKey(s.TrainQueue[0] ?? "") ? "Researching" : "Training")} {QueueName(s.TrainQueue[0])}: {Mathf.RoundToInt(s.TrainProgress * 100)}%";
             else if (v.Kind == UnitKind.Worker)
                 detail = s.CarryGold > 0 ? $"Carrying {s.CarryGold} blood-iron" : s.CarryLumber > 0 ? $"Carrying {s.CarryLumber} lumber" : s.Action == ActionState.Working ? "Working" : "Idle";
             else detail = $"Damage {Mathf.RoundToInt(s.Damage)} · Armor {s.Armor:0.#}";
@@ -480,6 +484,14 @@ namespace Bloodfall.Client.UI.Screens
                 grid.Add(tile);
             }
             _selection.Add(grid);
+        }
+
+        /// <summary>A queue entry is a unit or a research.</summary>
+        private string QueueName(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return "?";
+            if (_mc.Data.Units.TryGetValue(id, out var d)) return d.Name;
+            return _mc.Data.Upgrades.TryGetValue(id, out var up) ? up.Name : El.Pretty(id);
         }
 
         private static string Short(string name)
@@ -541,8 +553,25 @@ namespace Bloodfall.Client.UI.Screens
                     }
                     Add("Rally", "", KeyCode.Y, rts.ArmRally, true, "Set where new units gather. A vein or trees put new workers to work.");
                 }
+                if (!s.UnderConstruction && primary.Unit?.Research != null)
+                {
+                    foreach (var id in primary.Unit.Research)
+                    {
+                        if (!data.Upgrades.TryGetValue(id, out var up)) continue;
+                        var upId = id;
+                        if (rts.Researched(id))
+                        {
+                            Add(up.Name, "researched", KeyCode.None, () => { }, false, up.Description);
+                            continue;
+                        }
+                        bool can = rts.CanResearch(up, out var why);
+                        string cost = up.LumberCost > 0 ? $"{up.GoldCost} / {up.LumberCost}" : $"{up.GoldCost}";
+                        Add(up.Name, cost, Key(up.Hotkey), () => rts.Research(upId), can,
+                            $"{up.Description}\n{cost} · {up.ResearchTime:0} s · permanent" + (why != null ? "\n" + why : ""));
+                    }
+                }
                 if (s.UnderConstruction) Add("Cancel", "75% refund", KeyCode.X, () => rts.CancelQueue(primary.Id, 0), true, "Cancel construction and recover 75% of the cost.");
-                else if (s.TrainQueue != null && s.TrainQueue.Length > 0) Add("Cancel", "last in queue", KeyCode.X, () => rts.CancelQueue(primary.Id, -1), true, "Cancel the last queued unit (full refund).");
+                else if (s.TrainQueue != null && s.TrainQueue.Length > 0) Add("Cancel", "last in queue", KeyCode.X, () => rts.CancelQueue(primary.Id, -1), true, "Cancel the last queued unit or research (full refund).");
                 return;
             }
             bool workers = own.Any(v => v.Kind == UnitKind.Worker);

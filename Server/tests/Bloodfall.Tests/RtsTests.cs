@@ -11,7 +11,7 @@ namespace Bloodfall.Tests
     /// <summary>War of the Ancients (RTS) rules on the Ashfields map: economy, construction, training, victory.</summary>
     public class RtsTests
     {
-        private static Match NewRts(string dawn = "dawnguard", string dusk = "ashen_legion", bool neutrals = false, ulong seed = 3)
+        internal static Match NewRts(string dawn = "dawnguard", string dusk = "ashen_legion", bool neutrals = false, ulong seed = 3)
         {
             var cfg = new MatchConfig { ModeId = "rts_1v1", MapId = "map_rts_ashfields", Seed = seed, SkipHeroSelect = true, PreGameTimeOverride = 0.1f, DisableNeutrals = !neutrals };
             cfg.Players.Add(new PlayerSetup { Name = "Dawn", Team = Team.Dawn, RtsFaction = dawn });
@@ -21,10 +21,10 @@ namespace Bloodfall.Tests
             return m;
         }
 
-        private static List<Unit> Owned(Match m, Player p, UnitKind kind) => m.Units.Where(u => u.Owner == p && u.Kind == kind && u.IsAlive).ToList();
-        private static Unit Hall(Match m, Player p) => Owned(m, p, UnitKind.Building).First(b => b.DefId == p.RtsFaction.Hall);
+        internal static List<Unit> Owned(Match m, Player p, UnitKind kind) => m.Units.Where(u => u.Owner == p && u.Kind == kind && u.IsAlive).ToList();
+        internal static Unit Hall(Match m, Player p) => Owned(m, p, UnitKind.Building).First(b => b.DefId == p.RtsFaction.Hall);
         private static Unit MainVein(Match m, Player p) => m.NearestMine(Hall(m, p).Position, 20f);
-        private static UnitDef Def(string id) => TestUtil.Data.Units[id];
+        internal static UnitDef Def(string id) => TestUtil.Data.Units[id];
 
         private static int NearestTree(Match m, Vector2 p)
         {
@@ -40,7 +40,7 @@ namespace Bloodfall.Tests
         }
 
         /// <summary>A valid spot for a building, searched outward from the hall toward the map centre.</summary>
-        private static Vector2 FindSpot(Match m, Player p, string buildingId, float startDist = 8f)
+        internal static Vector2 FindSpot(Match m, Player p, string buildingId, float startDist = 8f)
         {
             var hall = Hall(m, p);
             var centre = new Vector2(m.Grid.WorldWidth, m.Grid.WorldHeight) * 0.5f;
@@ -56,7 +56,7 @@ namespace Bloodfall.Tests
             throw new InvalidOperationException("No spot for " + buildingId);
         }
 
-        private static Unit BuildAndFinish(Match m, Player p, string buildingId, Vector2 spot, int builders = 1)
+        internal static Unit BuildAndFinish(Match m, Player p, string buildingId, Vector2 spot, int builders = 1)
         {
             var workers = Owned(m, p, UnitKind.Worker).Take(builders).ToList();
             m.IssueOrder(workers[0], new Order { Type = OrderType.Build, UnitId = workers[0].Id, ItemId = buildingId, Point = spot });

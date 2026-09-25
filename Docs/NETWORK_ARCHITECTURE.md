@@ -24,8 +24,8 @@ backend.
    - Ticket format: `base64url(json payload) + "." + base64url(HMAC-SHA256(payload, ticketKey))`.
    - Payload: `matchId`, `accountId`, `displayName`, `team`, `slot`, `spectator`, `exp` (unix s), `nonce`.
 3. **The client connects over UDP** (connection key `bloodfall`) and sends `Hello` with:
-   - protocol version (currently **5**; v4 added the Vharoth phase and seal count to the snapshot header, v5 the
-     RTS fields listed in §3)
+   - protocol version (currently **6**; v4 added the Vharoth phase and seal count to the snapshot header, v5 the
+     RTS fields listed in §3, v6 research)
    - game data content hash
    - client version
    - the ticket
@@ -52,7 +52,7 @@ Every message starts with one `MsgType` byte.
 | Direction | Type | Content |
 |---|---|---|
 | C→S | `Hello` (1) | protocol, content hash, client version, ticket, spectator |
-| C→S | `Command` (2) | `Order`: type, unit, target, point(s), slot(s), item id (content index; a unit index for Train/Build), queue flag, group (up to 63 more unit ids, v5) |
+| C→S | `Command` (2) | `Order`: type, unit, target, point(s), slot(s), item id (content index; a unit index for Train/Build, an upgrade index for Research, v6), queue flag, group (up to 63 more unit ids, v5) |
 | C→S | `Chat` (3) | team flag, text (≤ 200 chars; `-ff` votes concede; practice cheats when enabled) |
 | C→S | `LoadProgress` (4) | 0–100 |
 | C→S | `PickHero` (5) | hero id or `random` |
@@ -77,6 +77,15 @@ Every message starts with one `MsgType` byte.
   - veins: blood-iron left.
 - **Player views** carry the RTS faction and whether the player is eliminated.
 - **Private state.** The receiving player gets an RTS block with blood-iron, lumber, supply used and supply cap.
+
+**Research (v6).**
+- The content index gained an upgrade table (ids sorted ordinally, like units and items).
+- A `Research` command names an upgrade index.
+- Each training-queue entry is `index << 1`, with the low bit set when the entry is research, so units and
+  research share one queue on the wire.
+- The private RTS block ends with the completed research: a count byte (at most 64), then upgrade indices in
+  ordinal order.
+- `ResearchComplete` events go only to the researching player.
 - **Fog.**
   - Enemy RTS buildings are sent only while visible. The client is expected to remember last-seen buildings.
   - MOBA structures stay always known.

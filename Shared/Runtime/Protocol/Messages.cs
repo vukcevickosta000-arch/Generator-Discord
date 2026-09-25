@@ -10,7 +10,7 @@ namespace Bloodfall.Protocol
     public static class ProtocolInfo
     {
         /// <summary>Bump when the wire format changes. Clients with a different version are rejected with a clear message.</summary>
-        public const ushort Version = 5;
+        public const ushort Version = 6;
         public const string ConnectionKey = "bloodfall";
         public const int DefaultGamePort = 27015;
     }
@@ -47,6 +47,8 @@ namespace Bloodfall.Protocol
         public readonly List<string> Abilities = new List<string>();
         public readonly List<string> Statuses = new List<string>();
         public readonly List<string> Items = new List<string>();
+        public readonly List<string> Upgrades = new List<string>();
+        private readonly Dictionary<string, int> _upgrade = new Dictionary<string, int>();
         private readonly Dictionary<string, int> _unit = new Dictionary<string, int>();
         private readonly Dictionary<string, int> _ability = new Dictionary<string, int>();
         private readonly Dictionary<string, int> _status = new Dictionary<string, int>();
@@ -58,20 +60,24 @@ namespace Bloodfall.Protocol
             Abilities.AddRange(data.Abilities.Keys.OrderBy(s => s, StringComparer.Ordinal));
             Statuses.AddRange(data.Statuses.Keys.OrderBy(s => s, StringComparer.Ordinal));
             Items.AddRange(data.Items.Keys.OrderBy(s => s, StringComparer.Ordinal));
+            Upgrades.AddRange(data.Upgrades.Keys.OrderBy(s => s, StringComparer.Ordinal));
             for (int i = 0; i < Units.Count; i++) _unit[Units[i]] = i + 1;
             for (int i = 0; i < Abilities.Count; i++) _ability[Abilities[i]] = i + 1;
             for (int i = 0; i < Statuses.Count; i++) _status[Statuses[i]] = i + 1;
             for (int i = 0; i < Items.Count; i++) _item[Items[i]] = i + 1;
+            for (int i = 0; i < Upgrades.Count; i++) _upgrade[Upgrades[i]] = i + 1;
         }
 
         public int UnitId(string id) => id != null && _unit.TryGetValue(id, out var v) ? v : 0;
         public int AbilityId(string id) => id != null && _ability.TryGetValue(id, out var v) ? v : 0;
         public int StatusId(string id) => id != null && _status.TryGetValue(id, out var v) ? v : 0;
         public int ItemId(string id) => id != null && _item.TryGetValue(id, out var v) ? v : 0;
+        public int UpgradeId(string id) => id != null && _upgrade.TryGetValue(id, out var v) ? v : 0;
         public string Unit(int i) => i > 0 && i <= Units.Count ? Units[i - 1] : null;
         public string Ability(int i) => i > 0 && i <= Abilities.Count ? Abilities[i - 1] : null;
         public string Status(int i) => i > 0 && i <= Statuses.Count ? Statuses[i - 1] : null;
         public string Item(int i) => i > 0 && i <= Items.Count ? Items[i - 1] : null;
+        public string Upgrade(int i) => i > 0 && i <= Upgrades.Count ? Upgrades[i - 1] : null;
     }
 
     // ============================================================== client-side views
@@ -191,6 +197,8 @@ namespace Bloodfall.Protocol
     public sealed class RtsPrivateState
     {
         public int Gold, Lumber, SupplyUsed, SupplyCap;
+        /// <summary>Research the player has completed (upgrade ids).</summary>
+        public List<string> Upgrades = new List<string>();
     }
 
     public sealed class PrivateState

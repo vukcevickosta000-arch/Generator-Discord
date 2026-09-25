@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Bloodfall.Data;
 
@@ -60,7 +61,7 @@ namespace Bloodfall.Simulation
         /// <summary>True once the player has lost every building (RTS defeat).</summary>
         public bool Eliminated;
         /// <summary>Completed RTS research.</summary>
-        public readonly HashSet<string> Upgrades = new HashSet<string>();
+        public readonly SortedSet<string> Upgrades = new SortedSet<string>(StringComparer.Ordinal);
         public int UnitsRaised, BloodPriceEarned;
         public float NextRaiseAt;
 

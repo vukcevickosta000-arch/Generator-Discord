@@ -55,8 +55,8 @@ namespace Bloodfall.Protocol
             w.WritePos(o.Point2);
             w.WriteVarUInt((uint)Math.Max(0, o.Slot));
             w.WriteVarUInt((uint)Math.Max(0, o.Slot2));
-            // Train and Build name a unit definition; everything else names an item.
-            w.WriteVarUInt((uint)(NamesUnit(o.Type) ? index.UnitId(o.ItemId) : index.ItemId(o.ItemId)));
+            // Train and Build name a unit definition, Research an upgrade; everything else names an item.
+            w.WriteVarUInt((uint)(NamesUnit(o.Type) ? index.UnitId(o.ItemId) : o.Type == OrderType.Research ? index.UpgradeId(o.ItemId) : index.ItemId(o.ItemId)));
             w.WriteBool(o.Queue);
             int group = Math.Min(Order.MaxGroup - 1, o.Group?.Length ?? 0);
             w.WriteVarUInt((uint)group);
@@ -77,7 +77,7 @@ namespace Bloodfall.Protocol
                 Slot2 = (int)r.ReadVarUInt(),
             };
             int named = (int)r.ReadVarUInt();
-            o.ItemId = NamesUnit(o.Type) ? index.Unit(named) : index.Item(named);
+            o.ItemId = NamesUnit(o.Type) ? index.Unit(named) : o.Type == OrderType.Research ? index.Upgrade(named) : index.Item(named);
             o.Queue = r.ReadBool();
             int group = (int)Math.Min(r.ReadVarUInt(), (uint)(Order.MaxGroup - 1));
             if (group > 0)
@@ -360,6 +360,14 @@ namespace Bloodfall.Protocol
                 w.WriteVarUInt((uint)Math.Max(0, viewerPlayer.Lumber));
                 w.WriteVarUInt((uint)Math.Max(0, viewerPlayer.SupplyUsed));
                 w.WriteVarUInt((uint)Math.Max(0, viewerPlayer.SupplyCap));
+                int ups = Math.Min(64, viewerPlayer.Upgrades.Count);
+                w.WriteByte((byte)ups);
+                int written = 0;
+                foreach (var id in viewerPlayer.Upgrades)
+                {
+                    if (written++ >= ups) break;
+                    w.WriteVarUInt((uint)index.UpgradeId(id));
+                }
             }
             return w.ToArray();
         }
@@ -425,7 +433,12 @@ namespace Bloodfall.Protocol
                 w.WriteByte((byte)Math.Round(MathUtil.Clamp01(u.BuildProgress) * 255));
                 int queued = friendly ? Math.Min(8, u.TrainQueue?.Count ?? 0) : 0;
                 w.WriteByte((byte)queued);
-                for (int i = 0; i < queued; i++) w.WriteVarUInt((uint)index.UnitId(u.TrainQueue[i]));
+                // Each entry is a unit or a research: index << 1, low bit set for research.
+                for (int i = 0; i < queued; i++)
+                {
+                    int up = index.UpgradeId(u.TrainQueue[i]);
+                    w.WriteVarUInt(up > 0 ? (uint)(up << 1 | 1) : (uint)(index.UnitId(u.TrainQueue[i]) << 1));
+                }
                 if (queued > 0) w.WriteByte((byte)Math.Round(MathUtil.Clamp01(u.TrainProgress) * 255));
                 bool rally = friendly && u.HasRally;
                 w.WriteBool(rally);
@@ -520,7 +533,15 @@ namespace Bloodfall.Protocol
             for (int i = 0; i < players; i++) f.Players.Add(ReadPlayerView(r, index));
             if (r.ReadBool()) f.Me = ReadPrivate(r, index);
             if (r.ReadBool())
+            {
                 f.Rts = new RtsPrivateState { Gold = (int)r.ReadVarUInt(), Lumber = (int)r.ReadVarUInt(), SupplyUsed = (int)r.ReadVarUInt(), SupplyCap = (int)r.ReadVarUInt() };
+                int ups = r.ReadByte();
+                for (int i = 0; i < ups; i++)
+                {
+                    var id = index.Upgrade((int)r.ReadVarUInt());
+                    if (id != null) f.Rts.Upgrades.Add(id);
+                }
+            }
             return f;
         }
 
@@ -564,7 +585,11 @@ namespace Bloodfall.Protocol
                 if (queued > 0)
                 {
                     e.TrainQueue = new string[queued];
-                    for (int i = 0; i < queued; i++) e.TrainQueue[i] = index.Unit((int)r.ReadVarUInt());
+                    for (int i = 0; i < queued; i++)
+                    {
+                        uint v = r.ReadVarUInt();
+                        e.TrainQueue[i] = (v & 1) != 0 ? index.Upgrade((int)(v >> 1)) : index.Unit((int)(v >> 1));
+                    }
                     e.TrainProgress = r.ReadByte() / 255f;
                 }
                 if (r.ReadBool()) e.Rally = r.ReadPos();

@@ -191,6 +191,14 @@ namespace Bloodfall.E2E
             var veinNow = fa.Entities.FirstOrDefault(e => e.Id == vein.Id);
             Check(veinNow != null && veinNow.ResourceAmount < 12500, $"vein depletes ({veinNow?.ResourceAmount})");
 
+            // Research at the hall: Masonry costs exactly the starting lumber.
+            int goldBefore = fa.Rts.Gold;
+            ca.SendOrder(new Order { Type = OrderType.Research, UnitId = hall.Id, ItemId = "rts_dg_up_masonry" });
+            await Pump(new[] { ca, cb }, 1f);
+            var researching = ca.Latest.Entities.First(e => e.Id == hall.Id);
+            Check(researching.TrainQueue != null && researching.TrainQueue.Contains("rts_dg_up_masonry") && ca.Latest.Rts.Lumber == 0,
+                $"research queued over the wire and paid (queue {string.Join(",", researching.TrainQueue ?? new string[0])}, lumber {ca.Latest.Rts.Lumber}, gold {goldBefore} -> {ca.Latest.Rts.Gold})");
+
             cb.SendChat("-ff", false);
             await Pump(new[] { ca, cb }, 4f);
             Check(ca.Result?.Winner == ca.LocalTeam.ToString(), $"RTS match ended by concession, winner {ca.Result?.Winner}");
