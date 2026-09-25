@@ -171,7 +171,51 @@ Measured after these changes (SimRunner `--rts`, 40 games per row, 30-minute cap
 | Dawnguard mirror, seeds 3000+ | Start sides 22–18, no draws |
 | Legion mirror, seeds 2000+ | Start sides 18–22, no draws |
 | Normal vs Beginner, 20 games | 20–0 |
-| Veteran vs Normal, 20 games per faction pairing | 12–7 and 11–8 (the edge is smaller than R3's 7–2 and 6–3) |
+| Veteran vs Normal, 20 games per faction pairing | 12–7 and 11–8 (the edge is smaller than R3's 7–2 and 6–3; superseded below) |
+
+### R2 part 2 (Crimson Court, Wild Covenant), 2026-09-25
+
+Both factions were tuned with 40-game series against every other faction:
+
+| Change | Reason |
+|---|---|
+| Blood Price 25% → 20%, Duelist 13–15 damage with 390 HP and 1 armor | At 25% with 13–15 damage the Court won 23–15 and 26–12 |
+| Moonlit +20% damage and +8% speed → +10% damage | The first clash (about minute 7) falls at night, and the Covenant won 34–6 and 40–0 |
+| Wolf form +0.3 move speed → +10 attack speed | Arrival order decides bot fights, so speed bonuses are outsized |
+| Moonfang Shifter 12–14 damage, 400 HP, 1 armor; Thornshot 16–19 | Tried 11–13 and 15–18: the Covenant fell to 38% |
+
+Simulation and bot fixes found while measuring (the mirror series exposed them):
+- **Unit update order.** Units always updated in creation order, so on a simultaneous exchange of blows the unit
+  created earlier struck first, which tended to be the first player's. RTS matches now alternate the direction every
+  tick. Bot updates alternate in the same way.
+- **Bot think phase.** The phase was the player id × 0.25 s, so the Dawn bot decided first every second. It is now
+  random per bot.
+- **Seeded bot variety.** Each bot has its own RNG, independent of the match RNG, for wave size (±3 supply), hold time
+  (±6 s) and expansion time (−0.5 to +0.75 min). Without it, a 40-game series replayed nearly the same game: the
+  "side bias" swung between 13–26 and 28–11 with every unrelated change.
+- **Forward point.** It moved from the midpoint to 40% of the way. The midpoint is the centre camp, and the army
+  that waited there fought among the camp creatures.
+- **Veteran.** It lost to Normal 11–18 and 10–20.
+  - Pulling hurt units home and building a third barracks did not help; the pull-back was removed.
+  - Veteran and Nightmare now wait for a 34-supply first wave. An earlier Normal attack walks into their towers and
+    reinforcements and is counter-attacked.
+  - Veteran then beat Normal 22–6 and 30–0.
+
+Measured (SimRunner `--rts`, 40 games per pairing, sides alternating, 30-minute cap):
+
+| Pairing | Result | Start sides |
+|---|---|---|
+| Dawnguard – Ashen Legion | 20–18 | 24–14 |
+| Crimson Court – Dawnguard | 19–20 | 18–21 |
+| Crimson Court – Ashen Legion | 22–16 | 14–24 |
+| Wild Covenant – Dawnguard | 21–18 | 20–19 |
+| Wild Covenant – Ashen Legion | 20–19 | 17–22 |
+| Wild Covenant – Crimson Court | 21–18 | 20–19 |
+| Mirrors (Covenant, Dawnguard, Legion, Court) | — | 20–19, 23–16, 19–21, 20–19 |
+| Normal vs Beginner (Covenant vs Court) | 20–0 | |
+| Veteran vs Normal | 22–6 (Dawnguard vs Legion), 30–0 (Court vs Covenant) | |
+
+Every faction wins 45–58% of its games.
 
 ## 6. Process
 

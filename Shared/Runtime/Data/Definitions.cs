@@ -403,6 +403,8 @@ namespace Bloodfall.Data
         public float ChopTime = 6f;
         /// <summary>Buildings: construction advances on its own once placed (the worker is free to leave).</summary>
         public bool SelfBuilds;
+        /// <summary>RTS: a status this unit wears at night (a shapeshift, usually with a model override).</summary>
+        public string NightForm;
         /// <summary>Resource nodes: starting amount (gold in a mine).</summary>
         public int ResourceAmount;
         /// <summary>Command card hotkey (RTS UI).</summary>

@@ -453,9 +453,12 @@ namespace Bloodfall.Simulation
             if (Tick % 15 == 0) UpdateAuras();
             if (Tick % 3 == 0) UpdateIntervalTriggers();
 
-            for (int i = 0; i < Units.Count; i++)
+            // RTS: alternate the update direction every tick. Units update in creation order, so a fixed order let
+            // the first player's units win every simultaneous exchange of blows (a 2:1 edge in bot mirrors).
+            bool reverse = IsRts && (Tick & 1) == 1;
+            for (int n = 0; n < Units.Count; n++)
             {
-                var u = Units[i];
+                var u = Units[reverse ? Units.Count - 1 - n : n];
                 if (u.Removed) continue;
                 if (u.StatsDirty) u.RecomputeStats(Rules);
                 UpdateUnit(u, dt);

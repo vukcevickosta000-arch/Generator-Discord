@@ -254,6 +254,24 @@ compile-checked, never run in Unity (TODO T-002).
 | Unholy Frenzy | 150/100 | 50 s | melee +10 attack speed (needs a Crypt) | Crypt of Horrors |
 | Ossified Stone | 100/100 | 45 s | buildings +20% HP | Necropolis |
 
+| Crimson Court | Cost | Time | Effect | Where |
+|---|---|---|---|---|
+| Crimson Steel | 100/50 | 40 s | melee +2 damage | Hall of Duels |
+| Heartpiercer Steel | 175/100 | 60 s | melee +3 damage (needs Crimson Steel and a Court of Night) | Hall of Duels |
+| Blood-Lacquered Plate | 100/75 | 40 s | soldiers +2 armor | Hall of Duels |
+| Barbed Bolts | 125/75 | 45 s | marksmen and engines +3 damage | Sanguine Foundry |
+| Sanguine Pact | 150/100 | 50 s | melee heal for 15% of the damage they deal | Court of Night |
+| Blood Mortar | 125/125 | 45 s | buildings +25% HP, +1 armor | Blood Keep |
+
+| Wild Covenant | Cost | Time | Effect | Where |
+|---|---|---|---|---|
+| Sharpened Claws | 100/50 | 40 s | melee +2 damage | Hunting Lodge |
+| Moonsteel Claws | 175/100 | 60 s | melee +3 damage (needs Sharpened Claws and a Den of Claws) | Hunting Lodge |
+| Thick Hide | 100/75 | 40 s | soldiers +1 armor, +10% HP | Hunting Lodge |
+| Heartwood Shot | 125/75 | 45 s | thornshots and ancients +3 damage | Grove of Ancients |
+| Feral Swiftness | 150/100 | 50 s | soldiers +8% move speed | Den of Claws |
+| Barkskin | 125/125 | 45 s | buildings +20% HP, +1 armor | Heart Grove |
+
 **Combat.**
 - Soldiers engage enemies within their acquisition range, and fight back when hit.
 - They do not walk into neutral camps on their own. Under attack-move they also pass camps that are not guarding
@@ -267,19 +285,35 @@ compile-checked, never run in Unity (TODO T-002).
 - Camps spawn once and do not respawn. Their bounty goes to the killer's owner.
 - A player with no buildings left (finished or not) is eliminated. A team whose players are all eliminated loses.
 
-**Factions in R1.**
+**Factions.**
 
-| | Dawnguard | Ashen Legion |
-|---|---|---|
-| Hall | Dawn Citadel (10 supply) | Necropolis (10 supply) |
-| Worker | Squire | Grave Acolyte |
-| Supply | Sun Shrine (+8) | Grave Obelisk (+8) |
-| Barracks | Barracks: Footman, Arbalist | Bone Pit: Ash Thrall, Bone Archer |
-| Defence | Watchtower | Spirit Spire |
-| Siege (needs barracks) | Siege Workshop: Ballista | Charnel Works: Corpse Catapult |
-| Elite (needs barracks) | Sanctum of Dawn: Sun Paladin | Crypt of Horrors: Crypt Horror |
-| Construction | Squires stay to build; each extra squire adds +50% speed | Acolytes only summon; buildings rise on their own |
-| Mechanic | Sun Shrines heal allied units within 7 m by 3 HP/s | Raising the dead (below) |
+| | Dawnguard | Ashen Legion | Crimson Court | Wild Covenant |
+|---|---|---|---|---|
+| Hall | Dawn Citadel | Necropolis | Blood Keep | Heart Grove |
+| Worker | Squire | Grave Acolyte | Bloodbound Serf | Grove Tender |
+| Supply (+8) | Sun Shrine | Grave Obelisk | Blood Font | Moonwell |
+| Barracks | Barracks: Footman, Arbalist | Bone Pit: Ash Thrall, Bone Archer | Hall of Duels: Crimson Duelist, Sanguine Marksman | Hunting Lodge: Moonfang Shifter, Thornshot |
+| Defence | Watchtower | Spirit Spire | Crimson Spire | Thorn Totem |
+| Siege (needs barracks) | Siege Workshop: Ballista | Charnel Works: Corpse Catapult | Sanguine Foundry: Blood Engine | Grove of Ancients: Rooted Ancient |
+| Elite (needs barracks) | Sanctum of Dawn: Sun Paladin | Crypt of Horrors: Crypt Horror | Court of Night: Blood Knight | Den of Claws: Ursine Warden |
+| Construction | Workers stay to build; each extra builder adds +50% speed | Acolytes only summon; buildings rise on their own | As the Dawnguard | As the Dawnguard |
+| Mechanic | Sun Shrines heal allied units within 7 m by 3 HP/s | Raising the dead | Blood Price | Moonlit |
+
+Every hall provides 10 supply.
+
+**Blood Price (Crimson Court).**
+- Every enemy unit the Court's forces kill (soldiers, towers or workers) pays 20% of its blood-iron cost to the
+  killer's owner. A neutral creature pays 40% of its maximum bounty.
+- Crimson Duelists hit a little harder but are less armoured than other factions' melee soldiers: 390 HP, 1 armor,
+  13–15 damage.
+- The Sanguine Pact research adds 15% lifesteal to the Court's melee.
+
+**Moonlit (Wild Covenant).**
+- During the night half of the 10-minute day cycle, Covenant soldiers deal 10% more damage.
+- Moonfang Shifters take wolf form (`nightForm` on the unit: a status with a model override), gaining +10 attack
+  speed.
+- Units trained at night join in their night form. Both effects end at dawn.
+- By day the Covenant's melee is slightly weaker: Moonfang Shifter 400 HP, 1 armor.
 
 **Raising the dead (Ashen Legion).**
 - When a living unit falls within 8 m of a Legion soldier (any owner, neutrals included), it rises as a Risen
@@ -288,8 +322,8 @@ compile-checked, never run in Unity (TODO T-002).
 - At most one rises per player every 25 s. Undead and siege engines never rise.
 - If several Legion players qualify, the one who made the kill raises; otherwise the one with the closest soldier.
 
-The two factions' line units share costs, stats within a few percent and speeds by role. Their differences are the
-construction style and the mechanic. The Crimson Court, the Wild Covenant and hero altars follow in phase R2
+All four factions' line units share costs and speeds by role, with stats within a few percent. Their differences are
+the construction style, the mechanic and small stat trade-offs that pay for it. Hero altars follow in phase R2
 (TODO T-030).
 
 **Bots.** The RTS AI plays by the same rules and knowledge as a player. Its plan:
@@ -298,12 +332,19 @@ construction style and the mechanic. The Crimson Court, the Wild Covenant and he
 3. Clear the camp guarding the nearest free vein, then expand to it.
 4. Research from minute 9, army upgrades first.
 5. Attack in waves that grow each time:
-   - The army first gathers at the map midpoint and holds for 20 s.
+   - The army first gathers at a forward point 40% of the way to the enemy and holds for 14–26 s.
    - It then advances in stages along the ground path, so it arrives together, and walks round guarding camps.
    - It retreats from lost fights, defends its buildings, and hunts down remembered enemy buildings.
    - With none known, it scouts the enemy start and then every vein, moving on from any spot it stops getting closer
      to.
 
 Difficulty levels:
-- **Beginner:** slower reactions, fewer workers, a late expansion and no tower.
-- **Veteran / Nightmare:** add focus fire and pull badly hurt units out of fights.
+- **Beginner:** slower reactions, fewer workers, a late expansion, no tower and a bigger first wave (34 supply).
+- **Normal:** attacks at 26 supply.
+- **Veteran / Nightmare:**
+  - wait for a 34-supply first wave, so an earlier attacker meets their towers and reinforcements;
+  - their ranged units focus fire;
+  - a third barracks.
+
+Every bot rolls its own seeded dice for think timing, wave size (±3 supply), hold time and expansion timing. No two
+games against it play out the same.

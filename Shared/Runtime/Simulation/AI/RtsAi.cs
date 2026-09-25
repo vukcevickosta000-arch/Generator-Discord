@@ -27,6 +27,13 @@ namespace Bloodfall.Simulation
         private readonly Vector2 _home, _enemyHome, _rally;
         private readonly float _thinkInterval;
         private float _nextThink;
+        /// <summary>
+        /// The bot's own dice (seeded from the match and player, separate from the match's RNG): a little variety in
+        /// timing and attack size, so games against it differ and bot-vs-bot series are not replays of one another.
+        /// </summary>
+        private readonly DeterministicRandom _rng;
+        private int _attackJitter;
+        private readonly float _expandJitter;
         private int _wave;
         private float _waveStartSupply;
         private enum Stance { Gather, Attack, Defend, Clear }
@@ -34,7 +41,7 @@ namespace Bloodfall.Simulation
         private Vector2 _objective;
         private float _lastOrderRefresh;
         private float _lastRetarget;
-        /// <summary>Attack phase 1: gather at the midpoint and hold there before pushing (0 = pushing).</summary>
+        /// <summary>Attack phase 1: gather at a forward point and hold there before pushing (0 = pushing).</summary>
         private float _holdUntil;
         private Vector2 _forward;
         private const float HoldTime = 20f;
@@ -87,7 +94,11 @@ namespace Bloodfall.Simulation
             // Thinking every 0.5 s measured no better than every 1 s (SimRunner), so Nightmare currently plays like
             // Veteran; see TODO T-031.
             _thinkInterval = Beginner ? 2f : 1f;
-            _nextThink = p.Id * 0.25f;
+            _rng = new DeterministicRandom(m.Config.Seed * 0x9E3779B97F4A7C15UL + (ulong)(p.Id + 1) * 0xBF58476D1CE4E5B9UL);
+            // A random phase: a fixed one (it used to be the player id) let the same player decide first every second.
+            _nextThink = _rng.Range(0f, _thinkInterval);
+            _attackJitter = _rng.Range(-3, 4);
+            _expandJitter = _rng.Range(-0.5f, 0.75f);
         }
 
         public void Update(Match m)
@@ -253,7 +264,7 @@ namespace Bloodfall.Simulation
             if (halls.Count >= 3) return null;
             var owned = OwnedVeins(m, halls);
             bool running = owned.Sum(v => v.ResourceAmount) < 4000;
-            float first = Beginner ? 11f : 7f;
+            float first = (Beginner ? 11f : 7f) + _expandJitter;
             if (!(min >= first && halls.Count < 2) && !(min >= first * 2f && halls.Count < 3) && !running) return null;
             if (OwnBuildings(m, _hall).Any(h => h.UnderConstruction)) return null;
             return m.Units.Where(v => v.Kind == UnitKind.Resource && v.IsAlive && v.ResourceAmount > 2000 && !owned.Contains(v)
@@ -450,10 +461,12 @@ namespace Bloodfall.Simulation
                     _wave++;
                     _waveStartSupply = supply;
                     _scoutBest = float.MaxValue;
-                    // First to the midpoint: the army regroups there with its stragglers and meets a counter-attack
-                    // on open ground instead of walking straight under the enemy's towers.
-                    _forward = m.Grid.NearestWalkable(Vector2.Lerp(_home, _enemyHome, 0.5f));
+                    // First to a forward point on our side of the centre: the army regroups there with its stragglers
+                    // and meets a counter-attack on open ground instead of walking straight under the enemy's towers.
+                    // (Not the midpoint itself: a centre camp stands there, and whoever waited among it lost.)
+                    _forward = m.Grid.NearestWalkable(Vector2.Lerp(_home, _enemyHome, 0.4f));
                     _holdUntil = float.MaxValue;
+                    _attackJitter = _rng.Range(-3, 4); // next wave's size
                     _objective = _forward;
                     _lastOrderRefresh = -99f;
                 }
@@ -470,7 +483,7 @@ namespace Bloodfall.Simulation
                 else if (_holdUntil > 0f)
                 {
                     var c = army.Count > 0 ? army.Aggregate(Vector2.Zero, (sum, u) => sum + u.Position) / army.Count : _home;
-                    if (_holdUntil == float.MaxValue && Vector2.Distance(c, _forward) < 10f) _holdUntil = m.Time + HoldTime;
+                    if (_holdUntil == float.MaxValue && Vector2.Distance(c, _forward) < 10f) _holdUntil = m.Time + HoldTime + _rng.Range(-6f, 6f);
                     if (m.Time >= _holdUntil)
                     {
                         _holdUntil = 0f;
@@ -505,8 +518,8 @@ namespace Bloodfall.Simulation
         }
 
         /// <summary>
-        /// Veteran and Nightmare micro: ranged units focus the weakest enemy in reach, and badly hurt units step back
-        /// toward home while enemies are close (they rejoin at the rally point).
+        /// Veteran and Nightmare micro: ranged units focus the weakest enemy in reach. (Pulling badly hurt units home
+        /// was tried and measured worse: they stopped dealing damage in the fight that decided the game.)
         /// </summary>
         private void Micro(Match m, List<Unit> army)
         {
@@ -525,11 +538,6 @@ namespace Bloodfall.Simulation
                     if (weakest == null || e.Hp < weakest.Hp) weakest = e;
                 }
                 if (!threatened) continue;
-                if (u.HpFraction < 0.25f && u.UnitDef.SupplyCost >= 2)
-                {
-                    if (u.CurrentOrder.Type != OrderType.Move) m.IssueOrder(u, Order.MoveTo(u.Id, _rally));
-                    continue;
-                }
                 // Never switch targets mid-swing: a cancelled wind-up is lost damage.
                 if (u.UnitDef.AttackType != AttackType.Ranged || weakest == null || u.Action == ActionState.AttackWindup) continue;
                 var cur = m.GetUnit(u.CurrentOrder.Type == OrderType.AttackUnit ? u.CurrentOrder.TargetId : u.AttackTargetId);
@@ -620,7 +628,11 @@ namespace Bloodfall.Simulation
             return t != null && t.IsAlive && Vector2.Distance(t.Position, u.Position) <= u.AcquisitionRange + t.Radius;
         }
 
-        private int AttackThreshold() => Math.Min(60, (Beginner ? 34 : 26) + 6 * _wave);
+        /// <summary>
+        /// Army supply that launches the next wave. Veteran and Nightmare wait for a bigger first wave: an earlier
+        /// attacker walks into their towers and reinforcements, loses, and gets counter-attacked.
+        /// </summary>
+        private int AttackThreshold() => Math.Min(60, (Beginner || Expert ? 34 : 26) + 6 * _wave + _attackJitter);
 
         private void UpdateEnemyArmyEstimate(Match m)
         {

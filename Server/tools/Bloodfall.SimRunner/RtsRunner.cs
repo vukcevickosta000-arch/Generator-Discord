@@ -62,7 +62,7 @@ namespace Bloodfall.SimRunner
                         Console.WriteLine($"   {p.Team} still has: " + string.Join(", ", m.Units.Where(u => u.Owner == p && u.IsAlive && u.Kind == UnitKind.Building)
                             .Select(u => $"{u.Name}{(u.UnderConstruction ? " (unfinished)" : "")} at ({u.Position.X:0},{u.Position.Y:0})").Take(8)));
                 foreach (var p in m.Players)
-                    Console.WriteLine($"   {p.RtsFaction.Id,-13} mined {p.GoldMined,6} lumber {p.LumberHarvested,5} trained {p.UnitsTrained,3} lost {p.UnitsLost,3} killed {p.UnitsKilled,3} built {p.BuildingsBuilt,2} lostB {p.BuildingsLost,2} razed {p.BuildingsRazed,2} raised {p.UnitsRaised,3}");
+                    Console.WriteLine($"   {p.RtsFaction.Id,-13} mined {p.GoldMined,6} lumber {p.LumberHarvested,5} trained {p.UnitsTrained,3} lost {p.UnitsLost,3} killed {p.UnitsKilled,3} built {p.BuildingsBuilt,2} lostB {p.BuildingsLost,2} razed {p.BuildingsRazed,2} raised {p.UnitsRaised,3} blood {p.BloodPriceEarned,5}");
             }
             sw.Stop();
             Console.WriteLine($"Simulated {games} game(s), {ticks} ticks in {sw.ElapsedMilliseconds} ms ({sw.Elapsed.TotalMilliseconds / Math.Max(1, ticks):0.000} ms/tick)");

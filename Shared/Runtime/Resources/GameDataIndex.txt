@@ -10,8 +10,10 @@ items/items.json
 maps/ashfields.json
 maps/velmoragh.json
 rts/ashen_legion.json
+rts/crimson_court.json
 rts/dawnguard.json
 rts/resource_nodes.json
+rts/wild_covenant.json
 rules.json
 statuses/common.json
 units/creeps.json

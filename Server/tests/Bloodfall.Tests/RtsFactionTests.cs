@@ -208,5 +208,92 @@ namespace Bloodfall.Tests
             TestUtil.Run(m, 4f);
             Assert.True(visitor.Hp < visitor.Stats.MaxHp);
         }
+    
+        [Fact]
+        public void TheCrimsonCourtIsPaidInBloodForItsKills()
+        {
+            var m = NewRts("crimson_court", "dawnguard");
+            var court = m.Players[0];
+            var dawn = m.Players[1];
+            var at = m.Grid.NearestWalkable(new Vector2(60, 60));
+            var duelist = m.CreateUnit(Def("rts_cc_duelist"), court.Team, at, 0f, court);
+            var footman = m.CreateUnit(Def("rts_dg_footman"), dawn.Team, m.Grid.NearestWalkable(at + new Vector2(2, 0)), 0f, dawn);
+            m.Step();
+            int courtGold = court.Gold, dawnGold = dawn.Gold;
+            m.DealDamage(new DamageInfo { Source = duelist, Target = footman, Amount = 99999f, Type = DamageType.Pure });
+            int price = (int)(Def("rts_dg_footman").GoldCost * court.RtsFaction.BloodPrice);
+            Assert.True(price > 0);
+            Assert.Equal(courtGold + price, court.Gold);
+            Assert.Equal(price, court.BloodPriceEarned);
+            // Other factions are not paid for their kills.
+            m.DealDamage(new DamageInfo { Source = m.CreateUnit(Def("rts_dg_footman"), dawn.Team, at, 0f, dawn), Target = duelist, Amount = 99999f, Type = DamageType.Pure });
+            Assert.Equal(dawnGold, dawn.Gold);
+            Assert.Equal(0, dawn.BloodPriceEarned);
+        }
+
+        [Fact]
+        public void TheWildCovenantGrowsStrongerAtNightAndShiftersBecomeWolves()
+        {
+            var m = NewRts("wild_covenant", "dawnguard");
+            var cov = m.Players[0];
+            var dawn = m.Players[1];
+            var at = m.Grid.NearestWalkable(new Vector2(40, 60));
+            var shifter = m.CreateUnit(Def("rts_wc_shifter"), cov.Team, at, 0f, cov);
+            var thornshot = m.CreateUnit(Def("rts_wc_thornshot"), cov.Team, m.Grid.NearestWalkable(at + new Vector2(2, 0)), 0f, cov);
+            var footman = m.CreateUnit(Def("rts_dg_footman"), dawn.Team, m.Grid.NearestWalkable(new Vector2(100, 90)), 0f, dawn);
+            TestUtil.Run(m, 0.2f);
+            Assert.False(m.IsNight);
+            float dayDamage = thornshot.Stats.BonusDamage;
+            Assert.Equal("rts_wc_shifter", shifter.ModelKey);
+
+            m.ForcedNightUntil = m.Time + 60f;
+            TestUtil.Run(m, 0.2f);
+            Assert.True(m.IsNight);
+            Assert.Contains(thornshot.Statuses, st => st.Def.Id == "rts_wc_moonlit");
+            Assert.True(thornshot.Stats.BonusDamage > dayDamage + 1f, $"night bonus {thornshot.Stats.BonusDamage - dayDamage:0.00}");
+            Assert.Equal("rts_wc_shifter_wolf", shifter.ModelKey);
+            Assert.DoesNotContain(thornshot.Statuses, st => st.Def.Id == "rts_wc_wolf_form"); // only shifters change shape
+            Assert.DoesNotContain(footman.Statuses, st => st.Def.Id == "rts_wc_moonlit");
+            var recruit = m.CreateUnit(Def("rts_wc_shifter"), cov.Team, at, 0f, cov);
+            TestUtil.Run(m, 0.1f);
+            Assert.Equal("rts_wc_shifter_wolf", recruit.ModelKey); // units raised at night join in their night form
+
+            m.ForcedNightUntil = m.Time;
+            TestUtil.Run(m, 0.2f);
+            Assert.False(m.IsNight);
+            Assert.DoesNotContain(thornshot.Statuses, st => st.Def.Id == "rts_wc_moonlit");
+            Assert.Equal(dayDamage, thornshot.Stats.BonusDamage, 3);
+            Assert.Equal("rts_wc_shifter", shifter.ModelKey);
+            Assert.Equal("rts_wc_shifter", recruit.ModelKey);
+        }
+
+        [Fact]
+        public void CourtAndCovenantBotsBuildTheirTechAndFight()
+        {
+            // Ten minutes of the two newer factions against each other: both run an economy, build their tech and
+            // armies, and research, with only a handful of rejected orders.
+            var cfg = new MatchConfig { ModeId = "rts_1v1", MapId = "map_rts_ashfields", Seed = 77, SkipHeroSelect = true };
+            cfg.Players.Add(new PlayerSetup { Name = "Dawn", Team = Team.Dawn, IsBot = true, BotDifficulty = BotDifficulty.Normal, RtsFaction = "crimson_court" });
+            cfg.Players.Add(new PlayerSetup { Name = "Dusk", Team = Team.Dusk, IsBot = true, BotDifficulty = BotDifficulty.Normal, RtsFaction = "wild_covenant" });
+            var m = new Match(TestUtil.Data, cfg);
+            int errors = 0;
+            while (m.Phase != MatchPhase.PostGame && m.Time < 10 * 60)
+            {
+                m.Step();
+                errors += m.Events.Count(e => e.Type == SimEventType.Error);
+                m.Events.Clear();
+            }
+            foreach (var p in m.Players)
+            {
+                Assert.True(p.GoldMined > 2000, $"{p.Name} mined {p.GoldMined}");
+                Assert.True(p.UnitsTrained >= 15, $"{p.Name} trained {p.UnitsTrained}");
+                Assert.True(p.BuildingsBuilt >= 8, $"{p.Name} built {p.BuildingsBuilt}");
+                var f = p.RtsFaction;
+                Assert.True(m.Units.Any(u => u.Owner == p && u.UnitDef?.Trains != null && u.UnitDef.Trains.Any(t => TestUtil.Data.Units[t].Kind == UnitKind.Soldier)),
+                    $"{p.Name} ({f.Id}) has a barracks");
+            }
+            Assert.True(m.Players[0].UnitsKilled + m.Players[1].UnitsKilled > 0, "the armies met");
+            Assert.True(errors < 40, $"{errors} rejected bot orders");
+        }
     }
 }

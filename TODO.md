@@ -11,9 +11,14 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
 
   The remaining phases, in order:
   - **T-030 (R2) Factions and heroes.**
-    - Crimson Court: blood economy (buildings or units convert HP into blood-iron).
-    - Wild Covenant: shapeshifters stronger at night.
-    - Altars that recruit up to three MOBA heroes per player; the heroes level from kills via ShareXp.
+    - **Still to do:** altars that recruit up to three MOBA heroes per player; the heroes level from kills via
+      ShareXp.
+    - Crimson Court. *Done* (`rts/crimson_court.json`): Blood Price (20% of each kill's cost), Sanguine Pact
+      lifesteal research, its own models.
+    - Wild Covenant. *Done* (`rts/wild_covenant.json`): Moonlit (+10% damage at night), Moonfang Shifters in wolf
+      form at night (`UnitDef.NightForm`), its own models.
+    - A possible later addition to the Court: an active "convert HP into blood-iron" ability (a building sacrifice).
+      Structure abilities have no command-card buttons yet.
     - Research. *Done:* five upgrades per faction (`UpgradeDef`, `Match.TryResearch`), protocol v6, command-card
       buttons and queue tiles in Unity (compile-checked only), and the bot researches from minute 9.
     - Faction mechanics. *Done:*
@@ -24,7 +29,7 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
       the Ashfields centre camp only fights back, so armies can meet beside it.
   - **T-031 (R3) RTS AI.** *Done (`Shared/Runtime/Simulation/AI/RtsAi.cs`, BALANCE_NOTES.md §5).* Follow-ups:
     - Nightmare needs a real edge over Veteran. Thinking every 0.5 s measured no better than every 1 s, so it
-      currently plays like Veteran.
+      currently plays like Veteran. Veteran's edge over Normal is now a patient 34-supply first wave (22–6, 30–0).
     - Hero use once altars exist (R2).
     - Towers at expansions.
     - Harass and counter-attacks while the enemy army is away.
@@ -44,9 +49,14 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
     - unit icons (the card shows text);
     - a proper construction scaffold;
     - ghosts on the minimap.
-  - **T-034 RTS art.** Dedicated worker, building and siege models per faction; the RTS units currently borrow the
-    MOBA creep and structure models.
-- **T-001 Blender model pipeline.** *Done for every unit and structure key (57 models,
+  - **T-034 RTS art.** The Crimson Court and Wild Covenant have their own models:
+    - noble buildings in blood marble and gold;
+    - organic groves, a totem, a lodge, a stone circle and a den;
+    - their own unit specs, including a wolf form for the shifters.
+
+    Still to do: dedicated Dawnguard and Ashen Legion units and buildings (they borrow the MOBA creep and structure
+    models), and construction scaffolds.
+- **T-001 Blender model pipeline.** *Done for every unit and structure key (79 models,
   `Blender/scripts/build_models.py`).* Remaining:
   - Props (`Models/Props/<type>.fbx`, 28 dressing types) and tree variants (MapRenderer still draws C# meshes).
   - Texture maps (normal and mask) once hand-authored art replaces the generated shapes; the rigs and clip names

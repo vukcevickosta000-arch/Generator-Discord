@@ -122,9 +122,15 @@ namespace Bloodfall.Simulation
         /// Runs at the start of the tick, right after units spawned last tick joined the world, so the AI never
         /// misses a building it placed a moment ago.
         /// </summary>
+        private readonly List<RtsAi> _aiOrder = new List<RtsAi>();
+
+        /// <summary>Bots take turns going first, tick by tick, so neither gets first pick of ground or targets.</summary>
         private void UpdateRtsAi()
         {
-            foreach (var ai in _rtsAi.Values) ai.Update(this);
+            _aiOrder.Clear();
+            _aiOrder.AddRange(_rtsAi.Values);
+            if ((Tick & 1) == 1) _aiOrder.Reverse();
+            foreach (var ai in _aiOrder) ai.Update(this);
         }
 
         /// <summary>Supply used (living units + training queues) and supply cap (completed buildings).</summary>
@@ -868,26 +874,31 @@ namespace Bloodfall.Simulation
             foreach (var id in p.Upgrades)
                 if (Data.Upgrades.TryGetValue(id, out var up) && UpgradeApplies(up, u.UnitDef)) ApplyStatus(u, up.Status, null, 1, -1f);
             if (IsNight && p.RtsFaction?.NightStatus != null && u.Kind == UnitKind.Soldier) ApplyStatus(u, p.RtsFaction.NightStatus, null, 1, -1f);
+            if (IsNight && u.UnitDef.NightForm != null) ApplyStatus(u, u.UnitDef.NightForm, null, 1, -1f);
         }
 
         // =================================================================== faction mechanics
 
-        /// <summary>Wild Covenant: soldiers take their night form when night falls and lose it at dawn.</summary>
+        /// <summary>
+        /// Wild Covenant: when night falls its soldiers gain the faction's night status and units with a night form
+        /// (Moonfang Shifters) change shape; both end at dawn.
+        /// </summary>
         private void ApplyNightStatuses()
         {
-            foreach (var p in Players)
+            foreach (var u in Units)
             {
-                var status = p.RtsFaction?.NightStatus;
-                if (status == null || !Data.Statuses.TryGetValue(status, out var def)) continue;
-                foreach (var u in Units)
-                {
-                    if (u.Owner != p || !u.IsAlive || u.Kind != UnitKind.Soldier) continue;
-                    if (IsNight) ApplyStatus(u, def, null, 1, -1f, 1, false, null, true);
-                    else
-                        for (int i = u.Statuses.Count - 1; i >= 0; i--)
-                            if (u.Statuses[i].Def == def) RemoveStatus(u, u.Statuses[i], false);
-                }
+                if (u.Owner == null || !u.IsAlive || u.UnitDef == null) continue;
+                var faction = u.Owner.RtsFaction?.NightStatus;
+                if (faction != null && u.Kind == UnitKind.Soldier && Data.Statuses.TryGetValue(faction, out var def)) SetNightStatus(u, def);
+                if (u.UnitDef.NightForm != null && Data.Statuses.TryGetValue(u.UnitDef.NightForm, out var form)) SetNightStatus(u, form);
             }
+        }
+
+        private void SetNightStatus(Unit u, StatusDef def)
+        {
+            if (IsNight) { ApplyStatus(u, def, null, 1, -1f, 1, false, null, true); return; }
+            for (int i = u.Statuses.Count - 1; i >= 0; i--)
+                if (u.Statuses[i].Def == def) RemoveStatus(u, u.Statuses[i], false);
         }
 
         /// <summary>

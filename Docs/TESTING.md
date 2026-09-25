@@ -4,7 +4,7 @@
 
 | Suite | Command | What it covers |
 |---|---|---|
-| Unit and simulation tests (102) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
+| Unit and simulation tests (105) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
 | End-to-end online | `Tools/dev/run-e2e.sh` | Real backend (fresh SQLite database) and a real game server over UDP; see §3 |
 | Bot soak | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- <minutes> <seed> [--deaths] [--trace N] [--mirror \| --heroes id1,id2]` | Full 5v5 bot matches (every playable hero by default): stability, performance, balance numbers |
 | RTS bot soak | `... SimRunner -- <minutes> <seed> --rts [--games N] [--factions a,b] [--difficulty X,Y] [--trace] [--log]` | 1v1 RTS bot games on Ashfields: wins per faction and per start side, economy and army statistics, AI errors |
@@ -48,7 +48,7 @@ What the unit and simulation tests cover:
   - determinism and data validity (every requirement buildable by the worker)
   - a complete Normal-vs-Beginner bot game (economy, production, razing; fewer than 60 rejected bot orders)
   - attack-move after a target dies mid-swing (regression)
-- **RTS factions** (`RtsFactionTests.cs`, 6 tests):
+- **RTS factions** (`RtsFactionTests.cs`, 9 tests):
   - research: cost, queue, no double research, effect on existing and new units, melee-only selector
   - the right building, prerequisites (research and buildings), cancel refunds, "not enough" errors
   - Legion raising: supply-free 30 s skeletons, the cooldown, no undead or siege, and the killer's side first in a
@@ -56,6 +56,11 @@ What the unit and simulation tests cover:
   - Sun Shrine healing near the shrine only
   - expansion camps attacking intruders, while the centre camp is left alone by passers-by and attack-move but
     fights back when hit
+  - Crimson Court Blood Price (paid to the killer's owner, not to other factions)
+  - Wild Covenant night: the Moonlit bonus on soldiers, wolf form on shifters (including units trained at night),
+    and both ending at dawn
+  - a 10-minute Crimson Court vs Wild Covenant bot game: economy, tech, armies, a fight and fewer than 40 rejected
+    orders
 
 ## 2. What the compile checks do *not* cover
 

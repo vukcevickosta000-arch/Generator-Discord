@@ -267,6 +267,7 @@ namespace Bloodfall.Data
                 Refs(u.Id, "builds", u.Builds, d => d.Kind == UnitKind.Building && d.BuildTime > 0);
                 Refs(u.Id, "requires", u.Requires, d => d.Kind == UnitKind.Building);
                 if (u.Kind == UnitKind.Worker && u.GatherGold <= 0 && u.GatherLumber <= 0) Warnings.Add($"Worker '{u.Id}' gathers nothing");
+                if (u.NightForm != null && !Statuses.ContainsKey(u.NightForm)) Errors.Add($"Unit '{u.Id}' has unknown night form '{u.NightForm}'");
             }
             foreach (var u in Units.Values)
                 if (u.Research != null)

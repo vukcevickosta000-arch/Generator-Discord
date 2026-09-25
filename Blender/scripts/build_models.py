@@ -40,7 +40,7 @@ def build_character(key, preview=False):
     return info
 
 
-SIEGE_KEYS = ["creep_dawn_ballista", "creep_dusk_catapult"]
+SIEGE_KEYS = ["creep_dawn_ballista", "creep_dusk_catapult", "rts_cc_engine"]
 
 
 def build_structure(key, preview=False):

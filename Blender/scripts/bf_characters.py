@@ -115,6 +115,42 @@ SPECS.update({
                                    head_scale=1.25, armor_mat="bf_matte"),
 })
 
+# ================================================================================================ RTS factions (War of the Ancients)
+CRIMSON_U = dict(armor=(0.2, 0.12, 0.14), accent=(0.78, 0.58, 0.28), glow=(1.0, 0.15, 0.2), skin=(0.86, 0.78, 0.76),
+                 tabard=(0.5, 0.04, 0.08), cloth=(0.38, 0.03, 0.07), trim=(0.8, 0.6, 0.28), sleeve=(0.24, 0.05, 0.07),
+                 legs=(0.16, 0.1, 0.11))
+WILD_U = dict(skin=(0.72, 0.6, 0.5), armor=(0.32, 0.25, 0.19), armor_mat="bf_matte", cloth=(0.22, 0.32, 0.16), fur=(0.4, 0.34, 0.26),
+              accent=(0.46, 0.36, 0.22), trim=(0.62, 0.68, 0.76), glow=(0.6, 0.85, 1.0), leaves=(0.24, 0.4, 0.16),
+              sleeve=(0.36, 0.28, 0.2), legs=(0.3, 0.24, 0.17), boots=(0.26, 0.19, 0.13))
+SPECS.update({
+    # Crimson Court
+    "rts_cc_serf": dict(height=1.55, bulk=0.85, weapon="shovel", hood=True, cuirass=False, torso=(0.35, 0.18, 0.16),
+                        cloth=(0.3, 0.06, 0.08), skin=(0.8, 0.7, 0.66), accent=(0.5, 0.1, 0.12), glow=(1.0, 0.15, 0.2), hunch=6,
+                        pauldrons=False, greaves=False, sleeve=(0.3, 0.14, 0.13), legs=(0.22, 0.12, 0.11)),
+    "rts_cc_duelist": dict(CRIMSON_U, height=1.78, bulk=0.9, stance="agile", weapon="rapier", cape=True, cape_color=(0.42, 0.03, 0.08),
+                           collar=True, steel=(0.85, 0.85, 0.9)),
+    "rts_cc_marksman": dict(CRIMSON_U, height=1.7, bulk=0.9, weapon="crossbow", hood=True, stance="heavy", cape=True,
+                            cape_color=(0.3, 0.03, 0.06)),
+    "rts_cc_blood_knight": dict(CRIMSON_U, height=2.1, bulk=1.35, stance="heavy", weapon="greatsword", helmet=True, horns=True,
+                                spiked=True, cape=True, cape_color=(0.4, 0.03, 0.07), gauntlets=True, armor=(0.16, 0.1, 0.12)),
+    # Wild Covenant
+    "rts_wc_tender": dict(WILD_U, height=1.5, bulk=0.8, weapon="staff", robe=True, hood=True, wood=(0.32, 0.23, 0.15), hunch=6,
+                          cloth=(0.28, 0.36, 0.2)),
+    "rts_wc_shifter": dict(WILD_U, height=1.8, bulk=1.0, stance="agile", claws_hands=True, cuirass=False, torso=(0.36, 0.28, 0.2),
+                           mane=True, hair=(0.2, 0.16, 0.12), pauldrons=False, greaves=False),
+    "rts_wc_shifter_wolf": dict(height=2.2, bulk=1.4, stance="beast", hunch=22, head_scale=1.35, skin=(0.3, 0.24, 0.18),
+                                torso=(0.32, 0.25, 0.19), cuirass=False, cloth=(0.3, 0.26, 0.2), fur=(0.36, 0.29, 0.21),
+                                accent=(0.62, 0.68, 0.76), glow=(0.6, 0.85, 1.0), muzzle=True, ears=True, mane=True, claws_hands=True,
+                                pauldrons=False, greaves=False, skirt=False, boots=(0.26, 0.2, 0.15), legs=(0.3, 0.24, 0.18),
+                                sleeve=(0.3, 0.24, 0.18), belt=(0.2, 0.16, 0.12), belly=(0.5, 0.44, 0.36)),
+    "rts_wc_thornshot": dict(WILD_U, height=1.72, bulk=0.88, weapon="bow", hood=True, cape=True, cape_color=(0.22, 0.34, 0.16)),
+    "rts_wc_werebear": dict(height=2.6, bulk=1.85, stance="beast", hunch=24, head_scale=1.3, skin=(0.3, 0.22, 0.15),
+                            torso=(0.33, 0.24, 0.16), cuirass=False, cloth=(0.28, 0.22, 0.16), fur=(0.36, 0.26, 0.17),
+                            accent=(0.62, 0.68, 0.76), glow=(0.6, 0.85, 1.0), muzzle=True, ears=True, mane=True, claws_hands=True,
+                            armor=(0.3, 0.24, 0.18), armor_mat="bf_matte", greaves=False, skirt=False,
+                            boots=(0.26, 0.19, 0.13), legs=(0.32, 0.23, 0.15), sleeve=(0.33, 0.24, 0.16), belly=(0.46, 0.38, 0.3)),
+})
+
 # ================================================================================================ four-legged (bf_beasts)
 BEAST_SPECS = {
     "neutral_crypt_rat": dict(height=0.42, length=0.8, width=0.1, head="rat", body=(0.32, 0.27, 0.25), belly=(0.48, 0.4, 0.36),
