@@ -68,7 +68,7 @@ namespace Bloodfall.Data
                 var sb = new StringBuilder();
                 foreach (var f in sortedFiles)
                 {
-                    sb.Append(f.Path).Append('\n');
+                    sb.Append(f.Path.Replace('\\', '/')).Append('\n');
                     // Normalize line endings so git autocrlf does not change the hash.
                     sb.Append(f.Text.Replace("\r\n", "\n")).Append('\n');
                 }

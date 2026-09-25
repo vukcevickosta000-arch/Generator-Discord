@@ -10,7 +10,7 @@ namespace Bloodfall.Data
         public static GameData FromDirectory(string root)
         {
             var files = Directory.GetFiles(root, "*.json", SearchOption.AllDirectories)
-                .Select(f => new GameDataFile(Path.GetRelativePath(root, f), File.ReadAllText(f)))
+                .Select(f => new GameDataFile(Path.GetRelativePath(root, f).Replace('\\', '/'), File.ReadAllText(f)))
                 .ToList();
             return GameData.Load(files);
         }

@@ -46,3 +46,6 @@ Blender/output/
 # OS
 .DS_Store
 Thumbs.db
+
+# Player builds
+Builds/
