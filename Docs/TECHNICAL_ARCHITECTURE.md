@@ -24,7 +24,7 @@
 |---|---|
 | `Core/` | `Json` (tolerant parser/writer), `JsonMapper` (reflection mapping, camelCase), `MathUtil` (armor formula, deterministic xorshift RNG, pseudo-random distribution with a bisection-solved C), `LeveledValue` |
 | `Data/` | Definitions (heroes, abilities, effects, statuses, items, units, maps, rules, modes, factions), `GameData.Load` (sorted by path, SHA-256 content hash with normalised line endings and separators, link + validate), loaders |
-| `Simulation/` | `Match` partial classes: Statuses, Effects, Combat, Casting, Movement, Projectiles, Items, Spawning, Vharoth (stub). Plus `NavGrid` (A* + LOS smoothing), `SpatialHash`, `VisionSystem`, AI brains |
+| `Simulation/` | `Match` partial classes: Statuses, Effects, Combat, Casting, Movement, Projectiles, Items, Spawning, Trees, Vharoth, Rts. Plus `NavGrid` (A* + LOS smoothing), `SpatialHash`, `VisionSystem`, AI brains |
 | `Protocol/` | `NetWriter/NetReader`, `Codec`, `Fragments`, `MatchHost`, `GameClient` + loopback, `Tickets`, `MatchResult` |
 | `Contracts/` | Every REST and WebSocket DTO shared by backend and client |
 | `Resources/GameData` | JSON content (hash-checked on connect). `Resources/GameDataIndex.txt` maps names back to paths for Unity. |
@@ -53,7 +53,26 @@
     are the exception.
   - **Summons** run their abilities at the level of the ability that raised them. Their `tags` choose the AI:
     `stationary` or `guard`.
-  - **Trees.** `Match.CountTreesNear` indexes the map's tree records.
+  - **Trees.** `Match.Trees.cs` indexes the map's tree records (`CountTreesNear`, `ForEachTreeNear`) and tracks
+    lumber per tree. `DestroyTree` clears the trunk's cells with `NavGrid.ClearTreeAt` (0.75 m, the same rule the
+    client applies on `TreeDestroyed`) and rebuilds vision locally.
+- **RTS mode** (`Match.Rts.cs`, active when the mode's `kind` is `Rts`):
+  - The same tick loop runs, without waves, passive income or Vharoth; `UpdateRts` runs after unit movement.
+  - Worker orders (Harvest, Build, ReturnResources) are validated in `IssueOrder` before they are queued, and
+    re-checked when they execute.
+  - Building orders (Train, SetRally, CancelQueue) are immediate.
+  - Buildings and veins block their footprint (0.85 × collision radius) as dynamic nav-grid blocks, released on
+    death or cancel.
+  - Supply is recomputed every tick from living units, queues and finished buildings.
+  - New unit kinds: `Soldier` (targets as Creep) and `Resource` (veins: never attacked, not in `TargetType.All`).
+  - New action state: `Working`. New events: ConstructionComplete, UnitTrained, ResourcesDelivered, MineDepleted and
+    PlayerEliminated (UnitTrained and ResourcesDelivered are private to the owner).
+  - Data:
+    - `UnitDef`: costs, `buildTime`, `supplyProvided`, `trains`, `builds`, `requires`, drop-off flags, gather
+      amounts and times, `selfBuilds`, `resourceAmount`.
+    - `rtsFactions` (hall, worker, starting units).
+    - `MapDef.startLocations` and `resourceNodes`.
+    - `PlayerSetup.RtsFaction`.
 - **Randomness:** only through the match RNG (seeded). PRD for procs and crits.
 - **Events:** `SimEvent` is the only output channel besides state. Each has a `PlayerId` (−1 = broadcast), and the
   server filters them per team.

@@ -45,12 +45,21 @@ namespace Bloodfall.Simulation
         }
 
         /// <summary>Recomputes blockers from the nav grid (call after trees are destroyed).</summary>
-        public void RebuildStatic()
+        public void RebuildStatic() => RebuildStatic(0, 0, Width - 1, Height - 1);
+
+        /// <summary>Recomputes blockers around one point only (a single felled tree).</summary>
+        public void RebuildStaticAround(Vector2 p, float radius)
+        {
+            RebuildStatic((int)((p.X - radius) / CellSize), (int)((p.Y - radius) / CellSize), (int)((p.X + radius) / CellSize), (int)((p.Y + radius) / CellSize));
+        }
+
+        private void RebuildStatic(int x0, int y0, int x1, int y1)
         {
             int ratio = Math.Max(1, (int)Math.Round(CellSize / _grid.CellSize));
-            for (int y = 0; y < Height; y++)
+            x0 = Math.Max(0, x0); y0 = Math.Max(0, y0); x1 = Math.Min(Width - 1, x1); y1 = Math.Min(Height - 1, y1);
+            for (int y = y0; y <= y1; y++)
             {
-                for (int x = 0; x < Width; x++)
+                for (int x = x0; x <= x1; x++)
                 {
                     int trees = 0, blockers = 0, maxLevel = 0, total = 0;
                     for (int sy = 0; sy < ratio; sy++)

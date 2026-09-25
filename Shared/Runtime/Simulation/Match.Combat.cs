@@ -156,6 +156,7 @@ namespace Bloodfall.Simulation
         {
             isDeny = false;
             if (target == null || !target.IsAlive || target == attacker) return false;
+            if (target.Kind == UnitKind.Resource) return false;
             if (target.HasFlag(StatusFlags.Untargetable) || target.HasFlag(StatusFlags.Airborne) && target.Motion != null && target.Motion.Invulnerable) return false;
             if (attacker.Team != Team.Neutral && target.Team != Team.Neutral && !IsVisibleTo(target, attacker.Team)) return false;
             if (target.Team != attacker.Team) return true;
@@ -359,6 +360,7 @@ namespace Bloodfall.Simulation
             if (killer != null) FireTriggers(killer, TriggerType.Kill, victim, 0f);
             FireTriggers(victim, TriggerType.Death, killer, 0f);
 
+            if (IsRts) OnRtsDeath(victim, killerPlayer);
             if (victim.IsHero && !victim.IsIllusion) OnHeroDeath(victim, killer, killerPlayer, deny);
             else if (victim.IsStructure) OnStructureDeath(victim, killer, killerPlayer, deny);
             else if (!OnVharothUnitDeath(victim, killer, killerPlayer)) OnUnitDeath(victim, killer, killerPlayer, deny);
@@ -382,7 +384,8 @@ namespace Bloodfall.Simulation
             if (killerPlayer != null && killer.Team != victim.Team)
             {
                 int gold = Rng.Range(def.BountyGoldMin, def.BountyGoldMax + 1) + def.GoldPerUpgrade * victim.CreepUpgradeLevel;
-                if (killer.IsHero || killer.Summoner != null || killer.Kind == UnitKind.Summon)
+                // RTS: any unit that kills a neutral creep earns its owner the bounty.
+                if (killer.IsHero || killer.Summoner != null || killer.Kind == UnitKind.Summon || (IsRts && victim.IsNeutral))
                 {
                     GiveGold(killerPlayer, gold, victim.Position, true);
                     if (victim.IsCreep || victim.IsNeutral) killerPlayer.LastHits++;
@@ -664,7 +667,12 @@ namespace Bloodfall.Simulation
                     if (Time >= u.RespawnAt && Phase == MatchPhase.Playing) RespawnHero(u);
                     continue;
                 }
-                if (u.IsStructure) continue; // structure ruins stay (client shows rubble)
+                if (u.IsStructure)
+                {
+                    // MOBA ruins stay (client shows rubble); RTS buildings are cleared so the ground can be rebuilt.
+                    if (u.Kind == UnitKind.Building && Time - u.DeathTime > Rules.RtsRuinRemoveDelay) u.Removed = true;
+                    continue;
+                }
                 if (Time - u.DeathTime > 2.5f) u.Removed = true;
             }
             for (int i = Corpses.Count - 1; i >= 0; i--) if (Corpses[i].Consumed || Time > Corpses[i].Expires) Corpses.RemoveAt(i);

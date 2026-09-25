@@ -102,7 +102,27 @@ Creeps upgrade every 7.5 min (+HP, +damage, +gold).
 - Recipes cost 10–25% of the total.
 - Build-ups should read clearly: 3 tiers at most.
 
-## 5. Process
+## 5. RTS economy (phase R1 numbers, 2026-09-25)
+
+These are design targets checked by `RtsTests`. There is no RTS AI yet, so there are no measured matches (TODO T-031).
+
+- **Start.** 500 blood-iron and 150 lumber, a hall (10 supply) and 5 workers (75 blood-iron, 1 supply, 14 s each).
+- **Mining.**
+  - A trip carries 10 blood-iron, with 1 s inside the vein. The hall is 11.5 m from its main vein (about 7 m edge to
+    edge, roughly 4 s of walking), so one worker earns about 1.9/s.
+  - One worker at a time per vein caps a vein at 10/s. The test measures 250–600 in 60 s with five workers.
+  - A main vein lasts about 21 minutes at saturation.
+- **Lumber.** A trip carries 10 lumber after 6 s of chopping, so one worker earns about 0.8/s at the base forest.
+  A tree holds 50 lumber (5 trips).
+- **Supply.** Supply structures cost 80/20, take 30 s and give +8. The cap is 100. Soldiers cost 2 supply, siege 3,
+  elites 5.
+- **First army.**
+  - A barracks costs 160/60 and takes 55 s.
+  - Footman 135/0, 20 s; Arbalist 135/20, 22 s.
+  - Legion equivalents cost 5–10 less and train 1–2 s faster, with about 10% less HP.
+- **Towers.** 110/80, 45 s, 22–26 damage per second at 7 m. Enough to stop a lone worker harass, not an army.
+
+## 6. Process
 
 1. Change data.
 2. Run `dotnet test`: data validation and simulation tests.

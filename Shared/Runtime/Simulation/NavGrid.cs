@@ -118,6 +118,36 @@ namespace Bloodfall.Simulation
         public void AddDynamicBlock(int x, int y) { if (InBounds(x, y) && _dynamic[y * Width + x] < 255) { _dynamic[y * Width + x]++; Version++; } }
         public void RemoveDynamicBlock(int x, int y) { if (InBounds(x, y) && _dynamic[y * Width + x] > 0) { _dynamic[y * Width + x]--; Version++; } }
 
+        public void AddDynamicBlockIndex(int i) { if (i >= 0 && i < _dynamic.Length && _dynamic[i] < 255) { _dynamic[i]++; Version++; } }
+        public void RemoveDynamicBlockIndex(int i) { if (i >= 0 && i < _dynamic.Length && _dynamic[i] > 0) { _dynamic[i]--; Version++; } }
+
+        /// <summary>Radius around a trunk whose cells a tree blocks (the map generators use 0.72 m discs).</summary>
+        public const float TreeCellRadius = 0.75f;
+
+        /// <summary>Marks every tree cell of the trunk at p as destroyed (same rule on server and client).</summary>
+        public void ClearTreeAt(Vector2 trunk)
+        {
+            foreach (int i in CellsInDisc(trunk, TreeCellRadius))
+            {
+                if ((Cells[i] & TreeBit) == 0 || _treeDestroyed[i]) continue;
+                _treeDestroyed[i] = true;
+            }
+            Version++;
+        }
+
+        /// <summary>Indices of the cells whose centres lie within r of c.</summary>
+        public List<int> CellsInDisc(Vector2 c, float r)
+        {
+            var list = new List<int>();
+            int x0 = (int)Math.Floor((c.X - r) / CellSize), x1 = (int)Math.Floor((c.X + r) / CellSize);
+            int y0 = (int)Math.Floor((c.Y - r) / CellSize), y1 = (int)Math.Floor((c.Y + r) / CellSize);
+            float r2 = r * r;
+            for (int y = y0; y <= y1; y++)
+                for (int x = x0; x <= x1; x++)
+                    if (InBounds(x, y) && Vector2.DistanceSquared(CellCenter(x, y), c) <= r2) list.Add(y * Width + x);
+            return list;
+        }
+
         /// <summary>Incremented whenever dynamic walkability changes (used to invalidate cached paths).</summary>
         public int Version { get; private set; }
 

@@ -47,6 +47,19 @@ namespace Bloodfall.Simulation
         public readonly List<string> ItemPurchaseLog = new List<string>();
         public string[] FinalItems = new string[0];
 
+        // RTS economy and statistics (unused in the MOBA modes).
+        public RtsFactionDef RtsFaction;
+        public int Lumber;
+        /// <summary>Supply used by living units plus units queued for training.</summary>
+        public int SupplyUsed;
+        public int SupplyCap;
+        public int GoldMined, LumberHarvested;
+        public int LumberSpent;
+        public int UnitsTrained, UnitsLost, UnitsKilled;
+        public int BuildingsBuilt, BuildingsLost, BuildingsRazed;
+        /// <summary>True once the player has lost every building (RTS defeat).</summary>
+        public bool Eliminated;
+
         public bool IsActiveHuman => !IsBot && Connection == PlayerConnection.Connected;
 
         public float Gpm(float matchSeconds) => matchSeconds > 1 ? GoldEarned / (matchSeconds / 60f) : 0f;

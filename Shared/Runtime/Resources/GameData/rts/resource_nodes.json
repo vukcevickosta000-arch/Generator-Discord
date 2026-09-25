@@ -1,0 +1,28 @@
+{
+  "$comment": "RTS resource nodes shared by every RTS map.",
+  "units": [
+    {
+      "id": "rts_bloodiron_vein",
+      "name": "Blood-Iron Vein",
+      "description": "A seam of blood-iron. Workers mine it until it runs dry.",
+      "kind": "Resource",
+      "maxHp": 1000,
+      "armor": 0,
+      "damageMin": 0,
+      "damageMax": 0,
+      "moveSpeed": 0,
+      "turnRate": 0,
+      "collisionRadius": 1.7,
+      "visionDay": 0,
+      "visionNight": 0,
+      "innateFlags": "Invulnerable",
+      "resourceAmount": 12500,
+      "model": "resource_bloodiron_vein",
+      "height": 3,
+      "tags": [
+        "rts",
+        "resource"
+      ]
+    }
+  ]
+}

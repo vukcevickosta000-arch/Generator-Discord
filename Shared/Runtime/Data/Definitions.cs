@@ -375,10 +375,37 @@ namespace Bloodfall.Data
         /// <summary>Structures: fortification / backdoor damage reduction when no enemy creeps are nearby.</summary>
         public float BackdoorProtection;
         public float Height = 2f;
+
+        // ---- RTS (ignored by the MOBA modes) ----
         public int SupplyCost;
         public int GoldCost;
         public int LumberCost;
+        /// <summary>Seconds to train (units) or construct (buildings).</summary>
         public float BuildTime;
+        /// <summary>Buildings: supply cap granted once construction is complete.</summary>
+        public int SupplyProvided;
+        /// <summary>Buildings: unit ids this building can train.</summary>
+        public List<string> Trains;
+        /// <summary>Workers: building ids this worker can construct.</summary>
+        public List<string> Builds;
+        /// <summary>Completed buildings the owner must have before this can be built or trained (tech tree).</summary>
+        public List<string> Requires;
+        /// <summary>Buildings: workers may return gold / lumber here.</summary>
+        public bool DropOffGold;
+        public bool DropOffLumber;
+        /// <summary>Workers: resources carried per trip.</summary>
+        public int GatherGold;
+        public int GatherLumber;
+        /// <summary>Workers: seconds spent at a mine / chopping a tree per trip.</summary>
+        public float MineTime = 1f;
+        public float ChopTime = 6f;
+        /// <summary>Buildings: construction advances on its own once placed (the worker is free to leave).</summary>
+        public bool SelfBuilds;
+        /// <summary>Resource nodes: starting amount (gold in a mine).</summary>
+        public int ResourceAmount;
+        /// <summary>Command card hotkey (RTS UI).</summary>
+        public string Hotkey;
+        public string Description;
     }
 
     public sealed class ItemDef
@@ -489,6 +516,10 @@ namespace Bloodfall.Data
         public List<JVec2> WardSpots = new List<JVec2>();
         public JVec2 BossPit;
         public List<JVec2> VharothSeals = new List<JVec2>();
+        /// <summary>RTS: start locations (a hall and workers are placed at each player's).</summary>
+        public List<RtsStartDef> StartLocations = new List<RtsStartDef>();
+        /// <summary>RTS: gold mines and other harvestable nodes.</summary>
+        public List<ResourceNodePlacement> ResourceNodes = new List<ResourceNodePlacement>();
         /// <summary>Tree trunks: base64 of 5-byte records (ushort x*10, ushort y*10 little endian, byte variant).</summary>
         public string Trees;
         public string DressingFile;
@@ -579,6 +610,25 @@ namespace Bloodfall.Data
         public ExperienceDef Experience = new ExperienceDef();
         /// <summary>RTS: upkeep thresholds etc. are defined in the RTS mode file.</summary>
         public float RtsGameSpeed = 1f;
+        public int RtsStartingGold = 500;
+        public int RtsStartingLumber = 150;
+        public int RtsMaxSupply = 100;
+        public float RtsPreGameTime = 3f;
+        /// <summary>Lumber in every tree; the tree falls when it is exhausted.</summary>
+        public int RtsTreeLumber = 50;
+        /// <summary>Workers that can mine one gold mine at the same time.</summary>
+        public int RtsMineSlots = 1;
+        public int RtsTrainQueueMax = 5;
+        /// <summary>Fraction of the cost refunded when a building under construction is cancelled.</summary>
+        public float RtsConstructionRefund = 0.75f;
+        /// <summary>Hit points a building starts construction with (fraction of its maximum).</summary>
+        public float RtsBuildStartHp = 0.1f;
+        /// <summary>Construction speed each additional builder adds (the first builder is 1).</summary>
+        public float RtsExtraBuilderRate = 0.5f;
+        /// <summary>Free space kept between a gold mine and any building footprint.</summary>
+        public float RtsMineClearance = 1.5f;
+        /// <summary>Seconds a destroyed RTS building's ruin stays before it is removed.</summary>
+        public float RtsRuinRemoveDelay = 3f;
     }
 
     public sealed class GameModeDef
@@ -594,6 +644,39 @@ namespace Bloodfall.Data
         public bool AllowBots = true;
         public float GameSpeed = 1f;
         public Dictionary<string, float> RuleOverrides;
+    }
+
+    public sealed class RtsStartDef
+    {
+        public Team Team;
+        public JVec2 Position;
+        public float Facing;
+    }
+
+    public sealed class ResourceNodePlacement
+    {
+        public string Id;
+        public string UnitId;
+        public JVec2 Position;
+        /// <summary>0 = the unit definition's ResourceAmount.</summary>
+        public int Amount;
+    }
+
+    /// <summary>An RTS faction: what a player starts with and which content belongs to it.</summary>
+    public sealed class RtsFactionDef
+    {
+        public string Id;
+        public Faction Faction;
+        public string Name;
+        public string Description;
+        /// <summary>Main building every player starts with (also the resource drop-off).</summary>
+        public string Hall;
+        public string Worker;
+        public int StartingWorkers = 5;
+        public List<string> StartingUnits = new List<string>();
+        /// <summary>Faction mechanic, one line for the UI.</summary>
+        public string Mechanic;
+        public bool Playable = true;
     }
 
     public sealed class FactionDef

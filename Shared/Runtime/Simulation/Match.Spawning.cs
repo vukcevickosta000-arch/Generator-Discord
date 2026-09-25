@@ -49,6 +49,16 @@ namespace Bloodfall.Simulation
             foreach (var u in Units) RecomputeFlags(u);
         }
 
+        private bool _rtsCampsSpawned;
+
+        /// <summary>RTS maps: neutral camps guard the expansions and do not respawn.</summary>
+        private void UpdateRtsSpawners()
+        {
+            if (_rtsCampsSpawned || Config.DisableNeutrals) return;
+            _rtsCampsSpawned = true;
+            SpawnNeutrals();
+        }
+
         private void UpdateSpawners(float dt)
         {
             if (_nextWaveTime == float.MinValue) _nextWaveTime = Rules.FirstWaveTime;

@@ -4,7 +4,36 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
 
 ## Now
 
-- **T-001 Blender model pipeline.** *Done for every unit and structure key (56 models,
+- **RTS mode (milestone 8).** Phase R1 is done: the simulation, the Ashfields map, Dawnguard and Ashen Legion, and
+  18 tests (GAME_DESIGN.md §11). The remaining phases, in order:
+  - **T-030 (R2) Factions and heroes.**
+    - Crimson Court: blood economy (buildings or units convert HP into blood-iron).
+    - Wild Covenant: shapeshifters stronger at night.
+    - Altars that recruit up to three MOBA heroes per player; the heroes level from kills via ShareXp.
+    - Research (`OrderType.Research`, which currently answers "Research is not available yet."): weapon and armour
+      upgrades per faction.
+    - Ashen Legion corpse raising and a Dawnguard healing aura, as the faction mechanics.
+    - Neutral camps should attack units that come near them (they currently only retaliate).
+  - **T-031 (R3) RTS AI.**
+    - Build order, worker saturation (about five per vein, the rest on lumber), supply planning, army attack waves
+      and expansion.
+    - SimRunner `--rts` with a faction-vs-faction win-rate table (the balance check for the RTS numbers).
+  - **T-032 (R4) Networking.**
+    - Multi-unit orders (a selection list in `Order`).
+    - Protocol v5 with RTS fields:
+      - per entity: construction progress, training queue, carried resources, vein amount;
+      - per player (private): lumber, supply and cap.
+    - Lobby faction pick (`PlayerSetup.RtsFaction`).
+    - Enable `rts_1v1` in MatchmakingModule and LobbyModule.
+    - An E2E RTS match.
+  - **T-033 (R5) Unity RTS interface.**
+    - Box select, control groups, command card (build/train/rally/cancel), placement ghost using
+      `Match.CanPlaceBuilding`, resource and supply bar.
+    - Construction scaffolding and progress bars; worker Working animation.
+    - Ashfields camera bounds.
+  - **T-034 RTS art.** Dedicated worker, building and siege models per faction; the RTS units currently borrow the
+    MOBA creep and structure models.
+- **T-001 Blender model pipeline.** *Done for every unit and structure key (57 models,
   `Blender/scripts/build_models.py`).* Remaining:
   - Props (`Models/Props/<type>.fbx`, 28 dressing types) and tree variants (MapRenderer still draws C# meshes).
   - Texture maps (normal and mask) once hand-authored art replaces the generated shapes; the rigs and clip names
@@ -80,7 +109,6 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
 
 ## Later
 
-- RTS mode (milestone 8): workers, harvesting, build trees per faction, production queues, research, an RTS map.
 - Two-factor authentication (the `TwoFactorEnabled` column exists; there is no flow yet).
 - Admin/moderation console for reports, bans and news publishing (the endpoints partially exist).
 - Account deletion / data export endpoint (GDPR): delete the account row, anonymise match player rows.

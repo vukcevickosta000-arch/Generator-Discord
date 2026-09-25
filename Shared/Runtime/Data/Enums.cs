@@ -14,6 +14,10 @@ namespace Bloodfall.Data
         Worker, Building,
         /// <summary>Map objectives that are interacted with rather than attacked (Vharoth's seals).</summary>
         Objective,
+        /// <summary>RTS: trained combat units (player controlled, no lane behaviour).</summary>
+        Soldier,
+        /// <summary>RTS: harvestable resource nodes (gold mines). Invulnerable and never attacked.</summary>
+        Resource,
     }
 
     public enum AttackType : byte { Melee, Ranged }
@@ -49,6 +53,8 @@ namespace Bloodfall.Data
         Courier = 256,
         /// <summary>Map objectives (Vharoth's seals). Not part of Units/All: only abilities that name it can target them.</summary>
         Objective = 512,
+        /// <summary>RTS resource nodes. Not part of Units/All.</summary>
+        Resource = 1024,
         Basic = Creep | Neutral | Summon | Boss | Illusion,
         Units = Hero | Basic,
         All = Units | Structure | Ward,
@@ -173,5 +179,7 @@ namespace Bloodfall.Data
     {
         Idle, Moving, AttackWindup, AttackBackswing, CastWindup, CastBackswing, Channeling,
         Dashing, Airborne, Stunned, Dead, Teleporting,
+        /// <summary>RTS workers mining, chopping or constructing.</summary>
+        Working,
     }
 }

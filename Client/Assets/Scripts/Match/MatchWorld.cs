@@ -492,8 +492,7 @@ namespace Bloodfall.Client.Match
                 case SimEventType.TreeDestroyed:
                     if (Map.DestroyTree(e.Point))
                     {
-                        Grid.ToCell(e.Point, out int tx, out int ty);
-                        Grid.SetTreeDestroyed(tx, ty, true);
+                        Grid.ClearTreeAt(e.Point); // same cells the server cleared
                         Fog.OnTreeDestroyed();
                         Vfx.Play("hit_bone", Map.World(e.Point, 1f));
                     }

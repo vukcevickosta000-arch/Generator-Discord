@@ -52,6 +52,17 @@ namespace Bloodfall.Simulation
         Buyback = 45,
         WaveSpawned = 46,
         Shake = 47,
+        // RTS
+        /// <summary>A building finished construction (UnitId = building).</summary>
+        ConstructionComplete = 48,
+        /// <summary>A unit finished training (UnitId = new unit, OtherId = building). Private to the owner.</summary>
+        UnitTrained = 49,
+        /// <summary>A worker delivered resources (Value = gold, Value2 = lumber). Private to the owner.</summary>
+        ResourcesDelivered = 50,
+        /// <summary>A gold mine ran dry (UnitId = mine).</summary>
+        MineDepleted = 51,
+        /// <summary>A player lost every building (OtherId = player id).</summary>
+        PlayerEliminated = 52,
     }
 
     /// <summary>

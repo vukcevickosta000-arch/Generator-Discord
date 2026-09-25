@@ -16,7 +16,7 @@ This file is the honest source of truth for what works. Status labels:
 | Check | Result | How to reproduce |
 |---|---|---|
 | Server solution build (`Server/Bloodfall.sln`) | ✅ builds, 0 warnings-as-errors | `dotnet build Server/Bloodfall.sln` |
-| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 73 / 73 pass | `dotnet test Server/tests/Bloodfall.Tests` |
+| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 91 / 91 pass | `dotnet test Server/tests/Bloodfall.Tests` |
 | End-to-end online test (real backend + game server over UDP) | ✅ **E2E PASSED** | `Tools/dev/run-e2e.sh` |
 | 20-minute 5v5 bot simulation (all eight heroes) | ✅ runs, 0.28 ms/tick | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- 20 11` |
 | Unity client scripts compile check (UnityEngine 2021.3 reference assemblies) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck` |
@@ -37,7 +37,7 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
 | 5 | Client / account / lobby / server flow | Backend **WORKING** (E2E). Unity screens IMPLEMENTED (unverified). |
 | 6 | Multiple heroes and items | PARTIAL: **8 of 96 heroes** playable (all eight concept heroes: Vorak, Ilyra, Nyxara, Malgrave, Ardyn, Fenrax, Morwen, Thael), each with kit tests and bot usage. 38 items. |
 | 7 | Vharoth event | **WORKING** in simulation: seals, awakening, three boss phases, Blood Moon, Heart of Vharoth with revive, bots that break seals and kill him. 13 tests. Unity presentation (models, effects, HUD boss bar, Blood Moon lighting, corpse): IMPLEMENTED (unverified). |
-| 8 | RTS match | PLANNED. Order types and unit kinds are reserved; the queue and lobbies refuse RTS with an explanation. |
+| 8 | RTS match | PARTIAL. **Phase R1 WORKING in simulation** (18 tests): blood-iron and lumber harvesting, construction, training queues, supply, rally points, victory by razing, and the Ashfields map. Two of four factions (Dawnguard, Ashen Legion). Still missing: heroes at an altar, research and the other two factions (R2), an RTS AI (R3), protocol/lobby/queue support (R4) and the Unity RTS interface (R5). **Not playable from the client yet**; the queue and lobbies still refuse RTS with an explanation. |
 | 9 | Content expansion | PLANNED |
 | 10 | Polish | PLANNED |
 
@@ -67,6 +67,16 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
   - A Blood Moon that forces night and shrinks vision.
   - The Heart of Vharoth relic (revive on the spot, Bloodthirst).
   - The event state is in every snapshot header (protocol v4).
+- **RTS rules** (`Match.Rts.cs`, GAME_DESIGN.md §11):
+  - Each player starts with a hall and five workers next to a blood-iron vein.
+  - Workers mine veins (one worker at a time per vein) and cut trees. Trees fall when their lumber runs out, which
+    opens paths and vision.
+  - Construction: placement is checked twice (when ordered and on arrival). Dawnguard buildings need a builder, and
+    extra builders speed them up; Ashen Legion buildings rise on their own. Cancelling refunds 75%.
+  - Training queues (5 slots), supply cap from buildings, rally points (a vein rally puts new workers to work),
+    watchtowers that shoot once finished, and one-time neutral camps whose bounty goes to the owner.
+  - A player with no buildings left is eliminated.
+  - All costs, requirements, placement and supply are validated on the server.
 - Practice cheats (`-gold`, `-lvlup`, `-refresh`, `-respawn`, `-startgame`). Honoured only when the match config sets
   `AllowCheats` (offline practice). Online matches never set it.
 
@@ -148,9 +158,11 @@ lobby → hero select → loading → match → post-game.
 | UI kit (frames, buttons, bars, cursors, rank emblems, faction crests, logo) | Done (procedural, `Tools/art`) |
 | Menu backdrop (sky, blood moon, castle, ruins, fog + live particles/lightning) | Done (procedural) |
 | Terrain layer textures (8), VFX sprites (24), Velmoragh heightfield/splat/dressing | Done (procedural) |
+| Ashfields (RTS map) heightfield/splat/dressing | Done (procedural, `Tools/mapgen/generate_ashfields.py`, preview `Docs/Images/ashfields_layout.png`) |
 | OFL fonts | Done |
-| Hero/creep/summon/neutral/boss/structure 3D models | **Done (generated)**: 56 FBX models from the Blender pipeline (`Blender/scripts`), with rigs, 12–13 animation clips and baked ambient occlusion (`Docs/Images/models_all.png`). Stylised primitive-based modelling, not sculpted or textured. Not yet imported in Unity. |
-| Map props and trees | Procedural stand-ins (C#); Blender versions are the next art task |
+| Hero/creep/summon/neutral/boss/structure 3D models | **Done (generated)**: 57 FBX models (including the RTS blood-iron vein) from the Blender pipeline (`Blender/scripts`), with rigs, 12–13 animation clips and baked ambient occlusion (`Docs/Images/models_all.png`). Stylised primitive-based modelling, not sculpted or textured. Not yet imported in Unity. |
+| Map props and trees | Procedural stand-ins (C#); Blender versions are still to do |
+| RTS unit and building models | **Borrowed**: Dawnguard uses the Dawn creep/structure models and Ashen Legion the Dusk ones (scaled). Dedicated worker and building models are part of R5. |
 | Ability/item/status icons (123) | Done (procedural embossed emblems, `Tools/art/generate_icons.py`) |
 | Hero portraits (8) | Rendered from the hero models (`Blender/scripts/render_portraits.py`), faction-coloured |
 | UI sounds, combat/spell/death SFX, ambience, music loops and stingers (97 clips) | Placeholder quality, procedurally synthesised (`Tools/audio/generate_audio.py`) |
@@ -159,8 +171,12 @@ lobby → hero select → loading → match → post-game.
 
 ## Next step (exact)
 
-1. **Art (T-001 remainder):** Blender props and trees, then portraits rendered from the models.
-2. **RTS mode (milestone 8).** The order types and unit kinds are reserved; see GAME_DESIGN.md §9.
+1. **RTS mode (milestone 8), in order** (details in TODO.md T-030 to T-034):
+   - R2: the Crimson Court and Wild Covenant factions, altars that recruit MOBA heroes, and research.
+   - R3: an RTS AI plus SimRunner `--rts`.
+   - R4: multi-unit orders and RTS state in the protocol, and RTS enabled in lobbies and the queue.
+   - R5: the Unity RTS interface and dedicated models.
+2. **Art (T-001 remainder):** Blender props and trees.
 3. **Hero-specific bot behaviour** (T-022) and last-hitting (T-016). The Nyxara bot is the weakest in bot matches.
 4. On a machine with Unity 6000.0.40f1:
    - Open `Client/`, run **Bloodfall ▸ Setup Project**, press Play.

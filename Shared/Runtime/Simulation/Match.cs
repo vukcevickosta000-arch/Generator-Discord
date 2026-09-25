@@ -16,6 +16,8 @@ namespace Bloodfall.Simulation
         public string HeroId;
         public bool IsBot;
         public BotDifficulty BotDifficulty = BotDifficulty.Normal;
+        /// <summary>RTS: faction id (see GameData.RtsFactions); null or unknown = random.</summary>
+        public string RtsFaction;
     }
 
     public sealed class MatchConfig
@@ -133,8 +135,14 @@ namespace Bloodfall.Simulation
 
             if (config.SkipHeroSelect)
             {
-                AutoPickRemaining();
+                if (!IsRts) AutoPickRemaining();
                 BeginPreGame();
+            }
+            else if (IsRts)
+            {
+                // No hero draft in the RTS: factions are chosen in the lobby (heroes are recruited in game).
+                Phase = MatchPhase.Loading;
+                PhaseTimer = 90f;
             }
             else
             {
@@ -186,11 +194,15 @@ namespace Bloodfall.Simulation
         private void BeginPreGame()
         {
             Phase = MatchPhase.PreGame;
-            Time = -(Config.PreGameTimeOverride ?? Rules.PreGameTime);
+            Time = -(Config.PreGameTimeOverride ?? (IsRts ? Rules.RtsPreGameTime : Rules.PreGameTime));
             DayNightTimer = Rules.DayLength;
             IsNight = NaturalNight = false;
-            SpawnStructures();
-            foreach (var p in Players) SpawnHero(p);
+            if (IsRts) SpawnRtsStart();
+            else
+            {
+                SpawnStructures();
+                foreach (var p in Players) SpawnHero(p);
+            }
             Emit(new SimEvent { Type = SimEventType.MatchPhase, Value = (float)Phase, PlayerId = -1 });
             Vision.Update(force: true);
         }
@@ -292,7 +304,12 @@ namespace Bloodfall.Simulation
                 case OrderType.SwapItems: SwapItems(unit, o.Slot, o.Slot2); return;
                 case OrderType.ToggleAbility: ToggleAbility(unit, o.Slot); return;
             }
+            if (TryImmediateRtsOrder(unit, o)) return;
             if (unit.Dead) return;
+            if (o.Type == OrderType.Harvest || o.Type == OrderType.Build || o.Type == OrderType.ReturnResources)
+            {
+                if (!ValidateWorkerOrder(unit, o, out var werr)) { EmitError(unit, werr); return; }
+            }
             if (o.Type == OrderType.CastNoTarget || o.Type == OrderType.CastUnit || o.Type == OrderType.CastPoint)
             {
                 var ab = unit.GetAbility(o.Slot);
@@ -322,6 +339,7 @@ namespace Bloodfall.Simulation
             if (unit.Action == ActionState.Channeling) EndChannel(unit, interrupted: true);
             if (unit.Action == ActionState.AttackWindup || unit.Action == ActionState.AttackBackswing || unit.Action == ActionState.CastBackswing)
                 SetAction(unit, ActionState.Idle);
+            if (unit.GatherTimer > 0f || unit.Action == ActionState.Working) StopWorking(unit);
             unit.CurrentOrder = o;
             unit.Path.Clear();
             unit.PathIndex = 0;
@@ -366,9 +384,13 @@ namespace Bloodfall.Simulation
             UpdateDayNight(dt);
             if (Phase == MatchPhase.Playing)
             {
-                UpdateSpawners(dt);
-                UpdatePassiveIncome(dt);
-                UpdateVharoth(dt);
+                if (IsRts) UpdateRtsSpawners();
+                else
+                {
+                    UpdateSpawners(dt);
+                    UpdatePassiveIncome(dt);
+                    UpdateVharoth(dt);
+                }
             }
             ProcessPendingOrders();
 
@@ -393,6 +415,7 @@ namespace Bloodfall.Simulation
                 if (u.StatsDirty) u.RecomputeStats(Rules);
                 UpdateUnit(u, dt);
             }
+            if (IsRts) UpdateRts(dt);
 
             UpdateProjectiles(dt);
             UpdateZones(dt);
@@ -456,6 +479,7 @@ namespace Bloodfall.Simulation
         private void CheckVictory()
         {
             if (Winner != Team.None || Phase != MatchPhase.Playing) return;
+            if (IsRts) { CheckRtsVictory(); if (Winner != Team.None) return; }
             for (int t = 0; t < 2; t++)
             {
                 if (Cores[t] != null && Cores[t].Dead) { EndMatch(t == 0 ? Team.Dusk : Team.Dawn); return; }

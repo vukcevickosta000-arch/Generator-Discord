@@ -155,8 +155,8 @@ namespace Bloodfall.Client.Match
                 return;
             }
             _terrainMat = new Material(shader) { name = "Terrain_" + Map.Id };
-            _terrainMat.SetTexture("_Splat0", Resources.Load<Texture2D>("Maps/Velmoragh/splat0"));
-            _terrainMat.SetTexture("_Splat1", Resources.Load<Texture2D>("Maps/Velmoragh/splat1"));
+            _terrainMat.SetTexture("_Splat0", Resources.Load<Texture2D>(MapFolder + "splat0"));
+            _terrainMat.SetTexture("_Splat1", Resources.Load<Texture2D>(MapFolder + "splat1"));
             string[] layers = { "grass", "dirt", "cobble", "rock", "blood_mud", "ash", "leaves", "paving" };
             for (int i = 0; i < layers.Length; i++)
             {
@@ -245,6 +245,17 @@ namespace Bloodfall.Client.Match
         }
 
         /// <summary>Removes the tree nearest to a point (destroyed trees; also updates vision blockers).</summary>
+        /// <summary>Resources folder of the map's render assets ("Maps/Velmoragh/"), taken from its height file path.</summary>
+        private string MapFolder
+        {
+            get
+            {
+                var h = string.IsNullOrEmpty(Map.HeightFile) ? "Maps/Velmoragh/height" : Map.HeightFile;
+                int slash = h.LastIndexOf('/');
+                return slash >= 0 ? h.Substring(0, slash + 1) : "";
+            }
+        }
+
         public bool DestroyTree(System.Numerics.Vector2 p)
         {
             if (!_treeLookup.TryGetValue(TreeKey(p.X, p.Y), out var entry))
@@ -371,8 +382,8 @@ namespace Bloodfall.Client.Match
         {
             const int S = 256;
             var tex = new Texture2D(S, S, TextureFormat.RGBA32, false) { name = "Minimap", wrapMode = TextureWrapMode.Clamp };
-            var splat0 = Resources.Load<Texture2D>("Maps/Velmoragh/splat0");
-            var splat1 = Resources.Load<Texture2D>("Maps/Velmoragh/splat1");
+            var splat0 = Resources.Load<Texture2D>(MapFolder + "splat0");
+            var splat1 = Resources.Load<Texture2D>(MapFolder + "splat1");
             Color[] s0 = null, s1 = null;
             int sw = 0, sh = 0;
             try

@@ -55,6 +55,7 @@ camera, pacing and HUD density, never for art.
 | Props | Procedural stand-ins for every dressing type | Blender models (`Models/Props/<type>.fbx`) |
 | Heroes, creeps, neutrals, summons, Vharoth | **Blender-generated** (`Blender/scripts`): rigged, 12–13 clips, baked AO vertex colours, 3–7k triangles. See `Docs/Images/models_all.png`. The procedural stand-ins remain as fallback. | Hand-sculpted, textured characters on the same rigs and clip names |
 | Structures, wards, siege | **Blender-generated**: towers per team and tier, barracks, cores, fountains, wards, seal crystal, cauldron; rigged siege carts (wheels, arm) | Hand-authored models with destruction states |
+| RTS | Blood-iron vein (`resource_bloodiron_vein`: scorched rock, glowing shards, timber mine mouth). Dawnguard and Ashen Legion units and buildings borrow the Dawn/Dusk creep and structure models at reduced scale. Ashfields: ash-dominated splat, dead-oak forests, burned wagons, trebuchets, ruins. | Dedicated workers (tools, carried ore/lumber), buildings with construction scaffolds, one kit per faction (TODO T-034) |
 | VFX | 24 procedural sprites (`Tools/art/generate_vfx.py`) with code-defined particle recipes (`VfxSystem`) | Same pipeline with more sprite sheets and mesh effects |
 | Menu backdrop | Procedural parallax painting (`Tools/art/generate_backdrop.py`) plus live fog, embers, bats and lightning | Keep; add an animated 3D castle later |
 

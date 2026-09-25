@@ -4,7 +4,7 @@
 
 | Suite | Command | What it covers |
 |---|---|---|
-| Unit and simulation tests (73) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
+| Unit and simulation tests (91) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
 | End-to-end online | `Tools/dev/run-e2e.sh` | Real backend (fresh SQLite database) and a real game server over UDP; see §3 |
 | Bot soak | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- <minutes> <seed> [--deaths] [--trace N] [--mirror \| --heroes id1,id2]` | Full 5v5 bot matches (every playable hero by default): stability, performance, balance numbers |
 | Unity client compile | `dotnet build Tools/UnityCompileCheck` | Every client script plus Shared, against UnityEngine 2021.3 reference assemblies |
@@ -29,6 +29,18 @@ What the unit and simulation tests cover:
   - rewards, Heart revive and use
   - the snapshot header
   - bots breaking seals
+- **RTS** (`RtsTests.cs`, 18 tests):
+  - starting bases and map symmetry
+  - mining rate and vein bookkeeping
+  - lumber harvesting and falling trees
+  - construction pausing without a builder, extra builders, self-building Legion structures
+  - rejected placements and costs, re-validation on arrival
+  - queue, supply, refunds and rally points
+  - cancelling construction, watchtowers firing only when finished
+  - elimination and victory, ruins releasing their ground
+  - order ownership (no commanding or training with enemy units), veins cannot be attacked
+  - one-time neutral camps and their bounty
+  - determinism and data validity (every requirement buildable by the worker)
 
 ## 2. What the compile checks do *not* cover
 

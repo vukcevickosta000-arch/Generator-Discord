@@ -7,7 +7,11 @@ heroes/nyxara.json
 heroes/thael.json
 heroes/vorak.json
 items/items.json
+maps/ashfields.json
 maps/velmoragh.json
+rts/ashen_legion.json
+rts/dawnguard.json
+rts/resource_nodes.json
 rules.json
 statuses/common.json
 units/creeps.json

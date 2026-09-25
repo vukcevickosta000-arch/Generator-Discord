@@ -32,6 +32,7 @@ namespace Bloodfall.Simulation
 
             if (u.Motion != null) { UpdateMotion(u, dt); return; }
             if (u.IsStructure && u.UnitDef != null && u.UnitDef.DamageMax <= 0) return;
+            if (u.Kind == UnitKind.Resource) return;
 
             if ((u.Flags & StatusFlags.HardDisable) != 0)
             {
@@ -88,6 +89,15 @@ namespace Bloodfall.Simulation
                 case OrderType.CastPoint:
                     ProcessCastOrder(u, dt);
                     break;
+                case OrderType.Harvest:
+                    UpdateHarvest(u, dt);
+                    break;
+                case OrderType.ReturnResources:
+                    UpdateReturnOrder(u, dt);
+                    break;
+                case OrderType.Build:
+                    UpdateBuild(u, dt);
+                    break;
                 default:
                     CompleteOrder(u);
                     break;
@@ -110,6 +120,14 @@ namespace Bloodfall.Simulation
             if ((u.IsHero || u.Kind == UnitKind.Summon) && u.Brain == null && u.IdleTime > 0.25f && u.CanAttack)
             {
                 var t = FindAttackTarget(u, Math.Min(u.AcquisitionRange, u.Stats.AttackRange + 2.5f));
+                if (t != null) u.CurrentOrder = new Order { Type = OrderType.AttackUnit, UnitId = u.Id, TargetId = t.Id, Slot2 = 1 };
+            }
+            // RTS soldiers guard their ground: they engage enemies that come close, and fight back when hit, but do
+            // not wander into neutral camps on their own.
+            else if (u.Kind == UnitKind.Soldier && u.Brain == null && u.IdleTime > 0.25f && u.CanAttack && (Tick + u.Id) % 3 == 0)
+            {
+                var t = Time - u.LastAttackedTime < 2f ? GetUnit(u.LastAttackerId) : null;
+                if (t == null || !CanAttackTarget(u, t, out bool deny) || deny) t = FindAttackTarget(u, u.AcquisitionRange, ignoreNeutrals: true);
                 if (t != null) u.CurrentOrder = new Order { Type = OrderType.AttackUnit, UnitId = u.Id, TargetId = t.Id, Slot2 = 1 };
             }
         }
@@ -142,7 +160,7 @@ namespace Bloodfall.Simulation
         }
 
         /// <summary>Default target acquisition: closest attackable enemy, preferring non-structures.</summary>
-        public Unit FindAttackTarget(Unit u, float range)
+        public Unit FindAttackTarget(Unit u, float range, bool ignoreNeutrals = false)
         {
             var list = RentList();
             float search = range <= 0f ? u.Stats.AttackRange + 2f : range;
@@ -154,6 +172,7 @@ namespace Bloodfall.Simulation
                 if (t.Team == u.Team || !CanAttackTarget(u, t, out bool deny) || deny) continue;
                 if (t.Invulnerable || t.Kind == UnitKind.Fountain) continue;
                 if (u.Team == Team.Neutral && t.Team == Team.Neutral) continue;
+                if (ignoreNeutrals && t.Team == Team.Neutral) continue;
                 float d = Vector2.Distance(u.Position, t.Position);
                 if (range <= 0f && d > AttackReach(u, t)) continue;
                 if (d > search + t.Radius) continue;
@@ -300,12 +319,12 @@ namespace Bloodfall.Simulation
             for (int i = 0; i < Units.Count; i++)
             {
                 var a = Units[i];
-                if (!a.IsAlive || a.IsStructure || a.Flying || a.HasFlag(StatusFlags.Phased) || a.Motion != null) continue;
+                if (!a.IsAlive || a.IsImmobile || a.Flying || a.HasFlag(StatusFlags.Phased) || a.Motion != null) continue;
                 _overlapScratch.Clear();
                 Spatial.Query(a.Position, a.Radius + 0.6f, _overlapScratch, true);
                 foreach (var b in _overlapScratch)
                 {
-                    if (b == a || b.Id < a.Id || !b.IsAlive || b.IsStructure || b.Flying || b.HasFlag(StatusFlags.Phased) || b.Motion != null) continue;
+                    if (b == a || b.Id < a.Id || !b.IsAlive || b.IsImmobile || b.Flying || b.HasFlag(StatusFlags.Phased) || b.Motion != null) continue;
                     if (b.Kind == UnitKind.Ward || a.Kind == UnitKind.Ward) continue;
                     var d = a.Position - b.Position;
                     float dist = d.Length();

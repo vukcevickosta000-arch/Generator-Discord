@@ -31,6 +31,8 @@ namespace Bloodfall.Data
         public readonly Dictionary<string, CampTypeDef> CampTypes = new Dictionary<string, CampTypeDef>();
         public readonly Dictionary<string, GameModeDef> Modes = new Dictionary<string, GameModeDef>();
         public readonly Dictionary<Faction, FactionDef> Factions = new Dictionary<Faction, FactionDef>();
+        public readonly Dictionary<string, RtsFactionDef> RtsFactions = new Dictionary<string, RtsFactionDef>();
+        public readonly List<string> RtsFactionOrder = new List<string>();
         public readonly List<string> ShopCategories = new List<string>();
         public RulesDef Rules = new RulesDef();
         public string ContentHash = "";
@@ -98,6 +100,16 @@ namespace Bloodfall.Data
                     case "campTypes": foreach (var n in kv.Value.ArrayValue ?? new List<JsonNode>()) { var c = JsonMapper.FromNode<CampTypeDef>(n); CampTypes[c.Id] = c; } break;
                     case "modes": foreach (var n in kv.Value.ArrayValue ?? new List<JsonNode>()) { var m = JsonMapper.FromNode<GameModeDef>(n); Modes[m.Id] = m; } break;
                     case "factions": foreach (var n in kv.Value.ArrayValue ?? new List<JsonNode>()) { var fd = JsonMapper.FromNode<FactionDef>(n); Factions[fd.Id] = fd; } break;
+                    case "rtsFactions":
+                        foreach (var n in kv.Value.ArrayValue ?? new List<JsonNode>())
+                        {
+                            var rf = JsonMapper.FromNode<RtsFactionDef>(n);
+                            if (string.IsNullOrEmpty(rf.Id)) { Errors.Add($"{f.Path}: RTS faction without id"); continue; }
+                            if (RtsFactions.ContainsKey(rf.Id)) Errors.Add($"{f.Path}: duplicate RTS faction id '{rf.Id}'");
+                            else RtsFactionOrder.Add(rf.Id);
+                            RtsFactions[rf.Id] = rf;
+                        }
+                        break;
                     case "shopCategories": foreach (var n in kv.Value.ArrayValue ?? new List<JsonNode>()) { var s = n.AsString(); if (!ShopCategories.Contains(s)) ShopCategories.Add(s); } break;
                     case "$schema": case "$comment": case "roster": break;
                     default: Warnings.Add($"{f.Path}: unknown top-level key '{kv.Key}'"); break;
@@ -219,12 +231,41 @@ namespace Bloodfall.Data
                 foreach (var c in m.Camps)
                     if (!CampTypes.ContainsKey(c.CampType)) Errors.Add($"Map '{m.Id}' camp '{c.Id}' uses unknown camp type '{c.CampType}'");
             }
+            foreach (var m in Maps.Values)
+                foreach (var rn in m.ResourceNodes)
+                    if (!Units.TryGetValue(rn.UnitId ?? "", out var rd) || rd.Kind != UnitKind.Resource) Errors.Add($"Map '{m.Id}' resource node '{rn.Id}' uses unknown resource unit '{rn.UnitId}'");
+            ValidateRts();
             foreach (var c in CampTypes.Values)
                 foreach (var v in c.Variants)
                     foreach (var u in v)
                         if (!Units.ContainsKey(u)) Errors.Add($"Camp type '{c.Id}' uses unknown unit '{u}'");
             if (Rules.Experience?.Cumulative == null || Rules.Experience.Cumulative.Length < Rules.MaxHeroLevel)
                 Errors.Add("rules.experience.cumulative must define XP for every level");
+        }
+
+        private void ValidateRts()
+        {
+            void Refs(string owner, string what, List<string> ids, Func<UnitDef, bool> ok)
+            {
+                if (ids == null) return;
+                foreach (var id in ids)
+                    if (!Units.TryGetValue(id ?? "", out var d) || !ok(d)) Errors.Add($"Unit '{owner}' {what} '{id}' is not a valid unit");
+            }
+            foreach (var u in Units.Values)
+            {
+                Refs(u.Id, "trains", u.Trains, d => d.Kind != UnitKind.Building && d.Kind != UnitKind.Resource && d.BuildTime > 0);
+                Refs(u.Id, "builds", u.Builds, d => d.Kind == UnitKind.Building && d.BuildTime > 0);
+                Refs(u.Id, "requires", u.Requires, d => d.Kind == UnitKind.Building);
+                if (u.Kind == UnitKind.Worker && u.GatherGold <= 0 && u.GatherLumber <= 0) Warnings.Add($"Worker '{u.Id}' gathers nothing");
+            }
+            foreach (var f in RtsFactions.Values)
+            {
+                if (!Units.TryGetValue(f.Hall ?? "", out var hall) || hall.Kind != UnitKind.Building) Errors.Add($"RTS faction '{f.Id}' hall '{f.Hall}' is not a building");
+                else if (!hall.DropOffGold || !hall.DropOffLumber) Errors.Add($"RTS faction '{f.Id}' hall '{f.Hall}' must accept gold and lumber");
+                if (!Units.TryGetValue(f.Worker ?? "", out var w) || w.Kind != UnitKind.Worker) Errors.Add($"RTS faction '{f.Id}' worker '{f.Worker}' is not a worker");
+                foreach (var su in f.StartingUnits ?? new List<string>())
+                    if (!Units.ContainsKey(su)) Errors.Add($"RTS faction '{f.Id}' starts with unknown unit '{su}'");
+            }
         }
 
         private void ValidateEffects(string owner, List<EffectDef> effects)

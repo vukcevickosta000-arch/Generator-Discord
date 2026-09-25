@@ -258,7 +258,42 @@ def cauldron(kit, key):
     return 1.2
 
 
+def bloodiron_vein(kit, key):
+    """RTS resource node: a scorched rock mound split by glowing blood-iron seams, with a miner's timber frame."""
+    rock, rock2, rust = (0.17, 0.14, 0.15), (0.24, 0.2, 0.2), (0.42, 0.17, 0.1)
+    kit.use(bone="root", color=rock, mat="bf_matte", smooth=False)
+    kit.ellipsoid((0, 0, 0.35), (1.75, 1.55, 0.75), seg=9, rings=5)
+    kit.use(color=rock2)
+    for i, (a, r, s, h) in enumerate([(0.3, 0.9, 0.8, 0.9), (2.2, 1.0, 0.7, 0.75), (4.0, 0.8, 0.85, 1.0), (5.2, 1.1, 0.6, 0.6)]):
+        kit.ellipsoid((math.cos(a) * r, math.sin(a) * r, 0.55 + 0.2 * (i % 2)), (s, s * 0.8, h), seg=7, rings=4,
+                      rot=Euler((0.2 * (i - 1.5), 0.15 * i, a)))
+    kit.use(color=rust)
+    for a in (1.0, 3.1, 4.6):
+        kit.ellipsoid((math.cos(a) * 1.25, math.sin(a) * 1.1, 0.45), (0.45, 0.3, 0.2), seg=6, rings=4, rot=Euler((0, 0.3, a)))
+    # Blood-iron crystals thrusting out of the rock at different angles.
+    red = (1.0, 0.12, 0.14)
+    kit.use(color=red, mat=kit.glow(red))
+    shards = [((0.1, 0.1, 1.0), (0.0, 0.1, 1.0), 0.32, 1.4), ((0.7, -0.3, 0.8), (0.6, -0.2, 0.8), 0.22, 0.9),
+              ((-0.6, 0.5, 0.8), (-0.5, 0.4, 0.8), 0.24, 1.0), ((-0.3, -0.7, 0.6), (-0.2, -0.8, 0.6), 0.18, 0.7),
+              ((0.9, 0.6, 0.5), (0.7, 0.6, 0.5), 0.16, 0.6), ((-1.1, -0.2, 0.4), (-0.9, -0.1, 0.5), 0.15, 0.55)]
+    for c, axis, r, length in shards:
+        kit.lathe([(0.001, -0.1), (r, 0.15), (r * 0.7, length * 0.75), (0.001, length)], center=c, axis=axis, seg=5,
+                  close_top=False, close_bottom=False)
+    # Timber frame of the mine mouth on the -Y (front) side, with a hanging lantern.
+    wood = (0.3, 0.21, 0.14)
+    kit.use(color=wood, mat="bf_matte", smooth=False)
+    for sx in (-0.75, 0.75):
+        kit.box((sx, -1.45, 0.75), (0.16, 0.16, 1.5), bevel=0.02)
+    kit.box((0, -1.45, 1.55), (1.8, 0.2, 0.18), bevel=0.02)
+    kit.use(color=(0.05, 0.03, 0.03))
+    kit.ellipsoid((0, -1.32, 0.6), (0.55, 0.12, 0.6), seg=8, rings=5)
+    kit.use(color=(1.0, 0.6, 0.25), mat=kit.glow((1.0, 0.6, 0.25)))
+    kit.ellipsoid((0.55, -1.62, 1.3), (0.09, 0.09, 0.12), seg=6, rings=4)
+    return 2.4
+
+
 STATIC = {
+    "resource_bloodiron_vein": bloodiron_vein,
     "tower_": tower, "barracks_": barracks, "core_": core, "fountain_": fountain, "ward_": ward,
     "vharoth_seal_active": seal_crystal, "summon_cauldron": cauldron,
 }
@@ -266,7 +301,7 @@ STATIC = {
 STATIC_KEYS = ([f"tower_{t}_t{i}" for t in ("dawn", "dusk") for i in (1, 2, 3, 4)]
                + [f"barracks_{t}_{k}" for t in ("dawn", "dusk") for k in ("melee", "ranged")]
                + ["core_dawn", "core_dusk", "fountain_dawn", "fountain_dusk", "ward_watcher", "ward_sentry",
-                  "vharoth_seal_active", "summon_cauldron"])
+                  "vharoth_seal_active", "summon_cauldron", "resource_bloodiron_vein"])
 
 
 def build_static(key):

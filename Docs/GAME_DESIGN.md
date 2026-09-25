@@ -193,3 +193,63 @@ health bar while Vharoth is visible.
   - *Ashen Legion:* raises fallen units as thralls.
   - *Wild Covenant:* shapeshifting units empowered at night.
   - *Dawnguard:* fortifications and healing auras.
+
+### 11.1 As implemented (phase R1)
+
+The rules below run in the shared simulation (`Shared/Runtime/Simulation/Match.Rts.cs`) and are covered by
+`RtsTests`. They cannot be played from the Unity client yet (TODO T-032, T-033).
+
+**Start.** Each player gets their faction's hall and five workers on their own plateau of **Ashfields**
+(`map_rts_ashfields`), plus 500 blood-iron and 150 lumber. There are no heroes, creep waves or passive income.
+
+**Blood-iron.** ("gold" in code and data.)
+- Veins hold 12,500 (mains and contested expansions) or 10,000 (naturals).
+- One worker at a time works a vein, for 1 s, and carries 10 back to the nearest hall. A main vein is 11.5 m from
+  the hall, so it saturates at about five workers (roughly 9–10 blood-iron per second).
+- An empty vein collapses.
+
+**Lumber.**
+- Every tree holds 50 lumber. A worker chops for 6 s and carries 10.
+- A tree falls when it is empty, opening the ground and line of sight on both server and client.
+- Workers pick the nearest tree they can actually reach, checked with a path test because forests are dense.
+
+**Construction.**
+- Placement needs open walkable ground: no trees, cliffs, water, buildings or veins, a 1.5 m gap from every vein,
+  and no enemy unit in the way.
+- It is checked when the order is given and again when the worker arrives, and the cost is paid on arrival.
+- A building starts at 10% HP and gains HP as it progresses. It grants supply, trains and shoots only when finished.
+- Cancelling a building under construction refunds 75%.
+
+**Training.**
+- Queues hold 5 units. Cost and supply are paid when a unit is queued, and cancelling refunds both in full.
+- Supply cap is the sum of finished buildings, capped at 100.
+- Rally points:
+  - a point: the new unit moves there;
+  - a vein or tree: a new worker starts harvesting;
+  - a unit: the new unit follows an ally or attacks an enemy.
+  - Halls with no rally send new workers to their vein.
+
+**Combat.**
+- Soldiers engage enemies within their acquisition range, and fight back when hit.
+- They do not walk into neutral camps on their own.
+- Watchtowers shoot once finished.
+
+**Neutrals and victory.**
+- Neutral camps guard the expansions. They spawn once and do not respawn, and their bounty goes to the killer's owner.
+- A player with no buildings left (finished or not) is eliminated. A team whose players are all eliminated loses.
+
+**Factions in R1.**
+
+| | Dawnguard | Ashen Legion |
+|---|---|---|
+| Hall | Dawn Citadel (10 supply) | Necropolis (10 supply) |
+| Worker | Squire | Grave Acolyte |
+| Supply | Sun Shrine (+8) | Grave Obelisk (+8) |
+| Barracks | Barracks: Footman, Arbalist | Bone Pit: Ash Thrall, Bone Archer |
+| Defence | Watchtower | Spirit Spire |
+| Siege (needs barracks) | Siege Workshop: Ballista | Charnel Works: Corpse Catapult |
+| Elite (needs barracks) | Sanctum of Dawn: Sun Paladin | Crypt of Horrors: Crypt Horror |
+| Mechanic | Squires stay to build; each extra squire adds +50% speed | Acolytes only summon; buildings rise on their own |
+
+Legion units are slightly cheaper, faster and frailer than their Dawnguard counterparts. The Crimson Court, the Wild
+Covenant, hero altars and research follow in phase R2 (TODO T-030).

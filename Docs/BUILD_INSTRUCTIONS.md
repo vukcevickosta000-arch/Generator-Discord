@@ -58,6 +58,7 @@ On Windows use `Tools/dev/run-local.ps1`.
 
 ```bash
 python3 Tools/mapgen/generate_velmoragh.py     # map JSON + heightfield/splat/dressing + Docs/Images/velmoragh_layout.png
+python3 Tools/mapgen/generate_ashfields.py     # RTS map (map_rts_ashfields) + render data + Docs/Images/ashfields_layout.png
 python3 Tools/art/generate_ui.py               # UI kit, cursors, crests, ranks, logo
 python3 Tools/art/generate_backdrop.py         # menu backdrop layers
 python3 Tools/art/generate_vfx.py              # particle / decal sprites
@@ -67,7 +68,7 @@ python3 Tools/audio/generate_audio.py          # UI, SFX, ambience, music, annou
 python3 Tools/dev/gen_gamedata_index.py        # after adding/renaming game data files
 python3 Tools/dev/gen_item_docs.py             # refresh the item table in Docs/ITEM_DATABASE.md
 pip install bpy==5.0.1                         # once (Python 3.11), or run the script with `blender -b -P`
-python3 Blender/scripts/build_models.py        # all 56 unit/structure models -> Client/Assets/Resources/Models/*.fbx
+python3 Blender/scripts/build_models.py        # all 57 unit/structure models -> Client/Assets/Resources/Models/*.fbx
 python3 Blender/scripts/build_models.py hero_vorak --preview   # one model + Cycles previews in Blender/previews/
 python3 Blender/scripts/render_portraits.py    # hero portraits from the models (Textures/Icons/Portraits)
 ```

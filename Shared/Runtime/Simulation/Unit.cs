@@ -62,6 +62,8 @@ namespace Bloodfall.Simulation
         public PseudoRandom Prd;
     }
 
+    public enum HarvestKind : byte { None, Gold, Lumber }
+
     public enum MotionKind : byte { None, Dash, Leap, Knockback, Pull }
 
     public sealed class ForcedMotion
@@ -196,7 +198,37 @@ namespace Bloodfall.Simulation
         public int SpawnTick;
         public float TotalDamageTaken;
 
+        // RTS
+        /// <summary>Buildings: still being constructed (no attacks, training, supply or drop-off).</summary>
+        public bool UnderConstruction;
+        /// <summary>Construction progress 0..1.</summary>
+        public float BuildProgress = 1f;
+        /// <summary>Buildings: unit ids waiting to be trained (resources and supply already paid).</summary>
+        public List<string> TrainQueue;
+        public float TrainProgress;
+        public bool HasRally;
+        public Vector2 RallyPoint;
+        public int RallyTargetId;
+        /// <summary>Workers: resources being carried back to a drop-off.</summary>
+        public int CarryGold, CarryLumber;
+        /// <summary>Resource nodes: amount left.</summary>
+        public int ResourceAmount;
+        /// <summary>Workers: what they were told to harvest (see <see cref="Match"/> RTS harvesting).</summary>
+        public HarvestKind Harvesting;
+        public int HarvestNodeId;
+        public int HarvestTree = -1;
+        /// <summary>Where the player pointed when ordering lumber harvesting (new trees are sought near it).</summary>
+        public Vector2 HarvestAnchor;
+        /// <summary>Buildings: workers constructing this tick (reset every tick).</summary>
+        public int BuilderCount;
+        public float GatherTimer;
+        public bool Returning;
+        /// <summary>Nav-grid cells this unit blocks (buildings and mines).</summary>
+        public List<int> Footprint;
+
         public bool IsHero => Kind == UnitKind.Hero;
+        public bool IsImmobile => IsStructure || Kind == UnitKind.Resource || Kind == UnitKind.Objective;
+        public bool IsGathering => GatherTimer > 0f;
         public bool IsStructure => Kind == UnitKind.Tower || Kind == UnitKind.Barracks || Kind == UnitKind.Core || Kind == UnitKind.Fountain || Kind == UnitKind.Building || Kind == UnitKind.Shop;
         public bool IsAlive => !Dead && !Removed;
         public bool IsCreep => Kind == UnitKind.Creep;
@@ -234,6 +266,8 @@ namespace Bloodfall.Simulation
                 case UnitKind.Summon: return TargetType.Summon;
                 case UnitKind.Ward: return TargetType.Ward;
                 case UnitKind.Worker: return TargetType.Creep;
+                case UnitKind.Soldier: return TargetType.Creep;
+                case UnitKind.Resource: return TargetType.Resource;
                 case UnitKind.Objective: return TargetType.Objective;
                 default: return TargetType.Structure;
             }
