@@ -43,6 +43,7 @@ namespace Bloodfall.E2E
             var a = await Register(backend, "Vorakfan" + suffix);
             var b = await Register(backend, "Bloodwitch" + suffix);
             Check(a.token != null && b.token != null, "two accounts registered and logged in");
+            await AccountSecurityChecks(backend, "Vorakfan" + suffix, "Sentinel" + suffix);
 
             Console.WriteLine("2. Custom lobby");
             var lobby = await Post<LobbyView>(a.http, "api/lobbies", new CreateLobbyRequest { Name = "E2E Blood Duel " + suffix, Region = "dev-local", ModeId = "moba_5v5", TeamSize = 1, FillWithBots = false });
@@ -135,6 +136,31 @@ namespace Bloodfall.E2E
             var body = await resp.Content.ReadFromJsonAsync<AuthResponse>(Json);
             http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", body?.AccessToken);
             return (http, body?.AccessToken);
+        }
+
+        /// <summary>Validation, credential and session-rotation behaviour of the auth service.</summary>
+        static async Task AccountSecurityChecks(string backend, string existingName, string freshName)
+        {
+            var http = new HttpClient { BaseAddress = new Uri(backend + "/") };
+            var dup = await http.PostAsJsonAsync("api/auth/register", new RegisterRequest { Username = existingName, Email = "other-" + existingName.ToLowerInvariant() + "@example.com", Password = "Crimson#Moon7" }, Json);
+            Check(!dup.IsSuccessStatusCode, $"duplicate username rejected ({(int)dup.StatusCode})");
+            var weak = await http.PostAsJsonAsync("api/auth/register", new RegisterRequest { Username = freshName + "x", Email = freshName.ToLowerInvariant() + "x@example.com", Password = "short" }, Json);
+            Check((int)weak.StatusCode == 400, $"weak password rejected ({(int)weak.StatusCode})");
+            var wrong = await http.PostAsJsonAsync("api/auth/login", new LoginRequest { Login = existingName, Password = "not-the-password" }, Json);
+            Check((int)wrong.StatusCode == 401, $"wrong password rejected ({(int)wrong.StatusCode})");
+            var ok = await http.PostAsJsonAsync("api/auth/login", new LoginRequest { Login = existingName, Password = "Crimson#Moon7" }, Json);
+            Check(ok.IsSuccessStatusCode, "login with correct password");
+
+            // Refresh rotation + reuse detection on a throwaway account.
+            var reg = await http.PostAsJsonAsync("api/auth/register", new RegisterRequest { Username = freshName, Email = freshName.ToLowerInvariant() + "@example.com", Password = "Crimson#Moon7" }, Json);
+            var first = await reg.Content.ReadFromJsonAsync<AuthResponse>(Json);
+            var r1 = await http.PostAsJsonAsync("api/auth/refresh", new RefreshRequest { RefreshToken = first?.RefreshToken }, Json);
+            var second = r1.IsSuccessStatusCode ? await r1.Content.ReadFromJsonAsync<AuthResponse>(Json) : null;
+            Check(second?.RefreshToken != null && second.RefreshToken != first?.RefreshToken, "refresh token rotated");
+            var reuse = await http.PostAsJsonAsync("api/auth/refresh", new RefreshRequest { RefreshToken = first?.RefreshToken }, Json);
+            Check((int)reuse.StatusCode == 401, $"reused refresh token rejected ({(int)reuse.StatusCode})");
+            var afterReuse = await http.PostAsJsonAsync("api/auth/refresh", new RefreshRequest { RefreshToken = second?.RefreshToken }, Json);
+            Check((int)afterReuse.StatusCode == 401, "token family revoked after reuse");
         }
 
         static async Task<T> Post<T>(HttpClient http, string url, object body)
