@@ -73,6 +73,17 @@
     - `rtsFactions` (hall, worker, starting units).
     - `MapDef.startLocations` and `resourceNodes`.
     - `PlayerSetup.RtsFaction`.
+  - **RTS AI** (`AI/RtsAi.cs`) is one controller per bot player, not per unit. It acts once a second, from the
+    start of the tick, and uses only `IssueOrder` and `TryTrain`, so every rule applies to it. It also only reads
+    what a player knows: its own units, visible enemies, remembered enemy buildings and the map layout.
+    - Economy: five workers per vein, and a lumber crew sized by stock.
+    - Construction: supply ahead of need, then barracks, tower, siege, expansion and elite buildings, with sites
+      keeping a 1.3 m ring of open ground.
+    - Production: resources are reserved for sites workers are walking to.
+    - Army: gather at a rally, clear the camps guarding expansions, defend, and attack in staged advances once
+      stronger than the largest enemy army seen. Retreat when a wave is broken.
+    - Difficulty changes efficiency and judgement, never resources. MatchHost hands an abandoning player's base to
+      the AI.
 - **Randomness:** only through the match RNG (seeded). PRD for procs and crits.
 - **Events:** `SimEvent` is the only output channel besides state. Each has a `PlayerId` (−1 = broadcast), and the
   server filters them per team.

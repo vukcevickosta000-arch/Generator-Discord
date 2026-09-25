@@ -6,6 +6,7 @@ using Bloodfall.Simulation;
 
 // Headless balance / AI analysis tool:
 //   dotnet run -- [minutes] [seed] [--deaths] [--trace <playerIndex>] [--mirror | --heroes id1,id2,...]
+//   dotnet run -- [minutes] [seed] --rts [--factions a,b] [--games N] [--difficulty Normal] [--trace]
 // By default the ten bots cycle through every playable hero (Dawn from the start of the roster, Dusk from the middle).
 namespace Bloodfall.SimRunner
 {
@@ -16,12 +17,13 @@ namespace Bloodfall.SimRunner
             float minutes = args.Length > 0 && float.TryParse(args[0], out var mm) ? mm : 20f;
             ulong seed = args.Length > 1 && ulong.TryParse(args[1], out var ss) ? ss : 11UL;
             bool deaths = args.Contains("--deaths");
-            int trace = -1;
-            int ti = Array.IndexOf(args, "--trace");
-            if (ti >= 0 && ti + 1 < args.Length) trace = int.Parse(args[ti + 1]);
             var root = GameDataLoader.FindDefaultRoot(AppContext.BaseDirectory) ?? GameDataLoader.FindDefaultRoot(Environment.CurrentDirectory);
             var data = GameDataLoader.FromDirectory(root);
             if (data.Errors.Count > 0) { foreach (var e in data.Errors) Console.WriteLine("DATA ERROR: " + e); return 1; }
+            if (args.Contains("--rts")) return RtsRunner.Run(data, args, minutes, seed);
+            int trace = -1;
+            int ti = Array.IndexOf(args, "--trace");
+            if (ti >= 0 && ti + 1 < args.Length) trace = int.Parse(args[ti + 1]);
 
             string[] heroes = data.PlayableHeroes().Select(h => h.Id).ToArray();
             if (args.Contains("--mirror")) heroes = new[] { "hero_vorak" };

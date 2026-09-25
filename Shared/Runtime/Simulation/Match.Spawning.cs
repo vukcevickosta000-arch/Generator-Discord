@@ -164,7 +164,7 @@ namespace Bloodfall.Simulation
                 bool blocked = list.Any(u => u.Kind != UnitKind.Ward || !u.IsInvisible);
                 ReturnList(list);
                 if (blocked) continue;
-                var variant = ct.Variants[Rng.Range(0, ct.Variants.Count)];
+                var variant = ct.Variants[IsRts ? SymmetricVariant(camp.Position, ct.Variants.Count) : Rng.Range(0, ct.Variants.Count)];
                 if (!CampUnits.TryGetValue(camp.Id, out var members)) { members = new List<Unit>(); CampUnits[camp.Id] = members; }
                 members.RemoveAll(m => m.Dead || m.Removed);
                 int upgrade = (int)(Math.Max(0f, Time) / 600f);
@@ -182,6 +182,18 @@ namespace Bloodfall.Simulation
                     members.Add(n);
                 }
             }
+        }
+
+        /// <summary>
+        /// RTS maps are point-symmetric; a camp and its mirror image must hold the same creeps or one player's
+        /// expansion is easier to take. The variant is derived from the camp's position folded onto one half.
+        /// </summary>
+        private int SymmetricVariant(Vector2 p, int count)
+        {
+            var mirror = new Vector2(Grid.WorldWidth, Grid.WorldHeight) - p;
+            var key = p.X + p.Y < mirror.X + mirror.Y ? p : mirror;
+            int h = (int)Math.Round(key.X * 10f) * 7919 + (int)Math.Round(key.Y * 10f) * 104729;
+            return (int)((uint)h % (uint)count);
         }
 
         /// <summary>Called by neutral brains: the whole camp retaliates together.</summary>

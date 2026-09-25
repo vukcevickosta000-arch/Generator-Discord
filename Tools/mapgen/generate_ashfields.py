@@ -268,7 +268,11 @@ def main():
     forest = (edge_band | groves | base_back) & ~front
     forest &= (road_d > 4.5) & ~clearing & ~rock & walk
     forest &= ~(np.hypot(X - SIZE / 2, Y - SIZE / 2) < 16.0)   # the burned centre is open ground
-    trees = poisson_trees(forest, spacing=1.55)
+    # Trees are sampled on the Dawn half and point-mirrored, so both sides get exactly the same forests.
+    # Keeping 1.2 m off the dividing diagonal leaves mirrored trunks at least the Poisson spacing apart.
+    half = forest & (X + Y < SIZE - 1.2)
+    half_trees = poisson_trees(half, spacing=1.55)
+    trees = half_trees + [(SIZE - x, SIZE - y, v) for x, y, v in half_trees]
     tree_block = np.zeros(X.shape, bool)
     for (tx, ty, _v) in trees:
         tree_block |= disc(X, Y, (tx, ty), 0.72)

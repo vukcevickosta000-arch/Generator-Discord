@@ -143,7 +143,9 @@ namespace Bloodfall.Simulation
                 ProcessAttack(u, t, dt, allowMove: true);
                 return;
             }
-            if (u.Action == ActionState.AttackWindup) return;
+            // The target died or left mid-swing and nothing else is in reach: drop the swing and keep marching
+            // (returning here would leave the unit frozen in its wind-up forever).
+            if (u.Action == ActionState.AttackWindup) SetAction(u, ActionState.Idle);
             if (u.Action == ActionState.AttackBackswing) { u.ActionTimer -= dt; if (u.ActionTimer > 0f) return; SetAction(u, ActionState.Idle); }
             u.AttackTargetId = 0;
             if (MoveTowardsPoint(u, goal, dt, 0.4f))

@@ -104,7 +104,7 @@ Creeps upgrade every 7.5 min (+HP, +damage, +gold).
 
 ## 5. RTS economy (phase R1 numbers, 2026-09-25)
 
-These are design targets checked by `RtsTests`. There is no RTS AI yet, so there are no measured matches (TODO T-031).
+These are design targets checked by `RtsTests`.
 
 - **Start.** 500 blood-iron and 150 lumber, a hall (10 supply) and 5 workers (75 blood-iron, 1 supply, 14 s each).
 - **Mining.**
@@ -122,9 +122,28 @@ These are design targets checked by `RtsTests`. There is no RTS AI yet, so there
   - Legion equivalents cost 5–10 less and train 1–2 s faster, with about 10% less HP.
 - **Towers.** 110/80, 45 s, 22–26 damage per second at 7 m. Enough to stop a lone worker harass, not an army.
 
+### Measured: RTS bots on Ashfields (SimRunner `--rts`, 30-minute cap, 2026-09-25)
+
+| Series | Result |
+|---|---|
+| Dawnguard vs Ashen Legion, Normal, 24 games (seeds 500–523), sides alternating | 12–12. Start sides also 12–12. Decided games last 23.7 min on average. |
+| Same, seeds 900–923 | Dawnguard 15–9. Start sides Dawn 17 – Dusk 7, but see the next row. |
+| Mirror games, 80 in total (Dawnguard seeds 1000+, Legion 2000+) | Start sides Dawn 36 – Dusk 40 (4 draws): no side advantage. |
+| Normal vs Beginner, 10 games per faction | Normal 10–0 with both factions |
+| Veteran vs Normal, 10 games per faction | Veteran 7–2 (Dawnguard), 6–3 (Legion) |
+| Nightmare vs Veteran | 2–7 and 5–4: no better (TODO T-031) |
+| Performance | 0.06–0.08 ms per tick with about 150 units |
+
+History of the fixes behind these numbers:
+
+- Legion line units were buffed after the first series (Dawnguard 12–3). Thrall 400 HP for 120, Bone Archer 290 HP
+  for 125, Catapult 580 HP for 170, Crypt Horror 1000 HP for 260.
+- Map symmetry fixes (BUGS.md F-018, F-019) removed a start-side advantage of up to 22–2 in mirrors.
+
 ## 6. Process
 
 1. Change data.
 2. Run `dotnet test`: data validation and simulation tests.
-3. Run `SimRunner -- 20 <seed>` with at least 3 seeds and compare against the tables above.
+3. Run `SimRunner -- 20 <seed>` with at least 3 seeds and compare against the tables above. For the RTS, run
+   `SimRunner -- 30 <seed> --rts --games 24` (plus `--factions a,b` and `--difficulty X,Y`).
 4. Record results here with the date and commit.

@@ -16,9 +16,10 @@ This file is the honest source of truth for what works. Status labels:
 | Check | Result | How to reproduce |
 |---|---|---|
 | Server solution build (`Server/Bloodfall.sln`) | ✅ builds, 0 warnings-as-errors | `dotnet build Server/Bloodfall.sln` |
-| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 91 / 91 pass | `dotnet test Server/tests/Bloodfall.Tests` |
+| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 93 / 93 pass | `dotnet test Server/tests/Bloodfall.Tests` |
 | End-to-end online test (real backend + game server over UDP) | ✅ **E2E PASSED** | `Tools/dev/run-e2e.sh` |
 | 20-minute 5v5 bot simulation (all eight heroes) | ✅ runs, 0.28 ms/tick | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- 20 11` |
+| RTS bot games (Ashfields, 24 games) | ✅ decided in 19–24 min on average, factions and start sides even, 0.06–0.08 ms/tick | `... SimRunner -- 30 500 --rts --games 24` |
 | Unity client scripts compile check (UnityEngine 2021.3 reference assemblies) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck` |
 | Unity editor scripts compile check (Unity3D.SDK 2021.1) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck/Editor` |
 | Unity 6 editor import / Play mode / Windows player build | ⛔ **not run** (no Unity editor available) | see BUILD_INSTRUCTIONS.md |
@@ -37,7 +38,7 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
 | 5 | Client / account / lobby / server flow | Backend **WORKING** (E2E). Unity screens IMPLEMENTED (unverified). |
 | 6 | Multiple heroes and items | PARTIAL: **8 of 96 heroes** playable (all eight concept heroes: Vorak, Ilyra, Nyxara, Malgrave, Ardyn, Fenrax, Morwen, Thael), each with kit tests and bot usage. 38 items. |
 | 7 | Vharoth event | **WORKING** in simulation: seals, awakening, three boss phases, Blood Moon, Heart of Vharoth with revive, bots that break seals and kill him. 13 tests. Unity presentation (models, effects, HUD boss bar, Blood Moon lighting, corpse): IMPLEMENTED (unverified). |
-| 8 | RTS match | PARTIAL. **Phase R1 WORKING in simulation** (18 tests): blood-iron and lumber harvesting, construction, training queues, supply, rally points, victory by razing, and the Ashfields map. Two of four factions (Dawnguard, Ashen Legion). Still missing: heroes at an altar, research and the other two factions (R2), an RTS AI (R3), protocol/lobby/queue support (R4) and the Unity RTS interface (R5). **Not playable from the client yet**; the queue and lobbies still refuse RTS with an explanation. |
+| 8 | RTS match | PARTIAL. **R1 and R3 WORKING in simulation** (20 tests): blood-iron and lumber harvesting, construction, training queues, supply, rally points, victory by razing, the Ashfields map, and an RTS AI at four difficulties that plays complete games (BALANCE_NOTES.md §5). Two of four factions (Dawnguard, Ashen Legion). Still missing: heroes at an altar, research and the other two factions (R2), protocol/lobby/queue support (R4) and the Unity RTS interface (R5). **Not playable from the client yet**; the queue and lobbies still refuse RTS with an explanation. |
 | 9 | Content expansion | PLANNED |
 | 10 | Polish | PLANNED |
 
@@ -77,6 +78,12 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
     watchtowers that shoot once finished, and one-time neutral camps whose bounty goes to the owner.
   - A player with no buildings left is eliminated.
   - All costs, requirements, placement and supply are validated on the server.
+  - **RTS AI** (`AI/RtsAi.cs`):
+    - Plays through the same validated orders as a human and only knows what a player can see.
+    - Four difficulties: Beginner < Normal < Veteran, measured. Nightmare currently plays like Veteran.
+    - Takes over abandoned players.
+  - Fixed along the way: an attack-move wind-up freeze in every mode, and start-side unfairness on Ashfields
+    (BUGS.md F-017 to F-019).
 - Practice cheats (`-gold`, `-lvlup`, `-refresh`, `-respawn`, `-startgame`). Honoured only when the match config sets
   `AllowCheats` (offline practice). Online matches never set it.
 
@@ -173,7 +180,6 @@ lobby → hero select → loading → match → post-game.
 
 1. **RTS mode (milestone 8), in order** (details in TODO.md T-030 to T-034):
    - R2: the Crimson Court and Wild Covenant factions, altars that recruit MOBA heroes, and research.
-   - R3: an RTS AI plus SimRunner `--rts`.
    - R4: multi-unit orders and RTS state in the protocol, and RTS enabled in lobbies and the queue.
    - R5: the Unity RTS interface and dedicated models.
 2. **Art (T-001 remainder):** Blender props and trees.

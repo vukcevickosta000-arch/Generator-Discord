@@ -23,6 +23,17 @@ namespace Bloodfall.Simulation
         private const float TouchMargin = 0.45f;
 
         private readonly List<Vector2> _rtsPathScratch = new List<Vector2>(64);
+        private readonly Dictionary<int, RtsAi> _rtsAi = new Dictionary<int, RtsAi>();
+
+        /// <summary>The AI running a bot (or abandoned) player's side, if any.</summary>
+        public RtsAi RtsAiOf(Player p) => p != null && _rtsAi.TryGetValue(p.Id, out var ai) ? ai : null;
+
+        /// <summary>Hands a player's base to the RTS AI (bots at start; humans who abandon).</summary>
+        public void AssignRtsAi(Player p)
+        {
+            if (!IsRts || p == null || p.RtsFaction == null || _rtsAi.ContainsKey(p.Id)) return;
+            _rtsAi[p.Id] = new RtsAi(this, p);
+        }
 
         // =================================================================== setup
 
@@ -53,6 +64,7 @@ namespace Bloodfall.Simulation
             _spawnQueue.Clear();
             foreach (var u in Units) RecomputeFlags(u);
             UpdateSupply();
+            foreach (var p in Players) if (p.IsBot) AssignRtsAi(p);
         }
 
         private RtsFactionDef PickRtsFaction(Player p)
@@ -101,6 +113,15 @@ namespace Bloodfall.Simulation
                 b.BuilderCount = 0;
             }
             UpdateSupply();
+        }
+
+        /// <summary>
+        /// Runs at the start of the tick, right after units spawned last tick joined the world, so the AI never
+        /// misses a building it placed a moment ago.
+        /// </summary>
+        private void UpdateRtsAi()
+        {
+            foreach (var ai in _rtsAi.Values) ai.Update(this);
         }
 
         /// <summary>Supply used (living units + training queues) and supply cap (completed buildings).</summary>
@@ -318,7 +339,7 @@ namespace Bloodfall.Simulation
             float r = site.Radius + u.Radius + 0.5f;
             if (Vector2.Distance(u.Position, site.Position) > r)
             {
-                if (MoveTowardsPoint(u, site.Position, dt, r - 0.2f) && Vector2.Distance(u.Position, site.Position) > r + 0.3f)
+                if (!ApproachObject(u, NodeKey(site), site.Position, FootprintRadius(site.UnitDef), r, dt))
                 { EmitError(u, "Can't reach the building."); CompleteOrder(u); }
                 return;
             }
@@ -519,6 +540,35 @@ namespace Bloodfall.Simulation
             else UpdateChopping(u, dt);
         }
 
+        /// <summary>
+        /// Walks a worker to the side of a blocked object (vein, building, tree) that faces it. Aiming at the object's
+        /// centre would let the path search pick whichever free cell it scans first, often on the far side, and that
+        /// choice differs between mirrored bases. Returns false when the object turned out to be unreachable.
+        /// </summary>
+        private bool ApproachObject(Unit u, int key, Vector2 centre, float blockedRadius, float reach, float dt)
+        {
+            if (u.ApproachFor != key) { u.ApproachFor = key; u.ApproachTries = 0; SetApproach(u, centre, blockedRadius); }
+            bool done = MoveTowardsPoint(u, u.ApproachGoal, dt, 0.1f);
+            if (Vector2.Distance(u.Position, centre) <= reach) return true;
+            if (done)
+            {
+                // Stopped short (blocked, or the spot was snapped away): re-aim from here a couple of times, then give up.
+                if (++u.ApproachTries > 2) return false;
+                SetApproach(u, centre, blockedRadius);
+            }
+            return true;
+        }
+
+        private void SetApproach(Unit u, Vector2 centre, float blockedRadius)
+        {
+            var dir = MathUtil.SafeNormalize(u.Position - centre, Vector2.UnitX);
+            u.ApproachGoal = Grid.NearestWalkable(centre + dir * (blockedRadius + u.Radius + 0.25f), 8);
+            u.Path.Clear();
+        }
+
+        private static int NodeKey(Unit target) => target.Id;
+        private static int TreeKey(int tree) => -1 - tree;
+
         private void UpdateMining(Unit u, float dt)
         {
             var mine = GetUnit(u.HarvestNodeId);
@@ -547,7 +597,7 @@ namespace Bloodfall.Simulation
             float reach = mine.Radius + u.Radius + TouchMargin;
             if (Vector2.Distance(u.Position, mine.Position) > reach)
             {
-                if (MoveTowardsPoint(u, mine.Position, dt, reach - 0.15f) && Vector2.Distance(u.Position, mine.Position) > reach + 0.2f)
+                if (!ApproachObject(u, NodeKey(mine), mine.Position, FootprintRadius(mine.UnitDef), reach, dt))
                 { EmitError(u, "Can't reach that vein."); u.Harvesting = HarvestKind.None; CompleteOrder(u); }
                 return;
             }
@@ -587,7 +637,7 @@ namespace Bloodfall.Simulation
             var trunk = TreePosition(u.HarvestTree);
             if (Vector2.Distance(u.Position, trunk) > ChopReach)
             {
-                if (MoveTowardsPoint(u, trunk, dt, ChopReach - 0.3f) && Vector2.Distance(u.Position, trunk) > ChopReach)
+                if (!ApproachObject(u, TreeKey(u.HarvestTree), trunk, NavGrid.TreeCellRadius, ChopReach, dt))
                 {
                     // Walled in by other trees after all: try another one.
                     int failed = u.HarvestTree;
@@ -638,7 +688,7 @@ namespace Bloodfall.Simulation
             float reach = drop.Radius + u.Radius + TouchMargin;
             if (Vector2.Distance(u.Position, drop.Position) > reach)
             {
-                if (MoveTowardsPoint(u, drop.Position, dt, reach - 0.15f) && Vector2.Distance(u.Position, drop.Position) > reach + 0.2f)
+                if (!ApproachObject(u, NodeKey(drop), drop.Position, FootprintRadius(drop.UnitDef), reach, dt))
                 { EmitError(u, "Can't reach a drop-off."); CompleteOrder(u); }
                 return;
             }

@@ -4,9 +4,10 @@
 
 | Suite | Command | What it covers |
 |---|---|---|
-| Unit and simulation tests (91) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
+| Unit and simulation tests (93) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
 | End-to-end online | `Tools/dev/run-e2e.sh` | Real backend (fresh SQLite database) and a real game server over UDP; see §3 |
 | Bot soak | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- <minutes> <seed> [--deaths] [--trace N] [--mirror \| --heroes id1,id2]` | Full 5v5 bot matches (every playable hero by default): stability, performance, balance numbers |
+| RTS bot soak | `... SimRunner -- <minutes> <seed> --rts [--games N] [--factions a,b] [--difficulty X,Y] [--trace] [--log]` | 1v1 RTS bot games on Ashfields: wins per faction and per start side, economy and army statistics, AI errors |
 | Unity client compile | `dotnet build Tools/UnityCompileCheck` | Every client script plus Shared, against UnityEngine 2021.3 reference assemblies |
 | Unity editor compile | `dotnet build Tools/UnityCompileCheck/Editor` | Editor scripts against Unity3D.SDK 2021.1; APIs newer than 2021.2 are behind `UNITY_2021_2_OR_NEWER` |
 
@@ -29,7 +30,7 @@ What the unit and simulation tests cover:
   - rewards, Heart revive and use
   - the snapshot header
   - bots breaking seals
-- **RTS** (`RtsTests.cs`, 18 tests):
+- **RTS** (`RtsTests.cs`, 20 tests):
   - starting bases and map symmetry
   - mining rate and vein bookkeeping
   - lumber harvesting and falling trees
@@ -41,6 +42,8 @@ What the unit and simulation tests cover:
   - order ownership (no commanding or training with enemy units), veins cannot be attacked
   - one-time neutral camps and their bounty
   - determinism and data validity (every requirement buildable by the worker)
+  - a complete Normal-vs-Beginner bot game (economy, production, razing; fewer than 60 rejected bot orders)
+  - attack-move after a target dies mid-swing (regression)
 
 ## 2. What the compile checks do *not* cover
 

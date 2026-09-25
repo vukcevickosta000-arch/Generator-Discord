@@ -253,3 +253,14 @@ The rules below run in the shared simulation (`Shared/Runtime/Simulation/Match.R
 
 Legion units are slightly cheaper, faster and frailer than their Dawnguard counterparts. The Crimson Court, the Wild
 Covenant, hero altars and research follow in phase R2 (TODO T-030).
+
+**Bots.** The RTS AI plays by the same rules and knowledge as a player. Its plan:
+1. Saturate the vein and keep a lumber crew.
+2. Build supply ahead of need, then barracks, tower, siege and elite buildings.
+3. Clear the camp guarding the nearest free vein, then expand to it.
+4. Attack in waves that grow each time, advancing in stages so the army arrives together. Retreat from lost fights,
+   defend its buildings, and hunt down remembered enemy buildings.
+
+Difficulty levels:
+- **Beginner:** slower reactions, fewer workers, a late expansion and no tower.
+- **Veteran / Nightmare:** add focus fire and pull badly hurt units out of fights.

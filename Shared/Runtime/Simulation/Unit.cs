@@ -219,6 +219,10 @@ namespace Bloodfall.Simulation
         public int HarvestTree = -1;
         /// <summary>Where the player pointed when ordering lumber harvesting (new trees are sought near it).</summary>
         public Vector2 HarvestAnchor;
+        /// <summary>Workers: the spot beside a vein / drop-off / tree they are walking to, and whose it is.</summary>
+        public Vector2 ApproachGoal;
+        public int ApproachFor = int.MinValue;
+        public int ApproachTries;
         /// <summary>Buildings: workers constructing this tick (reset every tick).</summary>
         public int BuilderCount;
         public float GatherTimer;

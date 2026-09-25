@@ -476,6 +476,58 @@ namespace Bloodfall.Tests
         }
 
         [Fact]
+        public void AttackMoveResumesWhenTheTargetDiesMidSwing()
+        {
+            // Regression: a unit whose target died during its wind-up stayed frozen in the wind-up forever.
+            var m = NewRts();
+            var dawn = m.Players[0];
+            var dusk = m.Players[1];
+            var start = m.Grid.NearestWalkable(new Vector2(60, 60));
+            var goal = m.Grid.NearestWalkable(new Vector2(80, 80));
+            var archer = m.CreateUnit(Def("rts_dg_arbalist"), dawn.Team, start, 0f, dawn);
+            var victim = m.CreateUnit(Def("rts_al_thrall"), dusk.Team, m.Grid.NearestWalkable(start + new Vector2(3, 3)), 0f, dusk);
+            m.IssueOrder(victim, Order.HoldOrder(victim.Id));
+            TestUtil.Run(m, 0.1f);
+            m.IssueOrder(archer, Order.AttackMoveTo(archer.Id, goal));
+            for (int i = 0; i < 90 && archer.Action != ActionState.AttackWindup; i++) m.Step();
+            Assert.Equal(ActionState.AttackWindup, archer.Action);
+            m.KillUnit(victim, null);
+            TestUtil.Run(m, 8f);
+            Assert.NotEqual(ActionState.AttackWindup, archer.Action);
+            Assert.True(Vector2.Distance(archer.Position, goal) < 1f, $"archer stuck at {archer.Position}");
+        }
+
+        [Fact]
+        public void BotsPlayACompleteGame()
+        {
+            // A Normal bot against a Beginner bot: both run an economy, build a base and armies, and the stronger
+            // one razes the other within 30 minutes. The AI plays through the same validated orders as a human.
+            var cfg = new MatchConfig { ModeId = "rts_1v1", MapId = "map_rts_ashfields", Seed = 701, SkipHeroSelect = true };
+            cfg.Players.Add(new PlayerSetup { Name = "Dawn", Team = Team.Dawn, IsBot = true, BotDifficulty = BotDifficulty.Normal, RtsFaction = "dawnguard" });
+            cfg.Players.Add(new PlayerSetup { Name = "Dusk", Team = Team.Dusk, IsBot = true, BotDifficulty = BotDifficulty.Beginner, RtsFaction = "ashen_legion" });
+            var m = new Match(TestUtil.Data, cfg);
+            int errors = 0;
+            while (m.Phase != MatchPhase.PostGame && m.Time < 30 * 60)
+            {
+                m.Step();
+                errors += m.Events.Count(e => e.Type == SimEventType.Error);
+                m.Events.Clear();
+            }
+            Assert.Equal(Team.Dawn, m.Winner);
+            foreach (var p in m.Players)
+            {
+                Assert.NotNull(m.RtsAiOf(p));
+                Assert.True(p.GoldMined > 3000, $"{p.Name} mined {p.GoldMined}");
+                Assert.True(p.LumberHarvested > 500, $"{p.Name} cut {p.LumberHarvested}");
+                Assert.True(p.UnitsTrained >= 15, $"{p.Name} trained {p.UnitsTrained}");
+                Assert.True(p.BuildingsBuilt >= 5, $"{p.Name} built {p.BuildingsBuilt}");
+            }
+            Assert.True(m.Players[0].BuildingsRazed >= m.Players[1].BuildingsBuilt, "the winner razed the loser's base");
+            // Bots issue orders like players; a few rejections (a site blocked on arrival) are normal, a flood is a bug.
+            Assert.True(errors < 60, $"{errors} rejected bot orders");
+        }
+
+        [Fact]
         public void AshfieldsDataIsValid()
         {
             var d = TestUtil.Data;

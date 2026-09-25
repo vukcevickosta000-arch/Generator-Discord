@@ -384,7 +384,7 @@ namespace Bloodfall.Simulation
             UpdateDayNight(dt);
             if (Phase == MatchPhase.Playing)
             {
-                if (IsRts) UpdateRtsSpawners();
+                if (IsRts) { UpdateRtsSpawners(); UpdateRtsAi(); }
                 else
                 {
                     UpdateSpawners(dt);

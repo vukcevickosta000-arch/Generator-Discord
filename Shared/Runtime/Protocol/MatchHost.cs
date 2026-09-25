@@ -318,6 +318,8 @@ namespace Bloodfall.Protocol
             p.Connection = PlayerConnection.Abandoned;
             // The hero keeps fighting under bot control so the team is not left a hero down.
             if (p.Hero != null && p.Hero.Brain == null) p.Hero.Brain = new BotBrain(BotDifficulty.Normal, (ulong)(p.Id + 7));
+            // RTS: the AI takes over the whole base.
+            Match.AssignRtsAi(p);
             Match.Announce(AnnouncerKeys.PlayerAbandoned, Team.None, p.Id);
             Match.Emit(new SimEvent { Type = SimEventType.PlayerConnection, OtherId = p.Id, Value = (float)p.Connection, Key = p.Name, PlayerId = -1 });
             Log?.Invoke($"{p.Name} abandoned: {reason}");

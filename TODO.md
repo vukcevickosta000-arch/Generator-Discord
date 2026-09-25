@@ -4,8 +4,12 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
 
 ## Now
 
-- **RTS mode (milestone 8).** Phase R1 is done: the simulation, the Ashfields map, Dawnguard and Ashen Legion, and
-  18 tests (GAME_DESIGN.md §11). The remaining phases, in order:
+- **RTS mode (milestone 8).** Phases R1 and R3 are done:
+  - R1: the simulation, the Ashfields map, Dawnguard and Ashen Legion.
+  - R3: the RTS AI and SimRunner `--rts`.
+  - 20 tests (GAME_DESIGN.md §11).
+
+  The remaining phases, in order:
   - **T-030 (R2) Factions and heroes.**
     - Crimson Court: blood economy (buildings or units convert HP into blood-iron).
     - Wild Covenant: shapeshifters stronger at night.
@@ -14,10 +18,12 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
       upgrades per faction.
     - Ashen Legion corpse raising and a Dawnguard healing aura, as the faction mechanics.
     - Neutral camps should attack units that come near them (they currently only retaliate).
-  - **T-031 (R3) RTS AI.**
-    - Build order, worker saturation (about five per vein, the rest on lumber), supply planning, army attack waves
-      and expansion.
-    - SimRunner `--rts` with a faction-vs-faction win-rate table (the balance check for the RTS numbers).
+  - **T-031 (R3) RTS AI.** *Done (`Shared/Runtime/Simulation/AI/RtsAi.cs`, BALANCE_NOTES.md §5).* Follow-ups:
+    - Nightmare needs a real edge over Veteran. Thinking every 0.5 s measured no better than every 1 s, so it
+      currently plays like Veteran.
+    - Hero use once altars exist (R2).
+    - Towers at expansions.
+    - Harass and counter-attacks while the enemy army is away.
   - **T-032 (R4) Networking.**
     - Multi-unit orders (a selection list in `Order`).
     - Protocol v5 with RTS fields:
