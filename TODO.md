@@ -4,24 +4,18 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
 
 ## Now
 
-- **T-001 Blender model pipeline.** Write `Blender/scripts/*.py` (run with the `bpy` module or `blender -b -P`) that
-  builds the models for every `model` key in the game data:
-  - Characters: all eight heroes (`hero_vorak`, `hero_ilyra`, `hero_nyxara`, `hero_malgrave`, `hero_ardyn`,
-    `hero_fenrax` plus the `hero_fenrax_moonfang` transform, `hero_morwen`, `hero_thael`), creeps and neutrals.
-  - Summons and forms: `summon_skeleton_legionnaire`, `summon_pale_revenant`, `summon_spirit_wolf`,
-    `summon_treant`, `summon_cauldron`, `hex_bat`, `hex_toad`.
-  - Vharoth: `boss_vharoth` (about 6.6 m tall), `vharoth_seal_active`, and the `vharoth_corpse` prop.
-  - Structures: towers T1–T4 per team, barracks, cores, fountains, wards.
-  - Props: every dressing prop type in `Maps/Velmoragh/dressing.json`, and trees.
-  - Characters get an armature and the clips `Idle, Run, Attack1, Attack2, Cast1, Cast2, Cast3, CastUlt, Channel,
-    Stun, Death`.
-  - Put the impact frame at 40% of each attack and cast clip (`ClipAnimator.ImpactFraction`).
-  - Add a `projectile_origin` empty and mark team-coloured materials with `team` in the name.
-  - Export FBX to `Client/Assets/Resources/Models/`, with props under `Models/Props/<type>.fbx`.
-- **T-002 Visual review of stand-ins in Unity**:
+- **T-001 Blender model pipeline.** *Done for every unit and structure key (56 models,
+  `Blender/scripts/build_models.py`).* Remaining:
+  - Props (`Models/Props/<type>.fbx`, 28 dressing types) and tree variants (MapRenderer still draws C# meshes).
+  - Portraits rendered from the models (replace the silhouettes in `Textures/Icons/Portraits`).
+  - Texture maps (normal and mask) once hand-authored art replaces the generated shapes; the rigs and clip names
+    are the contract.
+- **T-002 Visual review in Unity** of the generated FBX models and the procedural stand-ins:
   - scale (1 unit = 1 m)
-  - facing (+Z forward)
-  - the procedural animation timing relative to server attack points
+  - facing (+Z forward after `bakeAxisConversion`)
+  - clip import and looping flags
+  - attack and cast impact timing (40% of each clip) against the server's attack points
+  - the bf_* material mapping
 - **T-003 Icons and portraits.** *Done at placeholder level. Icons are procedural; portraits should become renders of
   the T-001 models.*
   - Generate with `Tools/art/generate_icons.py` into:

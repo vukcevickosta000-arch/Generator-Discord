@@ -53,12 +53,34 @@ camera, pacing and HUD density, never for art.
 | Terrain | Generated heightfield (0.5 m) with 8 procedural tiling layers (`Tools/art/generate_terrain.py`): grass/moss, dirt, cobble road, rock, blood mud, bone ash, leaf litter, sun paving. Height-blended with slope rock. | Hand-painted or photogrammetry-based layer sets with normal/mask maps at the same layer slots |
 | Trees | Procedural black pines and dead trees, GPU-instanced, wind in shader | Blender-modelled variants (`Models/Trees`) with leaf cards |
 | Props | Procedural stand-ins for every dressing type | Blender models (`Models/Props/<type>.fbx`) |
-| Heroes, creeps, neutrals | Procedural jointed stand-ins with team colours and procedural animation | Blender-modelled, rigged and animated characters (FBX) |
-| Structures | Procedural towers/barracks/core/fountain per team | Blender models with destruction states |
+| Heroes, creeps, neutrals, summons, Vharoth | **Blender-generated** (`Blender/scripts`): rigged, 12–13 clips, baked AO vertex colours, 3–7k triangles. See `Docs/Images/models_all.png`. The procedural stand-ins remain as fallback. | Hand-sculpted, textured characters on the same rigs and clip names |
+| Structures, wards, siege | **Blender-generated**: towers per team and tier, barracks, cores, fountains, wards, seal crystal, cauldron; rigged siege carts (wheels, arm) | Hand-authored models with destruction states |
 | VFX | 24 procedural sprites (`Tools/art/generate_vfx.py`) with code-defined particle recipes (`VfxSystem`) | Same pipeline with more sprite sheets and mesh effects |
 | Menu backdrop | Procedural parallax painting (`Tools/art/generate_backdrop.py`) plus live fog, embers, bats and lightning | Keep; add an animated 3D castle later |
 
-## 5. Blender pipeline (target spec for `Blender/scripts`)
+## 5. Blender pipeline (`Blender/scripts`)
+
+`python3 Blender/scripts/build_models.py [keys...] [--preview]` builds every model key in the game data. It runs
+headless through the `bpy` module (Blender 5.0) or `blender -b -P`, and exports to `Client/Assets/Resources/Models`.
+
+| Script | Contents |
+|---|---|
+| `bf_lib.py` | bmesh geometry kit, named materials, AO baking, armature and rigid skinning, clips, FBX export, Cycles previews |
+| `bf_humanoid.py` + `bf_characters.py` | Biped rig, body/armour/weapon builder, 12 clips; specs for heroes, creeps, summons, neutrals, Vharoth |
+| `bf_beasts.py` | Quadruped rig (optional wings, flying), builder and 13 clips; hounds, rats, wolves, toad, bat, wyrms |
+| `bf_structures.py` | Towers, barracks, cores, fountains, wards, objectives, cauldron, rigged siege carts |
+| `pose_strip.py` | Renders a strip of key poses for animation review |
+
+**Unity mapping.** Materials are named `bf_matte`, `bf_metal`, `bf_team` or `bf_glow_RRGGBB`, and colours live in
+vertex colours. `ModelFactory.ConvertMaterials` maps them to the Bloodfall/Lit materials.
+
+**Not yet verified in Unity** (T-002):
+
+- the FBX axis conversion (+Z forward)
+- the 1 m scale
+- clip import and looping
+
+The spec below is the contract the scripts follow.
 
 **Units and orientation.**
 

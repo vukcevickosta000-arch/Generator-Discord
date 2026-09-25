@@ -53,6 +53,20 @@ namespace Bloodfall.Tests
         }
 
         [Fact]
+        public void EveryModelKeyHasABlenderModel()
+        {
+            // Blender/scripts/build_models.py exports one FBX per model key; ModelFactory falls back to procedural
+            // stand-ins, so a missing file is not fatal in game, but new content should come with its model.
+            var d = TestUtil.Data;
+            // RepoResources() is <repo>/Shared/Runtime/Resources.
+            var models = Path.GetFullPath(Path.Combine(RepoResources(), "..", "..", "..", "Client", "Assets", "Resources", "Models"));
+            var keys = d.Heroes.Values.Select(h => h.Model).Concat(d.Units.Values.Select(u => u.Model))
+                .Concat(d.Statuses.Values.Select(s => s.ModelOverride)).Where(k => !string.IsNullOrEmpty(k)).Distinct();
+            var missing = keys.Where(k => !File.Exists(Path.Combine(models, k + ".fbx"))).ToList();
+            Assert.True(missing.Count == 0, "No FBX for: " + string.Join(", ", missing));
+        }
+
+        [Fact]
         public void AllModelKeysAndIconsAreDeclared()
         {
             var d = TestUtil.Data;

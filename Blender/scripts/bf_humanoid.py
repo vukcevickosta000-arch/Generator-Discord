@@ -58,6 +58,11 @@ def skeleton(spec):
             (f"foot.{side}", (sgn * hx, 0.01 * H, ankleY), (sgn * hx, -0.09 * H, 0.01 * H), f"shin.{side}"),
         ]
     bones.append(("weapon_r", (-wrist.x, wrist.y, wrist.z - hand * 0.6), (-wrist.x, wrist.y - 0.12 * H, wrist.z - hand * 0.6), "hand.R"))
+    if spec.get("wings"):
+        chestD = 0.07 * H * k
+        for side, sgn in (("L", 1), ("R", -1)):
+            root = Vector((sgn * 0.05 * H * k, chestD, shoulderY - 0.02 * H))
+            bones.append((f"wing.{side}", root[:], (root + Vector((sgn * 0.3 * H, 0.1 * H, 0.14 * H)))[:], "chest"))
     return s, bones
 
 
@@ -311,8 +316,8 @@ def build_body(kit, spec, s):
             base = c + Vector((math.cos(a), 0, math.sin(a))) * R(0.12)
             kit.cone(base, c + Vector((math.cos(a), 0, math.sin(a))) * (R(0.22) if i % 2 == 0 else R(0.17)), R(0.012), seg=4)
     if spec.get("wings"):
-        kit.use(bone="chest", color=spec.get("wing_color", mul3(skin, 0.6)), mat="bf_matte", smooth=True)
-        for sgn in (-1, 1):
+        for side, sgn in (("L", 1), ("R", -1)):
+            kit.use(bone=f"wing.{side}", color=spec.get("wing_color", mul3(skin, 0.6)), mat="bf_matte", smooth=True)
             root = Vector((sgn * chestW * 0.5, chestD * 1.0, shoulderY - R(0.02)))
             mid = root + Vector((sgn * R(0.28), R(0.1), R(0.14)))
             tip = root + Vector((sgn * R(0.55), R(0.12), R(0.02)))
@@ -509,6 +514,9 @@ def make_clips(arm, spec):
         relax.update({"upper_arm.R": (-25, 0, 10), "forearm.R": (-45, 0, 0), "upper_arm.L": (-20, 0, -5), "forearm.L": (-60, 0, 20)})
     if stance == "caster":
         relax.update({"upper_arm.R": (-15, 0, 6), "forearm.R": (-55, 0, 0)})
+
+    if spec.get("wings"):
+        relax.update({"wing.L": (0, 0, 15), "wing.R": (0, 0, -15)})
 
     def P(**over):
         p = dict(relax)

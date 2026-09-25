@@ -542,7 +542,7 @@ def export_fbx(path, objects, animated=True):
 
 # ------------------------------------------------------------------------------------------------ preview
 
-def render_preview(path, focus_height, distance=None, size=512, samples=24, yaw=-35.0, pitch=18.0, frame=None, extra_light=1.0):
+def render_preview(path, focus_height, distance=None, size=512, samples=24, yaw=-35.0, pitch=32.0, frame=None, extra_light=1.0):
     """Cycles CPU render of the scene from a three-quarter front view (characters face -Y)."""
     scene = bpy.context.scene
     scene.render.engine = 'CYCLES'

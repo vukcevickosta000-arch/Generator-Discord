@@ -99,3 +99,40 @@ SPECS = {
                          claws_hands=True, spiked=True, sleeve=(0.36, 0.1, 0.11), legs=(0.3, 0.08, 0.09), tabard=(0.4, 0.03, 0.06),
                          head_scale=1.3, belly=(0.5, 0.14, 0.14)),
 }
+
+
+# ================================================================================================ winged bipeds
+SPECS.update({
+    "neutral_blood_gargoyle": dict(height=2.2, bulk=1.4, hunch=25, stance="beast", skin=(0.36, 0.34, 0.33), torso=(0.36, 0.34, 0.33),
+                                   cuirass=False, cloth=(0.3, 0.28, 0.27), accent=(0.5, 0.1, 0.1), glow=(1.0, 0.25, 0.18), horns=True,
+                                   wings=True, wing_color=(0.3, 0.28, 0.27), claws_hands=True, pauldrons=False, greaves=False,
+                                   skirt=False, sleeve=(0.36, 0.34, 0.33), legs=(0.34, 0.32, 0.31), boots=(0.3, 0.28, 0.27),
+                                   belly=(0.46, 0.44, 0.42), armor_mat="bf_matte"),
+    "neutral_gargoyle_whelp": dict(height=1.3, bulk=1.1, hunch=25, stance="beast", skin=(0.4, 0.38, 0.36), torso=(0.4, 0.38, 0.36),
+                                   cuirass=False, cloth=(0.32, 0.3, 0.29), accent=(0.5, 0.1, 0.1), glow=(1.0, 0.3, 0.2), horns=True,
+                                   wings=True, wing_color=(0.33, 0.31, 0.3), claws_hands=True, pauldrons=False, greaves=False,
+                                   skirt=False, sleeve=(0.4, 0.38, 0.36), legs=(0.38, 0.36, 0.34), boots=(0.33, 0.31, 0.3),
+                                   head_scale=1.25, armor_mat="bf_matte"),
+})
+
+# ================================================================================================ four-legged (bf_beasts)
+BEAST_SPECS = {
+    "neutral_crypt_rat": dict(height=0.42, length=0.8, width=0.1, head="rat", body=(0.32, 0.27, 0.25), belly=(0.48, 0.4, 0.36),
+                              tail=0.7, tail_r=0.025, glow=(0.5, 0.95, 0.45), neck_rise=0.05, head_len=0.2, leg_r=0.035, girth=1.1),
+    "neutral_bone_hound": dict(height=0.85, length=1.3, width=0.16, head="hound", skeletal=True, body=(0.82, 0.78, 0.68),
+                               glow=(0.4, 1.0, 0.5), spikes=True, spike_color=(0.7, 0.66, 0.56), tail=0.6, neck_rise=0.18, head_len=0.3),
+    "summon_spirit_wolf": dict(height=0.9, length=1.35, width=0.17, head="wolf", body=(0.56, 0.7, 0.86), belly=(0.78, 0.87, 0.96),
+                               glow=(0.75, 0.92, 1.0), bushy=True, mane=True, mane_color=(0.7, 0.82, 0.95), tail=0.7, tail_r=0.07,
+                               neck_rise=0.2, head_len=0.32),
+    "hex_toad": dict(height=0.22, length=0.45, width=0.1, head="toad", body=(0.3, 0.42, 0.18), belly=(0.62, 0.66, 0.36),
+                     glow=(0.95, 0.85, 0.3), tail=0.0, neck_rise=0.02, head_len=0.12, leg_r=0.03, girth=1.3, claws=False),
+    "hex_bat": dict(height=0.28, length=0.36, width=0.07, head="rat", body=(0.15, 0.1, 0.12), belly=(0.24, 0.16, 0.18),
+                    ear_color=(0.2, 0.12, 0.14), glow=(1.0, 0.2, 0.2), wings=0.62, membrane=(0.22, 0.12, 0.14), flying=True,
+                    tail=0.08, neck_rise=0.04, head_len=0.08, leg_r=0.015, claws=False),
+    "neutral_wyrmling": dict(height=0.8, length=1.6, width=0.18, head="dragon", body=(0.26, 0.21, 0.3), belly=(0.44, 0.34, 0.44),
+                             glow=(0.65, 0.35, 1.0), horn=(0.75, 0.66, 0.84), spikes=True, wings=1.1, membrane=(0.36, 0.22, 0.44),
+                             tail=1.2, tail_r=0.07, tail_blade=True, neck_rise=0.35, neck_len=0.15, head_len=0.34),
+    "neutral_nightwyrm": dict(height=1.6, length=3.2, width=0.36, head="dragon", body=(0.13, 0.11, 0.17), belly=(0.3, 0.22, 0.36),
+                              glow=(0.65, 0.35, 1.0), horn=(0.72, 0.62, 0.84), spikes=True, wings=2.6, membrane=(0.24, 0.12, 0.32),
+                              tail=2.6, tail_r=0.14, tail_blade=True, neck_rise=0.7, neck_len=0.35, head_len=0.6, girth=1.1),
+}

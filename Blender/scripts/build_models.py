@@ -13,15 +13,19 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import bf_lib as L          # noqa: E402
+import bf_beasts as BE      # noqa: E402
 import bf_humanoid as HU    # noqa: E402
-from bf_characters import SPECS  # noqa: E402
+import bf_structures as ST  # noqa: E402
+from bf_characters import BEAST_SPECS, SPECS  # noqa: E402
 
 
 def build_character(key, preview=False):
-    spec = dict(SPECS[key]); spec["key"] = key
+    beast = key in BEAST_SPECS
+    spec = dict(BEAST_SPECS[key] if beast else SPECS[key]); spec["key"] = key
+    mod = BE if beast else HU
     L.reset_scene()
-    arm, mesh, s = HU.build(spec)
-    clips = HU.make_clips(arm, spec)
+    arm, mesh, s = mod.build(spec)
+    clips = mod.make_clips(arm, spec)
     tris = L.triangle_count(mesh)
     path = os.path.join(L.MODELS_OUT, key + ".fbx")
     objs = [arm, mesh] + [o for o in arm.children if o.type == 'EMPTY']
@@ -33,6 +37,25 @@ def build_character(key, preview=False):
         for clip_name, frame in (("Attack1", 12), ("Run", 0)):
             arm.animation_data.action = next(c for c in clips if c.name == clip_name)
             L.render_preview(os.path.join(L.PREVIEW_OUT, f"{key}_{clip_name.lower()}.png"), s["H"] * 1.15, frame=frame, size=320, samples=12)
+    return info
+
+
+SIEGE_KEYS = ["creep_dawn_ballista", "creep_dusk_catapult"]
+
+
+def build_structure(key, preview=False):
+    L.reset_scene()
+    clips = []
+    if key in SIEGE_KEYS:
+        arm, mesh, top, clips = ST.build_siege(key)
+    else:
+        arm, mesh, top = ST.build_static(key)
+    path = os.path.join(L.MODELS_OUT, key + ".fbx")
+    objs = [arm, mesh] + [o for o in arm.children if o.type == 'EMPTY']
+    L.export_fbx(path, objs, animated=bool(clips))
+    info = f"{key}: {L.triangle_count(mesh)} tris, {len(clips)} clips, {os.path.getsize(path) / 1024:.0f} KiB"
+    if preview:
+        L.render_preview(os.path.join(L.PREVIEW_OUT, key + ".png"), top * 1.1, frame=0, samples=16)
     return info
 
 
@@ -50,11 +73,14 @@ def contact_sheet(keys, path, cell=256, cols=6):
 
 def main(argv):
     preview = "--preview" in argv
-    keys = [a for a in argv if not a.startswith("--")] or list(SPECS)
+    keys = [a for a in argv if not a.startswith("--")] or list(SPECS) + list(BEAST_SPECS) + ST.STATIC_KEYS + SIEGE_KEYS
     built = []
     for key in keys:
-        if key in SPECS:
+        if key in SPECS or key in BEAST_SPECS:
             print(build_character(key, preview), flush=True)
+            built.append(key)
+        elif key in ST.STATIC_KEYS or key in SIEGE_KEYS:
+            print(build_structure(key, preview), flush=True)
             built.append(key)
         else:
             print(f"unknown key {key}", flush=True)

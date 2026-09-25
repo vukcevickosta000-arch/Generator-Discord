@@ -16,7 +16,7 @@ This file is the honest source of truth for what works. Status labels:
 | Check | Result | How to reproduce |
 |---|---|---|
 | Server solution build (`Server/Bloodfall.sln`) | ✅ builds, 0 warnings-as-errors | `dotnet build Server/Bloodfall.sln` |
-| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 72 / 72 pass | `dotnet test Server/tests/Bloodfall.Tests` |
+| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 73 / 73 pass | `dotnet test Server/tests/Bloodfall.Tests` |
 | End-to-end online test (real backend + game server over UDP) | ✅ **E2E PASSED** | `Tools/dev/run-e2e.sh` |
 | 20-minute 5v5 bot simulation (all eight heroes) | ✅ runs, 0.28 ms/tick | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- 20 11` |
 | Unity client scripts compile check (UnityEngine 2021.3 reference assemblies) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck` |
@@ -149,7 +149,8 @@ lobby → hero select → loading → match → post-game.
 | Menu backdrop (sky, blood moon, castle, ruins, fog + live particles/lightning) | Done (procedural) |
 | Terrain layer textures (8), VFX sprites (24), Velmoragh heightfield/splat/dressing | Done (procedural) |
 | OFL fonts | Done |
-| Hero/creep/summon/structure/prop 3D models | **Procedural stand-ins only** (clearly stand-ins; Blender pipeline next). Each hero has distinct dressing (crowns, antlers, hats, collars, halo, werewolf form); summons and the toad hex have their own shapes. Not yet viewed in Unity. |
+| Hero/creep/summon/neutral/boss/structure 3D models | **Done (generated)**: 56 FBX models from the Blender pipeline (`Blender/scripts`), with rigs, 12–13 animation clips and baked ambient occlusion (`Docs/Images/models_all.png`). Stylised primitive-based modelling, not sculpted or textured. Not yet imported in Unity. |
+| Map props and trees | Procedural stand-ins (C#); Blender versions are the next art task |
 | Ability/item/status icons (123) | Done (procedural embossed emblems, `Tools/art/generate_icons.py`) |
 | Hero portraits (8) | Placeholder silhouettes with per-hero headgear; to be replaced by renders of the Blender models (T-001) |
 | UI sounds, combat/spell/death SFX, ambience, music loops and stingers (97 clips) | Placeholder quality, procedurally synthesised (`Tools/audio/generate_audio.py`) |
@@ -158,12 +159,7 @@ lobby → hero select → loading → match → post-game.
 
 ## Next step (exact)
 
-1. **Art pipeline (T-001), next:**
-   - Blender (bpy) generators for the hero, summon and creep models with rigs and the standard clips (Idle, Run,
-     Attack1/2, Cast1/2/3, CastUlt, Channel, Stun, Death).
-   - Structures and props.
-   - Exported as FBX to `Client/Assets/Resources/Models/<modelKey>.fbx`, where the model factory picks them up
-     automatically.
+1. **Art (T-001 remainder):** Blender props and trees, then portraits rendered from the models.
 2. **RTS mode (milestone 8).** The order types and unit kinds are reserved; see GAME_DESIGN.md §9.
 3. **Hero-specific bot behaviour** (T-022) and last-hitting (T-016). The Nyxara bot is the weakest in bot matches.
 4. On a machine with Unity 6000.0.40f1:

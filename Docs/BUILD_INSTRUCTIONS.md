@@ -66,6 +66,9 @@ python3 Tools/art/generate_icons.py            # ability / item / status icons +
 python3 Tools/audio/generate_audio.py          # UI, SFX, ambience, music, announcer (needs soundfile; espeak-ng for the announcer)
 python3 Tools/dev/gen_gamedata_index.py        # after adding/renaming game data files
 python3 Tools/dev/gen_item_docs.py             # refresh the item table in Docs/ITEM_DATABASE.md
+pip install bpy==5.0.1                         # once (Python 3.11), or run the script with `blender -b -P`
+python3 Blender/scripts/build_models.py        # all 56 unit/structure models -> Client/Assets/Resources/Models/*.fbx
+python3 Blender/scripts/build_models.py hero_vorak --preview   # one model + Cycles previews in Blender/previews/
 ```
 
 **Warning:** regenerating the map changes the game data content hash. Clients and servers must ship the same data;

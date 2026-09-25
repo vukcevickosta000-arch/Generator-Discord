@@ -4,7 +4,7 @@
 
 | Suite | Command | What it covers |
 |---|---|---|
-| Unit and simulation tests (72) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
+| Unit and simulation tests (73) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
 | End-to-end online | `Tools/dev/run-e2e.sh` | Real backend (fresh SQLite database) and a real game server over UDP; see §3 |
 | Bot soak | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- <minutes> <seed> [--deaths] [--trace N] [--mirror \| --heroes id1,id2]` | Full 5v5 bot matches (every playable hero by default): stability, performance, balance numbers |
 | Unity client compile | `dotnet build Tools/UnityCompileCheck` | Every client script plus Shared, against UnityEngine 2021.3 reference assemblies |
@@ -15,7 +15,8 @@ What the unit and simulation tests cover:
 - **Simulation:** armor math, movement and pathing, attacks and projectiles, denies, towers, creep waves, casting and
   statuses, items and recipes, XP and levels, respawn, fog of war, bots.
 - **Protocol:** buffers, tickets, snapshot visibility, host join/reject/reconnect flows.
-- **Data:** the index is current, a client-style load gives the same hash, and model and icon keys are declared.
+- **Data:** the index is current, a client-style load gives the same hash, model and icon keys are declared, and
+  every model key has an FBX from the Blender pipeline.
 - **Hero kits** (`HeroKitTests.cs`): every ability of Nyxara, Malgrave, Ardyn, Fenrax, Morwen and Thael, and the
   engine features they rely on. These include execute thresholds, summons scaling with level, ring walls, curse kill
   credit, echoed casts, forced night, tree counting and non-stacking auras. A 12-minute 10-bot match checks that every
