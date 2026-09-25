@@ -24,6 +24,10 @@ namespace Bloodfall.Client.UI.Screens
         private WorldOverlay _overlay;
         private Minimap _minimap;
         private Label _gold, _lumber, _supply, _clock, _dayNight, _error, _announce, _announceSub, _paused, _endBanner, _hint;
+        private VisualElement _heroBar;
+        private string _heroBarSig = "";
+        private int _lastHeroClick;
+        private float _lastHeroClickTime;
         private VisualElement _selection, _card, _dragBox, _chatLog, _menu;
         private TextField _chatInput;
         private bool _chatTeam = true;
@@ -68,6 +72,13 @@ namespace Bloodfall.Client.UI.Screens
             bar.Add(_dayNight);
             bar.Add(El.Btn("Menu", ToggleMenu, "btn--small"));
             root.Add(bar);
+
+            // Heroes from altars: one button each (click selects, double-click centres); fallen ones are dimmed.
+            _heroBar = El.Div("row");
+            _heroBar.style.position = Position.Absolute;
+            _heroBar.style.top = 58;
+            _heroBar.style.right = 12;
+            root.Add(_heroBar);
 
             // Alerts.
             var col = El.Div("col", "center");
@@ -249,6 +260,14 @@ namespace Bloodfall.Client.UI.Screens
                     Alert("ELIMINATED", p?.Name ?? "");
                     break;
                 }
+                case SimEventType.UnitTrained:
+                    if (_mc.Data.Heroes.TryGetValue(e.Key ?? "", out var joined))
+                        Alert(joined.Name.ToUpperInvariant() + " ANSWERS THE CALL", joined.Title ?? "");
+                    break;
+                case SimEventType.KillFeed:
+                    if (world.TryGetView(e.UnitId, out var fallen) && fallen.Kind == UnitKind.Hero && fallen.State?.OwnerPlayer == world.LocalPlayerId && _mc.IsRts)
+                        Alert("YOUR HERO HAS FALLEN", (fallen.Hero?.Name ?? "") + " can be revived at an altar");
+                    break;
                 case SimEventType.MineDepleted:
                     Alert("A BLOOD-IRON VEIN HAS RUN DRY", "");
                     break;
@@ -266,6 +285,34 @@ namespace Bloodfall.Client.UI.Screens
                     if (e.Key == AnnouncerKeys.BattleBegins) Alert("THE WAR BEGINS", "");
                     break;
             }
+        }
+
+        private void UpdateHeroBar(RtsPrivateState rts)
+        {
+            var sig = string.Join("|", rts.Heroes.Select(h => $"{h.UnitId}:{h.Level}:{h.Dead}:{h.AbilityPoints}"));
+            if (sig == _heroBarSig) return;
+            _heroBarSig = sig;
+            _heroBar.Clear();
+            foreach (var h in rts.Heroes)
+            {
+                int id = h.UnitId;
+                string name = _mc.Data.Heroes.TryGetValue(h.HeroId ?? "", out var hd) ? hd.Name : El.Pretty(h.HeroId);
+                var btn = El.Btn($"{name} {h.Level}" + (h.AbilityPoints > 0 ? " +" : ""), () => SelectHero(id), "btn--small");
+                btn.style.marginLeft = 4;
+                if (h.Dead) { btn.style.opacity = 0.45f; btn.SetEnabled(false); }
+                UI.AttachTooltip(btn, name, h.Dead ? "Fallen: revive at an altar." : $"Level {h.Level}" + (h.AbilityPoints > 0 ? $", {h.AbilityPoints} ability point(s) to spend" : "")
+                    + "\nClick to select, double-click to centre the camera.");
+                _heroBar.Add(btn);
+            }
+        }
+
+        private void SelectHero(int id)
+        {
+            if (Rts == null) return;
+            Rts.Select(new[] { id });
+            if (_lastHeroClick == id && Time.unscaledTime - _lastHeroClickTime < 0.4f) Rts.CenterOnSelection();
+            _lastHeroClick = id;
+            _lastHeroClickTime = Time.unscaledTime;
         }
 
         private static bool OnScreen(MatchWorld world, Vector3 p)
@@ -333,6 +380,7 @@ namespace Bloodfall.Client.UI.Screens
                 _lumber.text = rts.Lumber.ToString();
                 _supply.text = $"{rts.SupplyUsed}/{rts.SupplyCap}";
                 _supply.EnableInClassList("t-red", rts.SupplyUsed >= rts.SupplyCap);
+                UpdateHeroBar(rts);
             }
             _clock.text = El.FormatTime(Mathf.Max(0f, frame.Time));
             _dayNight.text = frame.IsNight ? "Night" : "Day";
@@ -361,6 +409,7 @@ namespace Bloodfall.Client.UI.Screens
             if (rts.Placing != null) _hint.text = rts.PlacementValid ? "Left-click to build (Shift to queue more) · Right-click or Esc to cancel" : "Can't build here";
             else if (rts.AttackMoveArmed) _hint.text = "Left-click a target or the ground to attack-move · Esc to cancel";
             else if (rts.RallyArmed) _hint.text = "Left-click to set the rally point (a vein or trees send new workers to work)";
+            else if (rts.CastArmed) _hint.text = "Left-click a target for the ability (Shift to queue) · Right-click or Esc to cancel";
             else _hint.text = "";
         }
 
@@ -453,7 +502,10 @@ namespace Bloodfall.Client.UI.Screens
             if (v.Kind == UnitKind.Resource) detail = $"Blood-iron left: {s.ResourceAmount:N0}";
             else if (s.UnderConstruction) detail = $"Under construction: {Mathf.RoundToInt(s.BuildProgress * 100)}%";
             else if (s.TrainQueue != null && s.TrainQueue.Length > 0)
-                detail = $"{(_mc.Data.Upgrades.ContainsKey(s.TrainQueue[0] ?? "") ? "Researching" : "Training")} {QueueName(s.TrainQueue[0])}: {Mathf.RoundToInt(s.TrainProgress * 100)}%";
+                detail = $"{QueueVerb(s.TrainQueue[0])} {QueueName(s.TrainQueue[0])}: {Mathf.RoundToInt(s.TrainProgress * 100)}%";
+            else if (v.Kind == UnitKind.Hero && Rts?.HeroState(v.Id) is RtsHeroState hs)
+                detail = $"Level {hs.Level} · {hs.Xp - hs.XpLevelStart} / {Math.Max(1, hs.XpNextLevel - hs.XpLevelStart)} XP · Damage {Mathf.RoundToInt(s.Damage)} · Armor {s.Armor:0.#}"
+                         + $" · Mana {Mathf.FloorToInt(s.Mana)} / {Mathf.RoundToInt(s.MaxMana)}" + (hs.AbilityPoints > 0 ? $" · {hs.AbilityPoints} ability point(s)" : "");
             else if (v.Kind == UnitKind.Worker)
                 detail = s.CarryGold > 0 ? $"Carrying {s.CarryGold} blood-iron" : s.CarryLumber > 0 ? $"Carrying {s.CarryLumber} lumber" : s.Action == ActionState.Working ? "Working" : "Idle";
             else detail = $"Damage {Mathf.RoundToInt(s.Damage)} · Armor {s.Armor:0.#}";
@@ -486,11 +538,19 @@ namespace Bloodfall.Client.UI.Screens
             _selection.Add(grid);
         }
 
-        /// <summary>A queue entry is a unit or a research.</summary>
+        private string QueueVerb(string id)
+        {
+            if (_mc.Data.Upgrades.ContainsKey(id ?? "")) return "Researching";
+            if (!_mc.Data.Heroes.ContainsKey(id ?? "")) return "Training";
+            return _mc.Client.Latest?.Rts?.Heroes?.Any(h => h.HeroId == id) == true ? "Reviving" : "Recruiting";
+        }
+
+        /// <summary>A queue entry is a unit, a hero or a research.</summary>
         private string QueueName(string id)
         {
             if (string.IsNullOrEmpty(id)) return "?";
             if (_mc.Data.Units.TryGetValue(id, out var d)) return d.Name;
+            if (_mc.Data.Heroes.TryGetValue(id, out var hd)) return hd.Name;
             return _mc.Data.Upgrades.TryGetValue(id, out var up) ? up.Name : El.Pretty(id);
         }
 
@@ -553,6 +613,27 @@ namespace Bloodfall.Client.UI.Screens
                     }
                     Add("Rally", "", KeyCode.Y, rts.ArmRally, true, "Set where new units gather. A vein or trees put new workers to work.");
                 }
+                if (!s.UnderConstruction && primary.Unit != null && primary.Unit.HeroAltar)
+                {
+                    foreach (var hd in data.PlayableHeroes())
+                    {
+                        var heroId = hd.Id;
+                        var hs = frame.Rts?.Heroes?.FirstOrDefault(h => h.HeroId == heroId);
+                        bool can = rts.CanRecruit(heroId, out int gold, out int lumber, out var why);
+                        string cost = lumber > 0 ? $"{gold} / {lumber}" : $"{gold}";
+                        string role = string.Join(", ", hd.Roles ?? new string[0]);
+                        if (hs != null && !hs.Dead)
+                            Add(hd.Name, $"level {hs.Level}", KeyCode.None, () => { }, false, $"{hd.Name}, {hd.Title}, already fights for you.");
+                        else if (hs != null)
+                            Add("Revive " + hd.Name, cost, KeyCode.None, () => rts.Recruit(heroId), can,
+                                $"Bring {hd.Name} (level {hs.Level}) back at this altar.\n{cost} · {data.Rules.RtsReviveTime + data.Rules.RtsReviveTimePerLevel * hs.Level:0} s" + (why != null ? "\n" + why : ""));
+                        else
+                            Add(hd.Name, cost, KeyCode.None, () => rts.Recruit(heroId), can,
+                                $"{hd.Name}, {hd.Title} ({El.Pretty(hd.Faction.ToString())}; {role}).\n{cost} · {data.Rules.RtsHeroSupply} supply · {data.Rules.RtsHeroTrainTime:0} s. "
+                                + $"Up to {data.Rules.RtsMaxHeroes} heroes; each one costs more than the last." + (why != null ? "\n" + why : ""));
+                    }
+                    Add("Rally", "", KeyCode.Y, rts.ArmRally, true, "Set where new heroes gather.");
+                }
                 if (!s.UnderConstruction && primary.Unit?.Research != null)
                 {
                     foreach (var id in primary.Unit.Research)
@@ -592,12 +673,41 @@ namespace Bloodfall.Client.UI.Screens
             Add("Attack", "", KeyCode.A, rts.ArmAttackMove, true, "Attack a target, or attack-move to a point.");
             Add("Stop", "", KeyCode.S, rts.Stop, true, "");
             Add("Hold", "", KeyCode.H, rts.Hold, true, "Hold position.");
+            if (primary.Kind == UnitKind.Hero) HeroButtons(primary, frame);
             if (workers)
             {
                 Add("Build", "", KeyCode.B, () => _buildMenu = true, true, "Open the build menu.");
                 bool carrying = own.Any(v => v.Kind == UnitKind.Worker && (v.State.CarryGold > 0 || v.State.CarryLumber > 0));
                 Add("Return", "cargo", KeyCode.R, rts.ReturnCargo, carrying, "Take carried resources to the nearest hall, then go back to work.");
                 Add("Harvest", "right-click", KeyCode.None, () => { }, true, "Right-click a blood-iron vein or trees to harvest.");
+            }
+        }
+
+        /// <summary>The selected hero's abilities (Q W E R by slot), and "learn" buttons while it has ability points.</summary>
+        private void HeroButtons(EntityView hero, SnapshotFrame frame)
+        {
+            var rts = Rts;
+            var abilities = hero.State?.HeroAbilities;
+            var own = hero.Hero?.Abilities;
+            if (abilities == null || own == null) return;
+            var hs = rts.HeroState(hero.Id);
+            for (int i = 0; i < Math.Min(abilities.Count, own.Count); i++)
+            {
+                var ab = abilities[i];
+                if (!_mc.Data.Abilities.TryGetValue(ab.Id ?? "", out var def) || def.Hidden) continue;
+                int index = i;
+                bool passive = def.Targeting == TargetingMode.Passive;
+                var key = def.Slot == AbilitySlot.Q ? KeyCode.Q : def.Slot == AbilitySlot.W ? KeyCode.W : def.Slot == AbilitySlot.E ? KeyCode.E
+                        : def.Slot == AbilitySlot.R ? KeyCode.R : KeyCode.None;
+                if (ab.Level > 0)
+                {
+                    string state = passive ? "passive" : ab.Cooldown > 0.05f ? $"{Mathf.CeilToInt(ab.Cooldown)} s" : $"lvl {ab.Level}";
+                    Add(def.Name, state, passive ? KeyCode.None : key, () => rts.Cast(hero.Id, index), !passive && ab.Cooldown <= 0.05f,
+                        $"{def.Description}\nLevel {ab.Level}" + (passive ? " · passive" : $" · {def.ManaCost.Get(ab.Level):0} mana · {def.Cooldown.Get(ab.Level):0.#} s cooldown"));
+                }
+                if (hs != null && hs.AbilityPoints > 0 && hs.CanLevel(i))
+                    Add("+ " + def.Name, ab.Level > 0 ? $"to lvl {ab.Level + 1}" : "learn", KeyCode.None, () => rts.LearnAbility(hero.Id, index), true,
+                        $"Spend an ability point on {def.Name}.\n{def.Description}");
             }
         }
 
@@ -676,7 +786,7 @@ namespace Bloodfall.Client.UI.Screens
         public override bool OnEscape()
         {
             var rts = Rts;
-            if (rts != null && (rts.Placing != null || rts.AttackMoveArmed || rts.RallyArmed)) { rts.CancelModes(); return true; }
+            if (rts != null && (rts.Placing != null || rts.AttackMoveArmed || rts.RallyArmed || rts.CastArmed)) { rts.CancelModes(); return true; }
             if (_buildMenu) { _buildMenu = false; return true; }
             ToggleMenu();
             return true;

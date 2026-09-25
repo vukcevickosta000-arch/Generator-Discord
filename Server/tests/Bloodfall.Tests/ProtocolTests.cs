@@ -176,6 +176,50 @@ namespace Bloodfall.Tests
         }
 
         [Fact]
+        public void Rts_HeroRecruitedAtAnAltar_StreamsItsStateAndLearnsOverTheWire()
+        {
+            var data = TestUtil.Data;
+            var cfg = new MatchConfig { ModeId = "rts_1v1", MapId = "map_rts_ashfields", Seed = 8, PreGameTimeOverride = 0.5f, DisableNeutrals = true };
+            cfg.Players.Add(new PlayerSetup { AccountId = OfflineSession.LocalAccountId, Name = "Me", Team = Team.Dawn, RtsFaction = "crimson_court" });
+            cfg.Players.Add(new PlayerSetup { Name = "Other", Team = Team.Dusk, IsBot = true, RtsFaction = "wild_covenant" });
+            var host = OfflineSession.CreateHost(data, cfg);
+            var link = new LoopbackConnection(host);
+            var client = new GameClient(data, link, new HelloInfo { Ticket = MatchTickets.OfflinePrefix + "Me", ClientVersion = "test" });
+            client.Connect();
+            Pump(host, client, 0.2f);
+            client.SendLoadProgress(1f);
+            Pump(host, client, 1.5f);
+            var me = host.Match.Players[0];
+            var keep = host.Match.Units.Single(u => u.DefId == "rts_cc_keep");
+            var altar = host.Match.CreateUnit(data.Units["rts_cc_altar"], Team.Dawn, host.Match.Grid.NearestWalkable(keep.Position + new Vector2(9, 3)), 0f, me);
+            me.Gold = 1000;
+            me.Lumber = 1000;
+            Pump(host, client, 0.2f);
+            Assert.Empty(client.Latest.Rts.Heroes);
+
+            client.SendOrder(new Order { Type = OrderType.Train, UnitId = altar.Id, ItemId = "hero_nyxara" });
+            Pump(host, client, 0.5f);
+            Assert.Equal(new[] { "hero_nyxara" }, client.Latest.Entities.Single(e => e.Id == altar.Id).TrainQueue);
+            Assert.Equal(1000 - data.Rules.RtsHeroGold[0], client.Latest.Rts.Gold);
+
+            Pump(host, client, data.Rules.RtsHeroTrainTime + 1f);
+            var hs = Assert.Single(client.Latest.Rts.Heroes);
+            Assert.Equal("hero_nyxara", hs.HeroId);
+            Assert.Equal(1, hs.Level);
+            Assert.False(hs.Dead);
+            Assert.Equal(1, hs.AbilityPoints);
+            Assert.True(hs.CanLevel(1), "a basic ability can be learned at level 1");
+            var entity = client.Latest.Entities.Single(e => e.Id == hs.UnitId);
+            Assert.Equal("hero_nyxara", entity.DefId);
+            Assert.Equal(0, entity.HeroAbilities[1].Level);
+
+            client.SendOrder(Order.LevelUp(hs.UnitId, 1));
+            Pump(host, client, 0.3f);
+            Assert.Equal(1, client.Latest.Entities.Single(e => e.Id == hs.UnitId).HeroAbilities[1].Level);
+            Assert.Equal(0, client.Latest.Rts.Heroes[0].AbilityPoints);
+        }
+
+        [Fact]
         public void Reconnect_RestoresPlayer_AndGraceAbandons()
         {
             var data = TestUtil.Data;

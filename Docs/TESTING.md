@@ -4,7 +4,7 @@
 
 | Suite | Command | What it covers |
 |---|---|---|
-| Unit and simulation tests (105) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
+| Unit and simulation tests (109) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
 | End-to-end online | `Tools/dev/run-e2e.sh` | Real backend (fresh SQLite database) and a real game server over UDP; see §3 |
 | Bot soak | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- <minutes> <seed> [--deaths] [--trace N] [--mirror \| --heroes id1,id2]` | Full 5v5 bot matches (every playable hero by default): stability, performance, balance numbers |
 | RTS bot soak | `... SimRunner -- <minutes> <seed> --rts [--games N] [--factions a,b] [--difficulty X,Y] [--trace] [--log]` | 1v1 RTS bot games on Ashfields: wins per faction and per start side, economy and army statistics, AI errors |
@@ -19,7 +19,9 @@ What the unit and simulation tests cover:
   - unit ids in Train/Build commands and the group cap;
   - a loopback RTS match with private economy, building state, training queue, rally point, group moves and fog;
   - research over the wire: an upgrade index in the command, units and research tagged in one queue, and completed
-    research in the private block (v6).
+    research in the private block (v6);
+  - a hero recruited over the wire: in the altar's queue, then in the private hero block with its ability points and
+    learnable abilities, then an ability learned by a `LevelAbility` command (v7).
 - **Data:** the index is current, a client-style load gives the same hash, model and icon keys are declared, and
   every model key has an FBX from the Blender pipeline.
 - **Hero kits** (`HeroKitTests.cs`): every ability of Nyxara, Malgrave, Ardyn, Fenrax, Morwen and Thael, and the
@@ -48,7 +50,7 @@ What the unit and simulation tests cover:
   - determinism and data validity (every requirement buildable by the worker)
   - a complete Normal-vs-Beginner bot game (economy, production, razing; fewer than 60 rejected bot orders)
   - attack-move after a target dies mid-swing (regression)
-- **RTS factions** (`RtsFactionTests.cs`, 9 tests):
+- **RTS factions and heroes** (`RtsFactionTests.cs`, 12 tests):
   - research: cost, queue, no double research, effect on existing and new units, melee-only selector
   - the right building, prerequisites (research and buildings), cancel refunds, "not enough" errors
   - Legion raising: supply-free 30 s skeletons, the cooldown, no undead or siege, and the killer's side first in a
@@ -59,8 +61,15 @@ What the unit and simulation tests cover:
   - Crimson Court Blood Price (paid to the killer's owner, not to other factions)
   - Wild Covenant night: the Moonlit bonus on soldiers, wolf form on shifters (including units trained at night),
     and both ending at dawn
-  - a 10-minute Crimson Court vs Wild Covenant bot game: economy, tech, armies, a fight and fewer than 40 rejected
-    orders
+  - a 10-minute Crimson Court vs Wild Covenant bot game: economy, tech, armies, heroes that level, a fight and fewer
+    than 40 rejected orders
+  - altars:
+    - three heroes at rising prices, no duplicates, the cap;
+    - an exact refund on cancel, unknown heroes and non-altars rejected;
+    - heroes arrive near the altar and `Player.Hero` stays empty.
+  - fallen heroes: no gold changes, no respawn on their own, revived at level for 100 + 30 per level, and a revival
+    is not a new hero
+  - experience from kills near a hero (per supply, buildings), none for a distant hero
 
 ## 2. What the compile checks do *not* cover
 

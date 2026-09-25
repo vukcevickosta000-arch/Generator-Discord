@@ -91,7 +91,8 @@
         "rts_al_bone_pit",
         "rts_al_spirit_spire",
         "rts_al_charnel_works",
-        "rts_al_crypt"
+        "rts_al_crypt",
+        "rts_al_altar"
       ],
       "model": "creep_dusk_thrall",
       "modelScale": 0.8,

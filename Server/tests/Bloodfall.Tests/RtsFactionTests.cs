@@ -293,7 +293,119 @@ namespace Bloodfall.Tests
                     $"{p.Name} ({f.Id}) has a barracks");
             }
             Assert.True(m.Players[0].UnitsKilled + m.Players[1].UnitsKilled > 0, "the armies met");
+            Assert.All(m.Players, p => Assert.NotEmpty(p.RtsHeroes));
+            Assert.Contains(m.Players.SelectMany(p => p.RtsHeroes), h => h.Level >= 2 && h.Abilities.Any(a => a.Level > 0 && !a.Def.CommonHeroAbility));
             Assert.True(errors < 40, $"{errors} rejected bot orders");
         }
-    }
+    
+        /// <summary>A Dawnguard base with a finished altar, plenty of money and supply for three heroes.</summary>
+        private static (Match m, Player p, Unit altar) AltarBase()
+        {
+            var m = NewRts();
+            var p = m.Players[0];
+            var altar = BuildAndFinish(m, p, "rts_dg_altar", FindSpot(m, p, "rts_dg_altar"));
+            for (int i = 0; i < 3; i++)
+                m.CreateUnit(Def("rts_dg_sun_shrine"), p.Team, m.Grid.NearestWalkable(Hall(m, p).Position + new Vector2(-8 + i * 3, -9)), 0f, p);
+            p.Gold = 5000;
+            p.Lumber = 5000;
+            TestUtil.Run(m, 0.2f);
+            return (m, p, altar);
+        }
+
+        [Fact]
+        public void AltarsRecruitUpToThreeHeroesAtRisingPrices()
+        {
+            var (m, p, altar) = AltarBase();
+            var rules = m.Rules;
+            int supply = p.SupplyUsed;
+            Assert.True(m.TryTrain(altar, "hero_vorak"));
+            Assert.Equal(5000 - rules.RtsHeroGold[0], p.Gold);
+            Assert.Equal(5000 - rules.RtsHeroLumber[0], p.Lumber);
+            Assert.Equal(supply + rules.RtsHeroSupply, p.SupplyUsed);
+            m.Events.Clear();
+            Assert.False(m.TryTrain(altar, "hero_vorak"));
+            Assert.Contains(m.Events, e => e.Type == SimEventType.Error && e.Key == "Already being recruited.");
+            Assert.True(m.TryTrain(altar, "hero_ilyra"));
+            Assert.True(m.TryTrain(altar, "hero_ardyn"));
+            Assert.Equal(5000 - rules.RtsHeroGold.Take(3).Sum(), p.Gold);
+            m.Events.Clear();
+            Assert.False(m.TryTrain(altar, "hero_thael"));
+            Assert.Contains(m.Events, e => e.Type == SimEventType.Error && e.Key.StartsWith("You can lead at most 3 heroes"));
+            // Cancelling the last one refunds exactly what it cost.
+            m.IssueOrder(altar, new Order { Type = OrderType.CancelQueue, UnitId = altar.Id, Slot = -1 });
+            Assert.Equal(5000 - rules.RtsHeroGold[0] - rules.RtsHeroGold[1], p.Gold);
+            Assert.Equal(5000 - rules.RtsHeroLumber[0] - rules.RtsHeroLumber[1], p.Lumber);
+            m.Events.Clear();
+            Assert.False(m.TryTrain(altar, "not_a_hero"));
+            Assert.False(m.TryTrain(BuildAndFinish(m, p, "rts_dg_barracks", FindSpot(m, p, "rts_dg_barracks")), "hero_thael"));
+            Assert.Contains(m.Events, e => e.Type == SimEventType.Error && e.Key == "That hero can't be recruited.");
+            Assert.Contains(m.Events, e => e.Type == SimEventType.Error && e.Key == "Can't train that here.");
+
+            TestUtil.Run(m, 2 * rules.RtsHeroTrainTime + 1f);
+            // The queue trains them in order (building the barracks above took time too).
+            Assert.Equal(new[] { "hero_vorak", "hero_ilyra" }, p.RtsHeroes.Select(h => h.DefId));
+            var vorak = p.RtsHeroes[0];
+            Assert.True(vorak.IsAlive && vorak.IsHero && vorak.Owner == p);
+            Assert.Equal(1, vorak.Level);
+            Assert.Null(p.Hero); // the RTS keeps its heroes in RtsHeroes
+            Assert.True(Vector2.Distance(vorak.Position, altar.Position) < 6f);
+        }
+
+        [Fact]
+        public void FallenHeroesStayDeadUntilRevivedAtAnAltar()
+        {
+            var (m, p, altar) = AltarBase();
+            var dusk = m.Players[1];
+            m.TryTrain(altar, "hero_vorak");
+            TestUtil.Run(m, m.Rules.RtsHeroTrainTime + 1f);
+            var vorak = p.RtsHeroes[0];
+            m.AddXp(vorak, m.Rules.Experience.Cumulative[2]);
+            Assert.Equal(3, vorak.Level);
+            int gold = p.Gold, duskGold = dusk.Gold, supply = p.SupplyUsed;
+            var killer = m.CreateUnit(Def("rts_al_thrall"), dusk.Team, m.Grid.NearestWalkable(vorak.Position + new Vector2(2, 0)), 0f, dusk);
+            m.Step();
+            m.DealDamage(new DamageInfo { Source = killer, Target = vorak, Amount = 99999f, Type = DamageType.Pure });
+            Assert.True(vorak.Dead);
+            Assert.Equal(gold, p.Gold);           // no MOBA death penalty
+            Assert.Equal(duskGold, dusk.Gold);    // and no hero bounty
+            m.KillUnit(killer, null);
+            TestUtil.Run(m, 90f);
+            Assert.True(vorak.Dead, "RTS heroes do not respawn on their own");
+            Assert.Equal(supply - m.Rules.RtsHeroSupply, p.SupplyUsed);
+
+            gold = p.Gold;
+            Assert.True(m.TryTrain(altar, "hero_vorak"));
+            Assert.Equal(gold - m.ReviveGold(vorak), p.Gold);
+            Assert.Equal(m.Rules.RtsReviveGold + m.Rules.RtsReviveGoldPerLevel * 3, gold - p.Gold);
+            Assert.Equal(1, m.HeroCount(p)); // a revival is not a new hero
+            TestUtil.Run(m, m.ReviveTime(vorak) + 1f);
+            Assert.True(vorak.IsAlive);
+            Assert.Equal(3, vorak.Level);
+            Assert.Equal(vorak.Stats.MaxHp, vorak.Hp, 1);
+            Assert.True(Vector2.Distance(vorak.Position, altar.Position) < 6f);
+        }
+
+        [Fact]
+        public void HeroesGrowFromKillsNearThem()
+        {
+            var (m, p, altar) = AltarBase();
+            var dusk = m.Players[1];
+            m.TryTrain(altar, "hero_vorak");
+            m.TryTrain(altar, "hero_ilyra");
+            TestUtil.Run(m, 2 * m.Rules.RtsHeroTrainTime + 2f);
+            var near = p.RtsHeroes[0];
+            var far = p.RtsHeroes[1];
+            far.Position = m.Grid.NearestWalkable(new Vector2(20, 60));
+            var at = m.Grid.NearestWalkable(near.Position + new Vector2(3, 0));
+            var footman = m.CreateUnit(Def("rts_al_thrall"), dusk.Team, at, 0f, dusk);
+            var obelisk = m.CreateUnit(Def("rts_al_obelisk"), dusk.Team, m.Grid.NearestWalkable(near.Position + new Vector2(0, 4)), 0f, dusk);
+            m.Step();
+            int xp = near.Xp;
+            m.KillUnit(footman, null);
+            Assert.Equal(xp + m.Rules.RtsXpPerSupply * Def("rts_al_thrall").SupplyCost, near.Xp);
+            m.KillUnit(obelisk, null);
+            Assert.Equal(xp + m.Rules.RtsXpPerSupply * 2 + m.Rules.RtsBuildingXp, near.Xp);
+            Assert.Equal(0, far.Xp);
+        }
+}
 }

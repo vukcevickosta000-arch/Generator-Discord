@@ -194,7 +194,7 @@ health bar while Vharoth is visible.
   - *Wild Covenant:* shapeshifting units empowered at night.
   - *Dawnguard:* fortifications and healing auras.
 
-### 11.1 As implemented (phases R1–R5 and R2 part 1)
+### 11.1 As implemented (phases R1–R5 and R2)
 
 The rules below run in the shared simulation (`Shared/Runtime/Simulation/Match.Rts.cs`) and are covered by
 `RtsTests` and `RtsFactionTests`. The Unity RTS interface (R5) exposes all of them, but it has only been
@@ -323,14 +323,38 @@ Every hall provides 10 supply.
 - If several Legion players qualify, the one who made the kill raises; otherwise the one with the closest soldier.
 
 All four factions' line units share costs and speeds by role, with stats within a few percent. Their differences are
-the construction style, the mechanic and small stat trade-offs that pay for it. Hero altars follow in phase R2
-(TODO T-030).
+the construction style, the mechanic and small stat trade-offs that pay for it.
+
+**Heroes (altars).**
+- Every faction builds an altar: Altar of Dawn, Bone Altar, Blood Altar, Altar of the Wild. Each costs 180/50,
+  takes 40 s and needs nothing else.
+- Recruiting:
+  - The altar offers every playable Blood War hero, whatever the faction, each once per player.
+  - A player leads at most three heroes, alive or awaiting revival.
+  - The first costs 200/50, the second 350/100 and the third 500/150.
+  - Each takes 45 s to recruit and uses 5 supply while alive.
+- Heroes arrive at level 1 with one ability point, using their Blood War kits unchanged. There are no items or shops
+  in the strategy mode.
+- Experience:
+  - Heroes gain experience from enemy deaths within 12.5 m, shared between the heroes there.
+  - A player's unit gives 20 per supply (at least 20), a building 60 and a hall 150.
+  - Neutral creatures and enemy heroes give their Blood War values.
+- Death:
+  - A fallen hero never returns by itself, and death costs no gold on either side.
+  - Any altar revives it at its level for 100 + 30 per level blood-iron, taking 20 s + 3 s per level.
+- Bots:
+  - build an altar right after their first barracks and recruit at random from every hero;
+  - take a second or third hero only after minute 8.5, up to 1 (Beginner), 2 (Normal) or 3 (Veteran/Nightmare);
+  - revive fallen heroes first;
+  - level abilities and cast them like Blood War bots, aiming spells at heroes and costly units rather than
+    temporary summons.
 
 **Bots.** The RTS AI plays by the same rules and knowledge as a player. Its plan:
 1. Saturate the vein and keep a lumber crew.
 2. Build supply ahead of need, then barracks, tower, siege and elite buildings.
 3. Clear the camp guarding the nearest free vein, then expand to it.
-4. Research from minute 9, army upgrades first.
+4. Build an altar after the first barracks and recruit a hero (more after minute 8.5); research from minute 9, army
+   upgrades first.
 5. Attack in waves that grow each time:
    - The army first gathers at a forward point 40% of the way to the enemy and holds for 14–26 s.
    - It then advances in stages along the ground path, so it arrives together, and walks round guarding camps.

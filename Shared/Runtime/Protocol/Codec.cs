@@ -368,6 +368,27 @@ namespace Bloodfall.Protocol
                     if (written++ >= ups) break;
                     w.WriteVarUInt((uint)index.UpgradeId(id));
                 }
+                // v7: the player's heroes. Ability ids, levels and cooldowns travel in each hero's entity.
+                var heroes = viewerPlayer.RtsHeroes;
+                int heroCount = Math.Min(8, heroes.Count);
+                w.WriteByte((byte)heroCount);
+                var table = m.Rules.Experience.Cumulative;
+                for (int i = 0; i < heroCount; i++)
+                {
+                    var h = heroes[i];
+                    w.WriteVarUInt((uint)h.Id);
+                    w.WriteVarUInt((uint)index.UnitId(h.DefId));
+                    w.WriteByte((byte)Math.Min(255, h.Level));
+                    w.WriteBool(h.Dead);
+                    w.WriteVarUInt((uint)Math.Max(0, h.Xp));
+                    w.WriteVarUInt((uint)table[Math.Min(table.Length - 1, h.Level - 1)]);
+                    w.WriteVarUInt((uint)m.XpForNextLevel(h));
+                    w.WriteByte((byte)Math.Min(255, h.AbilityPoints));
+                    int mask = 0;
+                    for (int a = 0; a < Math.Min(31, h.Abilities.Count); a++)
+                        if (m.CanLevelAbility(h, h.Abilities[a])) mask |= 1 << a;
+                    w.WriteVarUInt((uint)mask);
+                }
             }
             return w.ToArray();
         }
@@ -541,6 +562,20 @@ namespace Bloodfall.Protocol
                     var id = index.Upgrade((int)r.ReadVarUInt());
                     if (id != null) f.Rts.Upgrades.Add(id);
                 }
+                int heroes = r.ReadByte();
+                for (int i = 0; i < heroes; i++)
+                    f.Rts.Heroes.Add(new RtsHeroState
+                    {
+                        UnitId = (int)r.ReadVarUInt(),
+                        HeroId = index.Unit((int)r.ReadVarUInt()),
+                        Level = r.ReadByte(),
+                        Dead = r.ReadBool(),
+                        Xp = (int)r.ReadVarUInt(),
+                        XpLevelStart = (int)r.ReadVarUInt(),
+                        XpNextLevel = (int)r.ReadVarUInt(),
+                        AbilityPoints = r.ReadByte(),
+                        CanLevelMask = (int)r.ReadVarUInt(),
+                    });
             }
             return f;
         }

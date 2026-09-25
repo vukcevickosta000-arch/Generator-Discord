@@ -24,8 +24,8 @@ backend.
    - Ticket format: `base64url(json payload) + "." + base64url(HMAC-SHA256(payload, ticketKey))`.
    - Payload: `matchId`, `accountId`, `displayName`, `team`, `slot`, `spectator`, `exp` (unix s), `nonce`.
 3. **The client connects over UDP** (connection key `bloodfall`) and sends `Hello` with:
-   - protocol version (currently **6**; v4 added the Vharoth phase and seal count to the snapshot header, v5 the
-     RTS fields listed in §3, v6 research)
+   - protocol version (currently **7**; v4 added the Vharoth phase and seal count to the snapshot header, v5 the
+     RTS fields listed in §3, v6 research, v7 RTS heroes)
    - game data content hash
    - client version
    - the ticket
@@ -86,6 +86,17 @@ Every message starts with one `MsgType` byte.
 - The private RTS block ends with the completed research: a count byte (at most 64), then upgrade indices in
   ordinal order.
 - `ResearchComplete` events go only to the researching player.
+
+**RTS heroes (v7).**
+- Altars take ordinary `Train` commands whose unit index names a hero, and queue entries use the unit index as well.
+  (Hero ids are in the content index's unit table.)
+- The private RTS block ends with the player's heroes, at most 8. Each has:
+  - unit id, hero index, level, dead flag;
+  - XP, XP at the level's start, XP for the next level;
+  - ability points;
+  - a varuint mask of the abilities that can be learned now.
+- Ability ids, levels and cooldowns travel in each hero's entity, as in Blood War. `Player.Hero` (the Blood War private
+  block) stays empty in the strategy mode.
 - **Fog.**
   - Enemy RTS buildings are sent only while visible. The client is expected to remember last-seen buildings.
   - MOBA structures stay always known.

@@ -217,6 +217,50 @@ Measured (SimRunner `--rts`, 40 games per pairing, sides alternating, 30-minute 
 
 Every faction wins 45–58% of its games.
 
+### R2 part 3 (hero altars), 2026-09-25
+
+Heroes are Blood War heroes, unchanged. They are strong for their price early on, so the first clash snowballs
+harder: bot games now last 12–14 minutes instead of 16–17.
+
+| Finding | Change |
+|---|---|
+| Bots preferring their own faction's heroes tied faction balance to those heroes. The Legion's only hero, Malgrave (a summoner), won 30 of 40 games. | Bots recruit at random from every hero; the altar offers every hero to every faction |
+| The Legion's self-building acolytes afforded a second hero about a minute earlier | Bots take their second and third hero only after minute 8.5 |
+| Enemy hero bots spent their nukes on the Legion's 30-second skeletons | Spells go to heroes, then costly units; temporary summons and buildings are skipped |
+| Bot escapes aimed at "the fountain", which falls back to (0,0), the Dawn corner, on maps without bases | The fallback is the team's start location |
+| Mirrors leaned Dusk 64–86. The early economy was identical on both sides. | A* expands neighbours in the point-reflected order for starts on the far half, so mirror-image paths break ties the same way. Mirrors are now 112–121. |
+
+Measured (40 games per pairing):
+
+| Pairing | Result |
+|---|---|
+| Dawnguard – Ashen Legion | 16–24 |
+| Crimson Court – Ashen Legion | 16–23 |
+| Wild Covenant – Dawnguard | 18–22 |
+| Wild Covenant – Ashen Legion | 22–17 |
+| Crimson Court – Dawnguard | 24–15 |
+| Crimson Court – Wild Covenant | 22–15 |
+| Faction totals | Legion 54%, Court 53%, Covenant 48%, Dawnguard 45% |
+| Mirrors, six series | Dawn start 112 – Dusk 121 |
+| Normal vs Beginner | 20–0 |
+| Veteran vs Normal | 15–14 and 21–8 (62%, down from 22–6 and 30–0 before heroes) |
+
+Heroes, over about 75 recruitments each (wins/games they appeared in):
+
+| Hero | Win rate |
+|---|---|
+| Malgrave | about 72% |
+| Ilyra | about 68% |
+| Ardyn | about 64% |
+| Vorak | about 62% |
+| Thael | about 54% |
+| Morwen | about 37% |
+| Nyxara | about 32% |
+| Fenrax | about 31% |
+
+The Blood War assassins and carries rely on items and on the finesse of hero play; bots cast their abilities but do
+not play them well. Tuning heroes for the strategy mode is TODO T-035.
+
 ## 6. Process
 
 1. Change data.

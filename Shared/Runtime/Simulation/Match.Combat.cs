@@ -436,6 +436,7 @@ namespace Bloodfall.Simulation
 
         private void OnHeroDeath(Unit victim, Unit killer, Player killerPlayer, bool deny)
         {
+            if (IsRts) { OnRtsHeroDeath(victim, killer, killerPlayer); return; }
             var vp = victim.Owner;
             if (vp != null)
             {

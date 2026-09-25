@@ -10,7 +10,7 @@ namespace Bloodfall.Protocol
     public static class ProtocolInfo
     {
         /// <summary>Bump when the wire format changes. Clients with a different version are rejected with a clear message.</summary>
-        public const ushort Version = 6;
+        public const ushort Version = 7;
         public const string ConnectionKey = "bloodfall";
         public const int DefaultGamePort = 27015;
     }
@@ -199,6 +199,21 @@ namespace Bloodfall.Protocol
         public int Gold, Lumber, SupplyUsed, SupplyCap;
         /// <summary>Research the player has completed (upgrade ids).</summary>
         public List<string> Upgrades = new List<string>();
+        /// <summary>The player's heroes from altars, alive or awaiting revival (v7).</summary>
+        public List<RtsHeroState> Heroes = new List<RtsHeroState>();
+    }
+
+    public sealed class RtsHeroState
+    {
+        public int UnitId;
+        public string HeroId;
+        public int Level;
+        public bool Dead;
+        public int Xp, XpLevelStart, XpNextLevel;
+        public int AbilityPoints;
+        /// <summary>Bit i set: ability i (the hero's own abilities, in order) can be learned or raised now.</summary>
+        public int CanLevelMask;
+        public bool CanLevel(int index) => index >= 0 && index < 31 && (CanLevelMask & (1 << index)) != 0;
     }
 
     public sealed class PrivateState

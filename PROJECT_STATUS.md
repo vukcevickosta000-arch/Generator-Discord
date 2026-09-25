@@ -16,10 +16,10 @@ This file is the honest source of truth for what works. Status labels:
 | Check | Result | How to reproduce |
 |---|---|---|
 | Server solution build (`Server/Bloodfall.sln`) | ✅ builds, 0 warnings-as-errors | `dotnet build Server/Bloodfall.sln` |
-| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 105 / 105 pass | `dotnet test Server/tests/Bloodfall.Tests` |
+| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 109 / 109 pass | `dotnet test Server/tests/Bloodfall.Tests` |
 | End-to-end online test (real backend + game server over UDP): a MOBA match, then an RTS match | ✅ **E2E PASSED** | `Tools/dev/run-e2e.sh` |
 | 20-minute 5v5 bot simulation (all eight heroes) | ✅ runs, 0.28 ms/tick | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- 20 11` |
-| RTS bot games (Ashfields, 40-game series) | ✅ games decided in 15–19 min on average. Four factions, every pairing within 45–58%. Start sides even in all four mirrors, 0–2 draws per 40 games, about 0.05 ms/tick. | `... SimRunner -- 30 5000 --rts --games 40 --factions a,b` |
+| RTS bot games (Ashfields, 40-game series) | ✅ games decided in 12–14 min on average with heroes. Faction totals 45–54%. Start sides even: 112–121 over six mirror series. 0–3 draws per 40 games. About 0.05 ms/tick. | `... SimRunner -- 30 5000 --rts --games 40 --factions a,b` |
 | Unity client scripts compile check (UnityEngine 2021.3 reference assemblies) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck` |
 | Unity editor scripts compile check (Unity3D.SDK 2021.1) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck/Editor` |
 | Unity 6 editor import / Play mode / Windows player build | ⛔ **not run** (no Unity editor available) | see BUILD_INSTRUCTIONS.md |
@@ -38,7 +38,11 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
 | 5 | Client / account / lobby / server flow | Backend **WORKING** (E2E). Unity screens IMPLEMENTED (unverified). |
 | 6 | Multiple heroes and items | PARTIAL: **8 of 96 heroes** playable (all eight concept heroes: Vorak, Ilyra, Nyxara, Malgrave, Ardyn, Fenrax, Morwen, Thael), each with kit tests and bot usage. 38 items. |
 | 7 | Vharoth event | **WORKING** in simulation: seals, awakening, three boss phases, Blood Moon, Heart of Vharoth with revive, bots that break seals and kill him. 13 tests. Unity presentation (models, effects, HUD boss bar, Blood Moon lighting, corpse): IMPLEMENTED (unverified). |
-| 8 | RTS match | PARTIAL.<br>**Server side WORKING** (R1–R4 and R2 parts 1–2: 29 simulation tests, 3 protocol tests, E2E section 5): harvesting, construction, training, supply, rally points, victory by razing, the Ashfields map, an RTS AI at four difficulties, protocol v6, lobby factions and the strategy queue, all played over UDP.<br>**Unity interface IMPLEMENTED (unverified)** (R5): selection, control groups, command card, placement ghost, resource HUD, practice vs AI, Strategy queue and lobby factions. It compiles against the reference assemblies but has never been run in Unity.<br>**All four factions** (Dawnguard, Ashen Legion, Crimson Court, Wild Covenant). Each has its own mechanic (healing shrines, raising the dead, Blood Price, Moonlit night forms) and five or six research upgrades, and each wins 45–58% of 40-game bot series against every other faction. Also: research over protocol v6 with command-card buttons, and camps that guard the expansions. 9 faction tests, a protocol test and the E2E cover this. Still missing: hero altars (R2 part 3). |
+| 8 | RTS match | PARTIAL.<br>**Server side WORKING** (R1–R4 and R2: 32 simulation tests, 4 protocol tests, E2E section 5): harvesting, construction, training, supply, rally points, victory by razing, the Ashfields map, an RTS AI at four difficulties, protocol v7, lobby factions and the strategy queue, all played over UDP.<br>**Unity interface IMPLEMENTED (unverified)** (R5): selection, control groups, command card, placement ghost, resource HUD, practice vs AI, Strategy queue and lobby factions. It compiles against the reference assemblies but has never been run in Unity.<br>**All four factions** (Dawnguard, Ashen Legion, Crimson Court, Wild Covenant). Each has its own mechanic (healing shrines, raising the dead, Blood Price, Moonlit night forms) and five or six research upgrades, and each wins 45–58% of 40-game bot series against every other faction. Also:
+- research over protocol v6 with command-card buttons, and camps that guard the expansions;
+- **hero altars:** up to three Blood War heroes per player, levelling from kills and revived at altars, with bots that recruit and cast (protocol v7; Unity buttons, targeting and hero bar compile-checked only).
+
+12 faction and hero tests, 4 protocol tests and the E2E cover this. Open: hero balance for the strategy mode (T-035). |
 | 9 | Content expansion | PLANNED |
 | 10 | Polish | PLANNED |
 
@@ -179,7 +183,7 @@ lobby → hero select → loading → match → post-game.
 | Terrain layer textures (8), VFX sprites (24), Velmoragh heightfield/splat/dressing | Done (procedural) |
 | Ashfields (RTS map) heightfield/splat/dressing | Done (procedural, `Tools/mapgen/generate_ashfields.py`, preview `Docs/Images/ashfields_layout.png`) |
 | OFL fonts | Done |
-| Hero/creep/summon/neutral/boss/structure 3D models | **Done (generated)**: 79 FBX models (including the RTS blood-iron vein and the Crimson Court and Wild Covenant kits) from the Blender pipeline (`Blender/scripts`), with rigs, 12–13 animation clips and baked ambient occlusion (`Docs/Images/models_all.png`). Stylised primitive-based modelling, not sculpted or textured. Not yet imported in Unity. |
+| Hero/creep/summon/neutral/boss/structure 3D models | **Done (generated)**: 83 FBX models (including the RTS blood-iron vein, the Crimson Court and Wild Covenant kits and four hero altars) from the Blender pipeline (`Blender/scripts`), with rigs, 12–13 animation clips and baked ambient occlusion (`Docs/Images/models_all.png`). Stylised primitive-based modelling, not sculpted or textured. Not yet imported in Unity. |
 | Map props and trees | Procedural stand-ins (C#); Blender versions are still to do |
 | RTS unit and building models | **Crimson Court and Wild Covenant: generated.** 22 models: blood-marble noble buildings, organic Covenant groves, a lodge, a stone circle and a den, and every unit including the shifter's wolf form. **Dawnguard and Ashen Legion: borrowed** Dawn/Dusk creep and structure models, scaled (TODO T-034). |
 | Ability/item/status icons (123) | Done (procedural embossed emblems, `Tools/art/generate_icons.py`) |
@@ -191,7 +195,7 @@ lobby → hero select → loading → match → post-game.
 ## Next step (exact)
 
 1. **RTS mode (milestone 8), in order** (details in TODO.md T-030 to T-034):
-   - R2 part 3: altars that recruit up to three MOBA heroes per player (factions and research are done).
+   - T-035: tune the Blood War heroes for the strategy mode (R2 is otherwise done: factions, research, altars).
    - R5 follow-ups: dedicated models and unit icons (T-033, T-034).
 2. **Art (T-001 remainder):** Blender props and trees.
 3. **Hero-specific bot behaviour** (T-022) and last-hitting (T-016). The Nyxara bot is the weakest in bot matches.

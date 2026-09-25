@@ -23,6 +23,7 @@ namespace Bloodfall.Simulation
         private readonly Player _p;
         private readonly BotDifficulty _difficulty;
         private readonly UnitDef _hall, _worker, _supply, _barracks, _tower, _siegeHouse, _eliteHouse;
+        private readonly UnitDef _altar;
         private readonly List<UnitDef> _line = new List<UnitDef>();
         private readonly Vector2 _home, _enemyHome, _rally;
         private readonly float _thinkInterval;
@@ -83,6 +84,7 @@ namespace Bloodfall.Simulation
             _tower = builds.FirstOrDefault(b => b.DamageMax > 0);
             _siegeHouse = builds.FirstOrDefault(b => Trains(b, u => Tagged(u, "siege")));
             _eliteHouse = builds.FirstOrDefault(b => Trains(b, u => Tagged(u, "elite")));
+            _altar = builds.FirstOrDefault(b => b.HeroAltar);
             if (_barracks != null) _line.AddRange(_barracks.Trains.Where(d.Units.ContainsKey).Select(id => d.Units[id]));
 
             var hall = OwnHalls(m).FirstOrDefault();
@@ -122,6 +124,12 @@ namespace Bloodfall.Simulation
         private List<Unit> OwnBuildings(Match m, UnitDef def) => def == null ? new List<Unit>() : m.Units.Where(u => u.Owner == _p && u.IsAlive && u.DefId == def.Id).ToList();
         private int Count(Match m, UnitDef def) => OwnBuildings(m, def).Count;
         private static bool Tagged(Unit u, string tag) => u.UnitDef?.Tags != null && u.UnitDef.Tags.Contains(tag);
+        /// <summary>Soldiers and heroes: what the army is made of.</summary>
+        private static bool Fighter(Unit u) => u.Kind == UnitKind.Soldier || (u.IsHero && !u.IsIllusion);
+        private List<Unit> Fighters(Match m) => m.Units.Where(u => u.Owner == _p && u.IsAlive && Fighter(u)).ToList();
+        /// <summary>A unit's weight in army maths: its supply; a hero counts its supply plus one per level.</summary>
+        private static int Weight(Match m, Unit u) => u.IsHero ? m.Rules.RtsHeroSupply + u.Level : u.UnitDef?.SupplyCost ?? 1;
+        private int MaxHeroes(Match m) => Math.Min(m.Rules.RtsMaxHeroes, Minutes(m) < 8.5f ? 1 : Beginner ? 1 : Expert ? 3 : 2);
         private float Minutes(Match m) => m.MatchSeconds / 60f;
 
         /// <summary>Veins a hall of ours stands next to.</summary>
@@ -244,6 +252,8 @@ namespace Bloodfall.Simulation
             if (PlannedBuild(m, null)) return default; // a worker is already walking to a site
             if (_barracks != null && barracks == 0 && (workers >= 7 || min >= 1.2f)) return (_barracks, hall.Position, false);
             if (barracks == 0) return default;
+            // A hero early is worth more than a tower: the altar comes right after the first barracks.
+            if (_altar != null && Count(m, _altar) == 0 && min >= (Beginner ? 6f : 2.5f)) return (_altar, hall.Position, false);
             if (_tower != null && Count(m, _tower) == 0 && min >= 4f && _difficulty != BotDifficulty.Beginner) return (_tower, _rally, false);
             if (_siegeHouse != null && Count(m, _siegeHouse) == 0 && min >= 5f) return (_siegeHouse, hall.Position, false);
             var expansion = ExpansionVein(m, halls, min);
@@ -348,6 +358,7 @@ namespace Bloodfall.Simulation
                 reserveGold += site.GoldCost;
                 reserveLumber += site.LumberCost;
             }
+            Heroes(m, reserveGold, reserveLumber);
             foreach (var hall in halls)
             {
                 if ((hall.TrainQueue?.Count ?? 0) > 0 || workers >= workersWanted) continue;
@@ -393,6 +404,34 @@ namespace Bloodfall.Simulation
             }
         }
 
+        /// <summary>
+        /// Altar: revive fallen heroes first, then recruit up to the difficulty's number of heroes, picked at random.
+        /// The first hero ignores money set aside for buildings.
+        /// </summary>
+        private void Heroes(Match m, int reserveGold, int reserveLumber)
+        {
+            if (_altar == null) return;
+            var altar = OwnBuildings(m, _altar).FirstOrDefault(a => !a.UnderConstruction && (a.TrainQueue?.Count ?? 0) == 0);
+            if (altar == null) return;
+            var dead = _p.RtsHeroes.FirstOrDefault(h => h.Dead);
+            if (dead != null)
+            {
+                if (_p.Gold - m.ReviveGold(dead) >= reserveGold) m.TryTrain(altar, dead.DefId);
+                return;
+            }
+            if (m.HeroCount(_p) >= MaxHeroes(m)) return;
+            var owned = new HashSet<string>(_p.RtsHeroes.Select(h => h.DefId));
+            // Any hero answers any altar. (Preferring the faction's own heroes tied faction balance to how strong
+            // those few heroes are: the Legion's one hero is a summoner and won 30 of 40 games.)
+            var pool = m.Data.PlayableHeroes().Where(h => !owned.Contains(h.Id)).ToList();
+            if (pool.Count == 0) return;
+            var pick = pool[_rng.Range(0, pool.Count)];
+            var (gold, lumber) = m.NextHeroPrice(_p);
+            bool first = _p.RtsHeroes.Count == 0;
+            if (_p.Gold - gold < (first ? 0 : reserveGold) || _p.Lumber - lumber < (first ? 0 : reserveLumber)) return;
+            m.TryTrain(altar, pick.Id);
+        }
+
         private UnitDef PickUnit(Match m, Unit building)
         {
             var options = building.UnitDef.Trains.Where(m.Data.Units.ContainsKey).Select(id => m.Data.Units[id]).Where(d => m.RequirementsMet(_p, d, out _)).ToList();
@@ -431,8 +470,8 @@ namespace Bloodfall.Simulation
         private void Army(Match m)
         {
             RememberEnemyBuildings(m);
-            var army = Own(m, UnitKind.Soldier);
-            int supply = army.Sum(u => u.UnitDef.SupplyCost);
+            var army = Fighters(m);
+            int supply = army.Sum(u => Weight(m, u));
             UpdateEnemyArmyEstimate(m);
             var (threat, weight) = ThreatNearBase(m);
             // A lone raider does not recall an attacking army (towers and a few defenders handle it); a real
@@ -539,7 +578,7 @@ namespace Bloodfall.Simulation
                 }
                 if (!threatened) continue;
                 // Never switch targets mid-swing: a cancelled wind-up is lost damage.
-                if (u.UnitDef.AttackType != AttackType.Ranged || weakest == null || u.Action == ActionState.AttackWindup) continue;
+                if (u.UnitDef == null || u.UnitDef.AttackType != AttackType.Ranged || weakest == null || u.Action == ActionState.AttackWindup) continue;
                 var cur = m.GetUnit(u.CurrentOrder.Type == OrderType.AttackUnit ? u.CurrentOrder.TargetId : u.AttackTargetId);
                 if (cur == weakest || (cur != null && cur.Hp <= weakest.Hp * 1.3f && Vector2.Distance(u.Position, cur.Position) <= m.AttackReach(u, cur))) continue;
                 m.IssueOrder(u, Order.Attack(u.Id, weakest.Id));
@@ -638,7 +677,7 @@ namespace Bloodfall.Simulation
         {
             float visible = 0f;
             foreach (var e in m.Units)
-                if (e.IsAlive && e.Kind == UnitKind.Soldier && e.Team != _p.Team && e.Team != Team.Neutral && m.IsVisibleTo(e, _p.Team)) visible += e.UnitDef.SupplyCost;
+                if (e.IsAlive && Fighter(e) && e.Team != _p.Team && e.Team != Team.Neutral && m.IsVisibleTo(e, _p.Team)) visible += Weight(m, e);
             // What we have not seen for a while may have grown or died: let the memory fade over about two minutes.
             float dt = m.Time - _lastSeenUpdate;
             _lastSeenUpdate = m.Time;
@@ -652,8 +691,8 @@ namespace Bloodfall.Simulation
             var c = army.Aggregate(Vector2.Zero, (s, u) => s + u.Position) / army.Count;
             float sum = 0f;
             foreach (var e in m.Units)
-                if (e.IsAlive && e.Kind == UnitKind.Soldier && e.Team != _p.Team && e.Team != Team.Neutral && m.IsVisibleTo(e, _p.Team) && Vector2.Distance(e.Position, c) < 14f)
-                    sum += e.UnitDef.SupplyCost;
+                if (e.IsAlive && Fighter(e) && e.Team != _p.Team && e.Team != Team.Neutral && m.IsVisibleTo(e, _p.Team) && Vector2.Distance(e.Position, c) < 14f)
+                    sum += Weight(m, e);
             return sum;
         }
 
@@ -668,7 +707,7 @@ namespace Bloodfall.Simulation
                 if (!e.IsAlive || e.Team == _p.Team || e.Team == Team.Neutral || e.IsImmobile || !m.IsVisibleTo(e, _p.Team)) continue;
                 if (!mine.Any(b => Vector2.Distance(b.Position, e.Position) < 18f)) continue;
                 first ??= e.Position;
-                weight += Math.Max(1, e.UnitDef?.SupplyCost ?? 1);
+                weight += Math.Max(1, Weight(m, e));
             }
             return (first, weight);
         }
@@ -680,7 +719,7 @@ namespace Bloodfall.Simulation
         private Vector2 AttackTarget(Match m)
         {
             _lastRetarget = m.Time;
-            var army = Own(m, UnitKind.Soldier);
+            var army = Fighters(m);
             var centroid = army.Count > 0 ? army.Aggregate(Vector2.Zero, (s, u) => s + u.Position) / army.Count : _home;
             if (_knownEnemyBuildings.Count > 0)
             {

@@ -259,6 +259,9 @@ namespace Bloodfall.Simulation
             _searchId++;
             if (_searchId == int.MaxValue) { Array.Clear(_stamp, 0, _stamp.Length); Array.Clear(_closedStamp, 0, _closedStamp.Length); _searchId = 1; }
             _open.Clear();
+            // Starts on the far half of the map expand neighbours in the point-reflected order, so on a point-symmetric
+            // map (the RTS maps) a path and its mirror image break ties the same way: neither side gets the better route.
+            int mirror = sx + sy > Width - 1 ? -1 : 1;
             int startIdx = Index(sx, sy), goalIdx = Index(gx, gy);
             _g[startIdx] = 0; _parent[startIdx] = -1; _stamp[startIdx] = _searchId;
             _open.Push(startIdx, Heuristic(sx, sy, gx, gy));
@@ -278,9 +281,10 @@ namespace Bloodfall.Simulation
                 if (h < bestH) { bestH = h; bestIdx = cur; }
                 for (int d = 0; d < 8; d++)
                 {
-                    int nx = cx + Dx[d], ny = cy + Dy[d];
+                    int ddx = Dx[d] * mirror, ddy = Dy[d] * mirror;
+                    int nx = cx + ddx, ny = cy + ddy;
                     if (!IsWalkableCell(nx, ny)) continue;
-                    if (d >= 4 && (!IsWalkableCell(cx + Dx[d], cy) || !IsWalkableCell(cx, cy + Dy[d]))) continue; // no corner cutting
+                    if (d >= 4 && (!IsWalkableCell(cx + ddx, cy) || !IsWalkableCell(cx, cy + ddy))) continue; // no corner cutting
                     int ni = ny * Width + nx;
                     if (_closedStamp[ni] == _searchId) continue;
                     float ng = _g[cur] + (d >= 4 ? Sqrt2 : 1f);

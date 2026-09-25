@@ -33,6 +33,11 @@ namespace Bloodfall.Client.Match
         public bool PlacementValid { get; private set; }
         public bool AttackMoveArmed { get; private set; }
         public bool RallyArmed { get; private set; }
+        /// <summary>A hero ability waiting for its target (left-click a unit or the ground; right-click or Esc cancels).</summary>
+        public bool CastArmed => _castDef != null;
+        public int CastHeroId { get; private set; }
+        public int CastSlot { get; private set; } = -1;
+        private AbilityDef _castDef;
         /// <summary>Screen-space selection rectangle while dragging (for the HUD to draw).</summary>
         public Rect? DragRect { get; private set; }
         public event Action<string> LocalError;
@@ -139,6 +144,8 @@ namespace Bloodfall.Client.Match
             Placing = null;
             AttackMoveArmed = false;
             RallyArmed = false;
+            _castDef = null;
+            CastSlot = -1;
         }
 
         public void CenterOnSelection()
@@ -172,6 +179,7 @@ namespace Bloodfall.Client.Match
         {
             bool queue = InputBridge.Shift;
             if (Placing != null) { ConfirmPlacement(queue); return; }
+            if (CastArmed) { ConfirmCast(queue); return; }
             if (AttackMoveArmed)
             {
                 var units = SelectedOwn().Where(v => !v.IsStructure && v.Kind != UnitKind.Worker).Select(v => v.Id).ToList();
@@ -238,7 +246,7 @@ namespace Bloodfall.Client.Match
 
         private void OnRightClick()
         {
-            if (Placing != null || AttackMoveArmed || RallyArmed) { CancelModes(); return; }
+            if (Placing != null || AttackMoveArmed || RallyArmed || CastArmed) { CancelModes(); return; }
             var own = SelectedOwn();
             if (own.Count == 0) return;
             bool queue = InputBridge.Shift;
@@ -357,6 +365,111 @@ namespace Bloodfall.Client.Match
             if (rts != null && rts.Gold < up.GoldCost) { error = "Not enough blood-iron."; return false; }
             if (rts != null && rts.Lumber < up.LumberCost) { error = "Not enough lumber."; return false; }
             return true;
+        }
+
+        // ================================================================== heroes
+
+        /// <summary>The player's hero record for a unit (level, experience, ability points), if it is one of theirs.</summary>
+        public RtsHeroState HeroState(int unitId) => Frame?.Rts?.Heroes?.FirstOrDefault(h => h.UnitId == unitId);
+
+        /// <summary>Heroes owned plus recruitments queued at the player's altars (they count toward the limit and price).</summary>
+        public int HeroCount()
+        {
+            var heroes = Frame?.Rts?.Heroes;
+            int n = heroes?.Count ?? 0;
+            if (Frame == null) return n;
+            foreach (var e in Frame.Entities)
+                if (e.OwnerPlayer == Me && e.TrainQueue != null)
+                    foreach (var q in e.TrainQueue)
+                        if (_world.Data.Heroes.ContainsKey(q ?? "") && (heroes == null || !heroes.Any(h => h.HeroId == q))) n++;
+            return n;
+        }
+
+        public bool HeroQueued(string heroId) => Frame != null && Frame.Entities.Any(e => e.OwnerPlayer == Me && e.TrainQueue != null && e.TrainQueue.Contains(heroId));
+
+        /// <summary>Mirrors Match.TryRecruitHero's price and checks with what the client knows (the server's check is final).</summary>
+        public bool CanRecruit(string heroId, out int gold, out int lumber, out string error)
+        {
+            var rules = _world.Data.Rules;
+            var hs = Frame?.Rts?.Heroes?.FirstOrDefault(h => h.HeroId == heroId);
+            error = null;
+            if (hs != null)
+            {
+                gold = rules.RtsReviveGold + rules.RtsReviveGoldPerLevel * hs.Level;
+                lumber = 0;
+                if (!hs.Dead) error = "Already fighting for you.";
+            }
+            else
+            {
+                int n = Math.Max(0, Math.Min(HeroCount(), Math.Min(rules.RtsHeroGold.Length, rules.RtsHeroLumber.Length) - 1));
+                gold = rules.RtsHeroGold[n];
+                lumber = rules.RtsHeroLumber[n];
+                if (HeroCount() >= rules.RtsMaxHeroes) error = $"You can lead at most {rules.RtsMaxHeroes} heroes.";
+            }
+            if (error == null && HeroQueued(heroId)) error = hs != null ? "Already being revived." : "Already being recruited.";
+            var rts = Frame?.Rts;
+            if (error == null && rts != null)
+            {
+                if (rts.Gold < gold) error = "Not enough blood-iron.";
+                else if (rts.Lumber < lumber) error = "Not enough lumber.";
+                else if (rts.SupplyUsed + rules.RtsHeroSupply > rts.SupplyCap) error = "Not enough supply.";
+            }
+            return error == null;
+        }
+
+        /// <summary>Recruits (or revives) a hero at the first selected finished altar.</summary>
+        public void Recruit(string heroId)
+        {
+            var altar = SelectedOwn().FirstOrDefault(v => v.IsStructure && v.Unit != null && v.Unit.HeroAltar && !v.State.UnderConstruction);
+            if (altar == null) return;
+            if (!CanRecruit(heroId, out _, out _, out var err)) { Error(err); return; }
+            Mc.SendOrder(new Order { Type = OrderType.Train, UnitId = altar.Id, ItemId = heroId });
+        }
+
+        public void LearnAbility(int heroId, int index) => Mc.SendOrder(Order.LevelUp(heroId, index));
+
+        /// <summary>Uses a hero's ability: at once when it needs no target, otherwise arms targeting.</summary>
+        public void Cast(int heroId, int index)
+        {
+            if (!_world.TryGetView(heroId, out var hero) || !Mine(hero) || hero.State?.HeroAbilities == null || index >= hero.State.HeroAbilities.Count) return;
+            var ab = hero.State.HeroAbilities[index];
+            if (!_world.Data.Abilities.TryGetValue(ab.Id ?? "", out var def) || def.Targeting == TargetingMode.Passive) return;
+            if (ab.Level <= 0) { Error("Learn the ability first."); return; }
+            if (ab.Cooldown > 0.05f) { Error("Ability is on cooldown."); return; }
+            if (hero.State.Mana < def.ManaCost.Get(ab.Level)) { Error("Not enough mana."); return; }
+            switch (def.Targeting)
+            {
+                case TargetingMode.NoTarget: Mc.SendOrder(Order.CastNoTargetOrder(heroId, index)); return;
+                case TargetingMode.Toggle: Mc.SendOrder(new Order { Type = OrderType.ToggleAbility, UnitId = heroId, Slot = index }); return;
+                default:
+                    CancelModes();
+                    CastHeroId = heroId;
+                    CastSlot = index;
+                    _castDef = def;
+                    return;
+            }
+        }
+
+        private void ConfirmCast(bool queue)
+        {
+            var mode = _castDef.Targeting;
+            bool wantsUnit = mode == TargetingMode.Unit || mode == TargetingMode.UnitOrPoint;
+            if (wantsUnit && Hover != null && !Hover.Dying && ValidTeam(_castDef, Hover))
+                Mc.SendOrder(Order.CastUnitOrder(CastHeroId, CastSlot, Hover.Id, queue));
+            else if (mode == TargetingMode.Unit) { Error(Hover == null ? "Select a target." : "Invalid target."); return; }
+            else if (CursorOnGround) Mc.SendOrder(Order.CastPointOrder(CastHeroId, CastSlot, ToSim(CursorWorld), queue));
+            else { Error("Invalid location."); return; }
+            if (!queue) CancelModes();
+        }
+
+        private bool ValidTeam(AbilityDef def, EntityView target)
+        {
+            bool enemy = _world.IsEnemy(target.Team);
+            bool self = target.Id == CastHeroId;
+            var t = def.TargetTeam;
+            if (self) return (t & (TargetTeam.Self | TargetTeam.AllyOrSelf)) != 0 || t == TargetTeam.Any;
+            if (enemy) return (t & TargetTeam.Enemy) != 0 || t == TargetTeam.Any;
+            return (t & (TargetTeam.Ally | TargetTeam.AllyOrSelf)) != 0 || t == TargetTeam.Any;
         }
 
         public void CancelQueue(int buildingId, int slot) => Mc.SendOrder(new Order { Type = OrderType.CancelQueue, UnitId = buildingId, Slot = slot });
@@ -495,7 +608,7 @@ namespace Bloodfall.Client.Match
         {
             CursorKind k = CursorKind.Default;
             if (AttackMoveArmed) k = CursorKind.Attack;
-            else if (Placing != null || RallyArmed) k = CursorKind.Cast;
+            else if (Placing != null || RallyArmed || CastArmed) k = CursorKind.Cast;
             else if (Hover != null) k = _world.IsEnemy(Hover.Team) && Hover.Team != Team.Neutral ? CursorKind.Attack : CursorKind.Ally;
             CursorManager.Apply(k);
         }

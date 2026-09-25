@@ -33,6 +33,7 @@ namespace Bloodfall.Simulation
         {
             if (!IsRts || p == null || p.RtsFaction == null || _rtsAi.ContainsKey(p.Id)) return;
             _rtsAi[p.Id] = new RtsAi(this, p);
+            foreach (var h in p.RtsHeroes) h.Brain ??= new RtsHeroBrain(p.BotDifficulty, Rng.NextULong());
         }
 
         // =================================================================== setup
@@ -140,13 +141,16 @@ namespace Bloodfall.Simulation
             foreach (var u in Units)
             {
                 var p = u.Owner;
-                if (p == null || u.Dead || u.Removed || u.UnitDef == null) continue;
+                if (p == null || u.Dead || u.Removed) continue;
+                if (u.IsHero && !u.IsIllusion) { p.SupplyUsed += Rules.RtsHeroSupply; continue; }
+                if (u.UnitDef == null) continue;
                 if (u.Kind == UnitKind.Building)
                 {
                     if (!u.UnderConstruction) p.SupplyCap += u.UnitDef.SupplyProvided;
                     if (u.TrainQueue != null)
                         foreach (var q in u.TrainQueue)
-                            if (!Data.Upgrades.ContainsKey(q) && Data.Units.TryGetValue(q, out var qd)) p.SupplyUsed += qd.SupplyCost;
+                            if (IsHeroEntry(q)) p.SupplyUsed += Rules.RtsHeroSupply;
+                            else if (!Data.Upgrades.ContainsKey(q) && Data.Units.TryGetValue(q, out var qd)) p.SupplyUsed += qd.SupplyCost;
                 }
                 else p.SupplyUsed += u.UnitDef.SupplyCost;
             }
@@ -393,6 +397,7 @@ namespace Bloodfall.Simulation
             if (p == null || !IsRts || b.Kind != UnitKind.Building) return false;
             string err = null;
             if (b.Dead) return false;
+            if (b.UnitDef.HeroAltar) return TryRecruitHero(b, unitId);
             if (b.UnderConstruction) err = "The building is not finished.";
             else if (b.UnitDef.Trains == null || !b.UnitDef.Trains.Contains(unitId ?? "") || !Data.Units.TryGetValue(unitId, out _)) err = "Can't train that here.";
             else if ((b.TrainQueue?.Count ?? 0) >= Rules.RtsTrainQueueMax) err = "The training queue is full.";
@@ -417,6 +422,7 @@ namespace Bloodfall.Simulation
 
         private void UpdateTraining(Unit b, float dt)
         {
+            if (IsHeroEntry(b.TrainQueue[0])) { UpdateHeroTraining(b, dt); return; }
             if (Data.Upgrades.TryGetValue(b.TrainQueue[0], out var up))
             {
                 b.TrainProgress += dt / Math.Max(0.1f, up.ResearchTime);
@@ -492,6 +498,15 @@ namespace Bloodfall.Simulation
             if (b.TrainQueue == null || b.TrainQueue.Count == 0) return;
             int i = slot < 0 || slot >= b.TrainQueue.Count ? b.TrainQueue.Count - 1 : slot;
             if (Data.Upgrades.TryGetValue(b.TrainQueue[i], out var up)) { b.Owner.Gold += up.GoldCost; b.Owner.Lumber += up.LumberCost; b.Owner.GoldSpent -= up.GoldCost; b.Owner.LumberSpent -= up.LumberCost; }
+            else if (IsHeroEntry(b.TrainQueue[i]))
+            {
+                if (b.Owner.HeroPaid.TryGetValue(b.TrainQueue[i], out var paid))
+                {
+                    b.Owner.Gold += paid.Gold; b.Owner.Lumber += paid.Lumber;
+                    b.Owner.GoldSpent -= paid.Gold; b.Owner.LumberSpent -= paid.Lumber;
+                    b.Owner.HeroPaid.Remove(b.TrainQueue[i]);
+                }
+            }
             else if (Data.Units.TryGetValue(b.TrainQueue[i], out var d)) Refund(b.Owner, d, 1f);
             b.TrainQueue.RemoveAt(i);
             if (i == 0) b.TrainProgress = 0f;
@@ -765,6 +780,8 @@ namespace Bloodfall.Simulation
             }
             var owner = victim.Owner;
             if (owner == null || victim.IsIllusion) return;
+            // Enemy heroes nearby grow from the kill (hero deaths share their own, larger, experience).
+            if (victim.UnitDef != null && !victim.IsHero) ShareXp(victim, RtsKillXp(victim.UnitDef), OtherTeam(owner.Team));
             bool enemyKill = killerPlayer != null && killerPlayer.Team != owner.Team;
             if (victim.Kind == UnitKind.Building)
             {

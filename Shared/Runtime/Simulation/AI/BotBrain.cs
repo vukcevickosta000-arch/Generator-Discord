@@ -168,6 +168,19 @@ namespace Bloodfall.Simulation
                 m.IssueOrder(u, Order.Attack(u.Id, t.Id));
         }
 
+        /// <summary>
+        /// One casting decision in a fight, outside the lane logic (RTS heroes use it). It makes the same engage, stun,
+        /// ultimate, nuke, area and buff choices as a MOBA bot, gated by the difficulty's spell chance. Returns true
+        /// when a cast was ordered.
+        /// </summary>
+        public bool CastInFight(Match m, Unit u, Unit target)
+        {
+            if (target == null || u.Action == ActionState.CastWindup || u.Action == ActionState.Channeling || u.Motion != null) return false;
+            if (_rng.NextFloat() >= _spellChance) return false;
+            return TryCast(m, u, "engage", target) || TryCast(m, u, "stun", target) || TryCast(m, u, "ultimate", target)
+                || TryCast(m, u, "nuke", target) || TryCast(m, u, "aoe", target) || TryCast(m, u, "buff", target);
+        }
+
         // ------------------------------------------------------------------ Vharoth
 
         private bool WantsObjective(Match m, Unit u)
@@ -469,7 +482,8 @@ namespace Bloodfall.Simulation
             return false;
         }
 
-        private static void LevelAbilities(Match m, Unit u)
+        /// <summary>Spends ability points: the ultimate when possible, otherwise the lowest-level basic ability.</summary>
+        public static void LevelAbilities(Match m, Unit u)
         {
             int guard = 4;
             while (u.AbilityPoints > 0 && guard-- > 0)
@@ -534,10 +548,14 @@ namespace Bloodfall.Simulation
             return Math.Min(idx, lanes - 1);
         }
 
+        /// <summary>Where the team retreats to: its fountain, or on maps without bases (the RTS) its start location.</summary>
         private static Vector2 Fountain(Match m, Team team)
         {
             var b = m.Map.Bases.FirstOrDefault(x => x.Team == team);
-            return b != null ? (Vector2)b.Fountain : Vector2.Zero;
+            if (b != null) return b.Fountain;
+            var start = m.Map.StartLocations.FirstOrDefault(s => s.Team == team);
+            // (Vector2.Zero, the old fallback, is the Dawn corner of the map: Dusk heroes "escaped" into the enemy.)
+            return start != null ? (Vector2)start.Position : new Vector2(m.Grid.WorldWidth, m.Grid.WorldHeight) * 0.5f;
         }
 
         private static List<Unit> VisibleEnemyHeroes(Match m, Unit u, float radius)

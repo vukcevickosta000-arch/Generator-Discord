@@ -63,6 +63,10 @@ namespace Bloodfall.Simulation
         /// <summary>Completed RTS research.</summary>
         public readonly SortedSet<string> Upgrades = new SortedSet<string>(StringComparer.Ordinal);
         public int UnitsRaised, BloodPriceEarned;
+        /// <summary>RTS: heroes recruited at altars, alive or awaiting revival (Player.Hero stays null in the RTS).</summary>
+        public readonly List<Unit> RtsHeroes = new List<Unit>();
+        /// <summary>RTS: what each queued hero recruitment or revival cost (hero id → gold, lumber), for exact refunds.</summary>
+        public readonly Dictionary<string, (int Gold, int Lumber)> HeroPaid = new Dictionary<string, (int Gold, int Lumber)>();
         public float NextRaiseAt;
 
         public bool IsActiveHuman => !IsBot && Connection == PlayerConnection.Connected;

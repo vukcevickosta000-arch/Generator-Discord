@@ -649,6 +649,10 @@ namespace Bloodfall.Data
         public int RtsReviveGoldPerLevel = 30;
         public float RtsReviveTime = 20f;
         public float RtsReviveTimePerLevel = 3f;
+        /// <summary>Experience a player's RTS unit gives the enemy heroes nearby when it dies (per supply; buildings; halls).</summary>
+        public int RtsXpPerSupply = 20;
+        public int RtsBuildingXp = 60;
+        public int RtsHallXp = 150;
     }
 
     public sealed class GameModeDef

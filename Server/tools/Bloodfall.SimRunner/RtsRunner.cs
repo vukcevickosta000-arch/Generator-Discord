@@ -26,6 +26,8 @@ namespace Bloodfall.SimRunner
             var wins = new Dictionary<string, int>();
             var sideWins = new Dictionary<Team, int>();
             var lengths = new List<float>();
+            var heroGames = new Dictionary<string, int>();
+            var heroWins = new Dictionary<string, int>();
             var sw = System.Diagnostics.Stopwatch.StartNew();
             long ticks = 0;
             for (int game = 0; game < games; game++)
@@ -56,19 +58,29 @@ namespace Bloodfall.SimRunner
                 wins[winner] = wins.TryGetValue(winner, out var w) ? w + 1 : 1;
                 sideWins[m.Winner] = sideWins.TryGetValue(m.Winner, out var sw2) ? sw2 + 1 : 1;
                 if (m.Winner != Team.None) lengths.Add(m.EndTime / 60f);
+                foreach (var p in m.Players)
+                    foreach (var h in p.RtsHeroes)
+                    {
+                        heroGames[h.DefId] = heroGames.TryGetValue(h.DefId, out var hg) ? hg + 1 : 1;
+                        if (m.Winner == p.Team) heroWins[h.DefId] = heroWins.TryGetValue(h.DefId, out var hw) ? hw + 1 : 1;
+                    }
                 Console.WriteLine($"Game {game + 1}: seed {cfg.Seed}, {string.Join(" vs ", m.Players.Select(p => $"{p.Team}={p.RtsFaction.Id}/{p.BotDifficulty}"))}, winner {winner} at {m.MatchSeconds / 60f:0.0} min");
                 if (m.Winner == Team.None)
                     foreach (var p in m.Players)
                         Console.WriteLine($"   {p.Team} still has: " + string.Join(", ", m.Units.Where(u => u.Owner == p && u.IsAlive && u.Kind == UnitKind.Building)
                             .Select(u => $"{u.Name}{(u.UnderConstruction ? " (unfinished)" : "")} at ({u.Position.X:0},{u.Position.Y:0})").Take(8)));
                 foreach (var p in m.Players)
-                    Console.WriteLine($"   {p.RtsFaction.Id,-13} mined {p.GoldMined,6} lumber {p.LumberHarvested,5} trained {p.UnitsTrained,3} lost {p.UnitsLost,3} killed {p.UnitsKilled,3} built {p.BuildingsBuilt,2} lostB {p.BuildingsLost,2} razed {p.BuildingsRazed,2} raised {p.UnitsRaised,3} blood {p.BloodPriceEarned,5}");
+                    Console.WriteLine($"   {p.RtsFaction.Id,-13} mined {p.GoldMined,6} lumber {p.LumberHarvested,5} trained {p.UnitsTrained,3} lost {p.UnitsLost,3} killed {p.UnitsKilled,3} built {p.BuildingsBuilt,2} lostB {p.BuildingsLost,2} razed {p.BuildingsRazed,2} raised {p.UnitsRaised,3} blood {p.BloodPriceEarned,5}"
+                        + (p.RtsHeroes.Count > 0 ? " heroes " + string.Join(", ", p.RtsHeroes.Select(h => $"{h.Name} L{h.Level}{(h.Dead ? " (dead)" : "")}")) : ""));
             }
             sw.Stop();
             Console.WriteLine($"Simulated {games} game(s), {ticks} ticks in {sw.ElapsedMilliseconds} ms ({sw.Elapsed.TotalMilliseconds / Math.Max(1, ticks):0.000} ms/tick)");
             Console.WriteLine("Wins: " + string.Join(", ", wins.OrderByDescending(kv => kv.Value).Select(kv => $"{kv.Key} {kv.Value}"))
                 + (lengths.Count > 0 ? $"; decided games last {lengths.Average():0.0} min on average" : ""));
             Console.WriteLine("By start: " + string.Join(", ", sideWins.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key} {kv.Value}")));
+            if (heroGames.Count > 0)
+                Console.WriteLine("Heroes (won/recruited): " + string.Join(", ", heroGames.OrderBy(kv => kv.Key)
+                    .Select(kv => $"{kv.Key.Replace("hero_", "")} {(heroWins.TryGetValue(kv.Key, out var w2) ? w2 : 0)}/{kv.Value}")));
             return 0;
         }
 

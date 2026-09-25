@@ -86,7 +86,8 @@
         "rts_dg_barracks",
         "rts_dg_watchtower",
         "rts_dg_workshop",
-        "rts_dg_sanctum"
+        "rts_dg_sanctum",
+        "rts_dg_altar"
       ],
       "model": "creep_dawn_footman",
       "modelScale": 0.8,

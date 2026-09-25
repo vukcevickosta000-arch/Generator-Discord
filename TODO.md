@@ -11,12 +11,13 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
 
   The remaining phases, in order:
   - **T-030 (R2) Factions and heroes.**
-    - **Still to do:** altars that recruit up to three MOBA heroes per player; the heroes level from kills via
-      ShareXp. *Groundwork only:*
-      - an altar building per faction (`rts_*_altar`, `UnitDef.HeroAltar`) with its model;
-      - the rules: three heroes, 200/50 → 350/100 → 500/150, revive 100 + 30 per level.
-
-      The altars are deliberately not in any worker's build list until recruiting works.
+    - Hero altars. *Done:*
+      - every faction's altar recruits up to three of the playable Blood War heroes (200/50 → 350/100 → 500/150);
+      - heroes level from kills near them and are revived at an altar;
+      - protocol v7;
+      - Unity recruit, revive, learn and cast buttons plus a hero bar (compile-checked only);
+      - bots recruit, level and cast.
+      - Follow-up: T-035.
     - Crimson Court. *Done* (`rts/crimson_court.json`): Blood Price (20% of each kill's cost), Sanguine Pact
       lifesteal research, its own models.
     - Wild Covenant. *Done* (`rts/wild_covenant.json`): Moonlit (+10% damage at night), Moonfang Shifters in wolf
@@ -53,6 +54,12 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
     - unit icons (the card shows text);
     - a proper construction scaffold;
     - ghosts on the minimap.
+  - **T-035 RTS hero balance.** Blood War heroes are used unchanged in the strategy mode. In bot series Malgrave,
+    Ilyra, Ardyn and Vorak win 62–72% of their games, and Fenrax, Nyxara and Morwen 31–37% (BALANCE_NOTES §5).
+    - Consider strategy-mode tuning per hero (for example an `rtsOverrides` block), or better bot play for the
+      assassins.
+    - Veteran's edge over Normal fell to 62% with heroes. Veteran could use its heroes better, for example by
+      focusing enemy heroes and retreating hurt heroes to the altar.
   - **T-034 RTS art.** The Crimson Court and Wild Covenant have their own models:
     - noble buildings in blood marble and gold;
     - organic groves, a totem, a lodge, a stone circle and a den;
@@ -60,7 +67,7 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
 
     Still to do: dedicated Dawnguard and Ashen Legion units and buildings (they borrow the MOBA creep and structure
     models), and construction scaffolds.
-- **T-001 Blender model pipeline.** *Done for every unit and structure key (79 models,
+- **T-001 Blender model pipeline.** *Done for every unit and structure key (83 models,
   `Blender/scripts/build_models.py`).* Remaining:
   - Props (`Models/Props/<type>.fbx`, 28 dressing types) and tree variants (MapRenderer still draws C# meshes).
   - Texture maps (normal and mask) once hand-authored art replaces the generated shapes; the rigs and clip names

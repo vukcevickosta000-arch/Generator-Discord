@@ -607,6 +607,18 @@ namespace Bloodfall.Simulation
             float angle = p.Slot * (MathUtil.TwoPi / 5f);
             spawn += MathUtil.FromAngle(angle) * 1.5f;
             spawn = Grid.NearestWalkable(spawn);
+            var u = CreateHero(hd, p, spawn, p.Team == Team.Dawn ? MathUtil.Pi * 0.25f : -MathUtil.Pi * 0.75f);
+            p.Hero = u;
+            if (p.IsBot) u.Brain = new BotBrain(p.BotDifficulty, Rng.NextULong());
+            RegisterUnit(u);
+        }
+
+        /// <summary>
+        /// A level-1 hero for a player: abilities unlearned (innates at level 1), one ability point, empty inventory.
+        /// The caller registers it (MOBA: the player's one hero; RTS: recruited at an altar).
+        /// </summary>
+        private Unit CreateHero(HeroDef hd, Player p, Vector2 spawn, float facing)
+        {
             var u = new Unit
             {
                 Id = _nextUnitId++,
@@ -616,7 +628,7 @@ namespace Bloodfall.Simulation
                 HeroDef = hd,
                 Name = hd.Name,
                 Position = spawn,
-                Facing = p.Team == Team.Dawn ? MathUtil.Pi * 0.25f : -MathUtil.Pi * 0.75f,
+                Facing = facing,
                 Radius = hd.CollisionRadius,
                 Owner = p,
                 Level = 1,
@@ -639,9 +651,7 @@ namespace Bloodfall.Simulation
                     u.Abilities.Add(new AbilityInstance { Def = ad, Level = 1, Index = u.Abilities.Count, Charges = ad.MaxCharges });
             u.RecomputeStats(Rules);
             u.LastPosition = spawn;
-            p.Hero = u;
-            if (p.IsBot) u.Brain = new BotBrain(p.BotDifficulty, Rng.NextULong());
-            RegisterUnit(u);
+            return u;
         }
 
         // =================================================================== events

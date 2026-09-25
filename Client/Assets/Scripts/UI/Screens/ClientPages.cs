@@ -263,7 +263,8 @@ namespace Bloodfall.Client.UI.Screens
                 "• Workers mining blood-iron veins and cutting lumber on the Ashfields map\n• Construction, supply, training queues and rally points\n" +
                 "• Four factions: the Dawnguard (healing shrines), the Ashen Legion (raises the fallen), the Crimson Court\n" +
                 "  (paid in blood for every kill) and the Wild Covenant (stronger by night, shifters turn into wolves)\n" +
-                "• Research: weapon, armour and building upgrades for every faction\n• RTS bots at four difficulties\n" +
+                "• Research: weapon, armour and building upgrades for every faction\n" +
+                "• Hero altars: recruit up to three Blood War heroes, level them in battle, revive the fallen\n• RTS bots at four difficulties\n" +
                 "• 1v1 lobbies and a Strategy queue on dedicated servers (tested end to end)", "t-body"));
             p.Add(El.Text("CONTROLS", "t-subheading", "mt-l"));
             p.Add(El.Text(
@@ -272,7 +273,7 @@ namespace Bloodfall.Client.UI.Screens
                 "Command card hotkeys: A attack, S stop, H hold, B build, R return cargo; training and building hotkeys are shown on the buttons", "t-body"));
             p.Add(El.Text("STILL TO COME", "t-subheading", "mt-l"));
             p.Add(El.Text(
-                "• Hero altars: up to three Blood War heroes per player\n" +
+                "• Heroes tuned for this mode (they are Blood War's, unchanged) and hero items\n" +
                 "• Dedicated Dawnguard and Ashen Legion models (they borrow Blood War's; the Court and Covenant have their own)\n" +
                 "The RTS controls and HUD are new and have not yet been play-tested inside Unity; please report anything that misbehaves.", "t-body"));
             var crests = El.Div("row", "center", "mt-l");
