@@ -152,7 +152,7 @@ lobby → hero select → loading → match → post-game.
 | Hero/creep/summon/neutral/boss/structure 3D models | **Done (generated)**: 56 FBX models from the Blender pipeline (`Blender/scripts`), with rigs, 12–13 animation clips and baked ambient occlusion (`Docs/Images/models_all.png`). Stylised primitive-based modelling, not sculpted or textured. Not yet imported in Unity. |
 | Map props and trees | Procedural stand-ins (C#); Blender versions are the next art task |
 | Ability/item/status icons (123) | Done (procedural embossed emblems, `Tools/art/generate_icons.py`) |
-| Hero portraits (8) | Placeholder silhouettes with per-hero headgear; to be replaced by renders of the Blender models (T-001) |
+| Hero portraits (8) | Rendered from the hero models (`Blender/scripts/render_portraits.py`), faction-coloured |
 | UI sounds, combat/spell/death SFX, ambience, music loops and stingers (97 clips) | Placeholder quality, procedurally synthesised (`Tools/audio/generate_audio.py`) |
 | Announcer (35 lines) | Placeholder: espeak-ng speech processed into a deep, reverberant voice. Original streak names. |
 | Hero voice lines | **Missing** (no content references any yet) |

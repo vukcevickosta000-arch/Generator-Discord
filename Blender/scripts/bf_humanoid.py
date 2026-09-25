@@ -173,9 +173,15 @@ def build_body(kit, spec, s):
         kit.cone(hc + Vector((0, -hr * 0.82, -hr * 0.05)), hc + Vector((0, -hr * 1.04, -hr * 0.2)), hr * 0.12, seg=6)  # nose
         kit.use(color=mul3(skin, 0.8))
         kit.box(hc + Vector((0, -hr * 0.78, hr * 0.22)), (hr * 1.1, hr * 0.14, hr * 0.14), bevel=hr * 0.04, smooth=True)  # brow
+    if not spec.get("muzzle"):
+        # Eye sockets and a mouth so faces read in portraits and close-ups.
+        kit.use(color=mul3(skin, 0.45), mat="bf_matte")
+        for sgn in (-1, 1):
+            kit.ellipsoid(hc + Vector((sgn * hr * 0.33, -hr * 0.8, hr * 0.1)), (hr * 0.2, hr * 0.12, hr * 0.14), seg=10, rings=6)
+        kit.box(hc + Vector((0, -hr * 0.84, -hr * 0.5)), (hr * 0.34, hr * 0.06, hr * 0.05), bevel=hr * 0.02, smooth=True)
     kit.use(color=glow, mat=kit.glow(glow))
     for sgn in (-1, 1):
-        kit.ellipsoid(hc + Vector((sgn * hr * 0.32, -hr * (0.78 if not spec.get("muzzle") else 0.75), hr * 0.08)), (hr * 0.1, hr * 0.06, hr * 0.07), seg=8, rings=5)
+        kit.ellipsoid(hc + Vector((sgn * hr * 0.33, -hr * (0.9 if not spec.get("muzzle") else 0.8), hr * 0.1)), (hr * 0.11, hr * 0.06, hr * 0.075), seg=8, rings=5)
     if spec.get("hair"):
         kit.use(color=spec["hair"], mat="bf_matte")
         kit.ellipsoid(hc + Vector((0, hr * 0.12, hr * 0.12)), (hr * 0.93, hr * 0.95, hr * 1.02), seg=16, rings=9)
@@ -352,9 +358,12 @@ def head_features(kit, spec, hc, hr, H, armor, accent, glow, cloth, skin):
         kit.use(color=glow, mat=kit.glow(glow))
         kit.ellipsoid((0, -hr * 0.9, top - hr * 0.33), (hr * 0.1,) * 3, seg=8, rings=5)
     if spec.get("hood"):
+        # Open at the front: a shell pushed behind the face, a peak, and drapes down to the shoulders.
         kit.use(bone="head", color=mul3(cloth, 0.85), mat="bf_matte", smooth=True)
-        kit.lathe([(hr * 1.25, -hr * 1.3), (hr * 1.2, -hr * 0.2), (hr * 1.0, hr * 0.8), (hr * 0.3, hr * 1.7), (0.001, hr * 1.9)],
-                  center=hc + Vector((0, hr * 0.2, 0)), seg=16, scale=(1.0, 1.05), close_bottom=False)
+        kit.ellipsoid(hc + Vector((0, hr * 0.32, hr * 0.12)), (hr * 1.22, hr * 1.02, hr * 1.25), seg=16, rings=10)
+        kit.cone(hc + Vector((0, hr * 0.45, hr * 0.9)), hc + Vector((0, hr * 0.85, hr * 2.0)), hr * 0.7, seg=10)
+        for sgn in (-1, 1):
+            kit.ellipsoid(hc + Vector((sgn * hr * 0.95, hr * 0.1, -hr * 0.5)), (hr * 0.35, hr * 0.8, hr * 0.9), seg=10, rings=6)
     if spec.get("hat"):
         kit.use(bone="head", color=mul3(cloth, 0.75), mat="bf_matte", smooth=True)
         kit.lathe([(hr * 2.5, 0), (hr * 2.4, hr * 0.12), (hr * 1.05, hr * 0.2)], center=(0, 0, top - hr * 0.35), seg=24, close_top=False)

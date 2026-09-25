@@ -10,6 +10,7 @@ from the content id, so new content gets a sensible icon automatically. Original
 import json
 import math
 import os
+import sys
 import re
 
 import numpy as np
@@ -878,8 +879,13 @@ def main():
             continue
         save(compose(glyph_for(icon), 64, 64, "debuff" if s.get("isDebuff") else "buff", 600 + i, 0.7), "Statuses", icon + ".png")
         n += 1
+    # Portraits are rendered from the hero models (Blender/scripts/render_portraits.py). A silhouette is only drawn
+    # for heroes that have no portrait yet, unless --portraits forces the silhouettes.
+    force = "--portraits" in sys.argv
     for i, h in enumerate(sorted(heroes.values(), key=lambda x: x["id"])):
         key = h.get("portrait") or "portrait_" + h["id"].replace("hero_", "")
+        if not force and os.path.exists(os.path.join(OUT, "Portraits", key + ".png")):
+            continue
         save(portrait(h, h.get("faction", "CrimsonCourt"), seed=900 + i), "Portraits", key + ".png")
         n += 1
     print(f"wrote {n} icons/portraits to {os.path.relpath(OUT, ROOT)}")

@@ -7,7 +7,6 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
 - **T-001 Blender model pipeline.** *Done for every unit and structure key (56 models,
   `Blender/scripts/build_models.py`).* Remaining:
   - Props (`Models/Props/<type>.fbx`, 28 dressing types) and tree variants (MapRenderer still draws C# meshes).
-  - Portraits rendered from the models (replace the silhouettes in `Textures/Icons/Portraits`).
   - Texture maps (normal and mask) once hand-authored art replaces the generated shapes; the rigs and clip names
     are the contract.
 - **T-002 Visual review in Unity** of the generated FBX models and the procedural stand-ins:

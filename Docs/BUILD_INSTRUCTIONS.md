@@ -69,6 +69,7 @@ python3 Tools/dev/gen_item_docs.py             # refresh the item table in Docs/
 pip install bpy==5.0.1                         # once (Python 3.11), or run the script with `blender -b -P`
 python3 Blender/scripts/build_models.py        # all 56 unit/structure models -> Client/Assets/Resources/Models/*.fbx
 python3 Blender/scripts/build_models.py hero_vorak --preview   # one model + Cycles previews in Blender/previews/
+python3 Blender/scripts/render_portraits.py    # hero portraits from the models (Textures/Icons/Portraits)
 ```
 
 **Warning:** regenerating the map changes the game data content hash. Clients and servers must ship the same data;
