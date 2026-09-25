@@ -49,3 +49,5 @@ Thumbs.db
 
 # Player builds
 Builds/
+# Preview renders from Blender/scripts (regenerate with --preview); only the contact sheets are kept in Docs/Images.
+Blender/previews/

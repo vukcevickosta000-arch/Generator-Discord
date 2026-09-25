@@ -87,6 +87,18 @@ namespace Bloodfall.Client.Match
             return m;
         }
 
+        /// <summary>Vertex-coloured material tinted with the team accent (imported models' bf_team parts).</summary>
+        public static Material TeamMat(Team team)
+        {
+            string key = "team_" + team;
+            if (Mats.TryGetValue(key, out var m) && m != null) return m;
+            m = new Material(LitShader) { name = key, enableInstancing = true };
+            m.SetColor("_BaseColor", TeamAccent(team) * 1.4f);
+            m.SetFloat("_Smoothness", 0.3f);
+            Mats[key] = m;
+            return m;
+        }
+
         /// <summary>Standard material set for MeshBuilder meshes: submesh 0 matte, 1 metal, 2 glow.</summary>
         public static Material[] StandardSet(Color glow, int submeshes, float glowIntensity = 3f)
         {
@@ -169,6 +181,17 @@ namespace Bloodfall.Client.Match
                     var s = src[i];
                     if (s == null) { dst[i] = VertexMat(0.3f, 0f); continue; }
                     if (s.shader == LitShader) { dst[i] = s; continue; }
+                    // Blender pipeline materials (Blender/scripts/bf_lib.py): colours live in vertex colours, the name says how
+                    // the surface shades. bf_team is tinted per team, so it is not cached across teams.
+                    string lname = s.name.ToLowerInvariant();
+                    if (lname.StartsWith("bf_"))
+                    {
+                        if (lname.StartsWith("bf_glow_") && ColorUtility.TryParseHtmlString("#" + s.name.Substring(8, Mathf.Min(6, s.name.Length - 8)), out var gc)) dst[i] = GlowMat(gc, 3f);
+                        else if (lname.StartsWith("bf_metal")) dst[i] = VertexMat(0.62f, 0.75f);
+                        else if (lname.StartsWith("bf_team")) dst[i] = TeamMat(team);
+                        else dst[i] = VertexMat(0.22f, 0f);
+                        continue;
+                    }
                     if (!Converted.TryGetValue(s, out var m) || m == null)
                     {
                         m = new Material(LitShader) { name = s.name + " (Bloodfall)", enableInstancing = true };
