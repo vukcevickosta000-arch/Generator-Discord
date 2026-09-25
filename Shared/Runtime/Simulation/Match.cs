@@ -135,7 +135,7 @@ namespace Bloodfall.Simulation
             {
                 Phase = MatchPhase.HeroSelect;
                 PhaseTimer = config.HeroSelectTimeOverride ?? Rules.HeroSelectTime;
-                foreach (var p in Players) if (p.IsBot && !p.HeroLocked) BotPickHero(p);
+                // Bots pick after the humans (AutoPickRemaining) so they never take a hero a player wanted.
             }
         }
 
@@ -152,7 +152,7 @@ namespace Bloodfall.Simulation
             {
                 case MatchPhase.HeroSelect:
                     PhaseTimer -= Dt;
-                    if (PhaseTimer <= 0 || Players.All(p => p.HeroLocked))
+                    if (PhaseTimer <= 0 || Players.All(p => p.HeroLocked || p.IsBot))
                     {
                         AutoPickRemaining();
                         Phase = MatchPhase.Loading;
@@ -204,17 +204,23 @@ namespace Bloodfall.Simulation
                 heroId = pool[Rng.Range(0, pool.Count)];
             }
             if (!Data.Heroes.TryGetValue(heroId, out var hero) || !hero.Playable) { error = "That hero is not available."; return false; }
-            if (!Config.SameHeroAllowed && Players.Any(o => o != p && o.HeroId == heroId && o.HeroLocked)) { error = "That hero has already been picked."; return false; }
+            if (UniquePicks && Players.Any(o => o != p && o.HeroId == heroId && o.HeroLocked)) { error = "That hero has already been picked."; return false; }
             p.HeroId = heroId;
             p.HeroLocked = true;
             Emit(new SimEvent { Type = SimEventType.MatchPhase, Key = "pick", Value = (float)Phase, UnitId = p.Id, PlayerId = -1 });
             return true;
         }
 
+        /// <summary>
+        /// Each hero may be picked once per match, unless the mode allows duplicates or the playable roster is smaller
+        /// than the number of players (early development roster).
+        /// </summary>
+        public bool UniquePicks => !Config.SameHeroAllowed && Data.PlayableHeroes().Count() >= Players.Count;
+
         public IEnumerable<string> AvailableHeroes(Team team)
         {
             foreach (var h in Data.PlayableHeroes())
-                if (Config.SameHeroAllowed || !Players.Any(o => o.HeroLocked && o.HeroId == h.Id)) yield return h.Id;
+                if (!UniquePicks || !Players.Any(o => o.HeroLocked && o.HeroId == h.Id)) yield return h.Id;
         }
 
         private void BotPickHero(Player p)

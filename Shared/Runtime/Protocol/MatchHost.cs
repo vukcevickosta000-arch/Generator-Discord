@@ -226,6 +226,7 @@ namespace Bloodfall.Protocol
             if (string.IsNullOrWhiteSpace(text)) return;
             text = text.Trim();
             if ((text == "-ff" || text == "/concede" || text == "/ff") && s.PlayerId >= 0) { VoteConcede(s); return; }
+            if (text.StartsWith("-") && Match.Config.AllowCheats && s.PlayerId >= 0 && TryCheat(s, text)) return;
             if (text.Length > 200) text = text.Substring(0, 200);
             var p = Match.GetPlayer(s.PlayerId);
             var msg = new ChatMessage { PlayerId = s.PlayerId, Name = p?.Name ?? "Spectator", TeamOnly = teamOnly, Team = s.Team, Text = text };
@@ -243,6 +244,48 @@ namespace Bloodfall.Protocol
         {
             if (string.IsNullOrEmpty(text)) return;
             s.Peer.Send(Codec.ChatBroadcast(new ChatMessage { PlayerId = -1, Name = "System", Text = text, Team = Team.None }), true);
+        }
+
+        /// <summary>
+        /// Practice cheats. Only honoured when the match was created with AllowCheats (offline practice / dev lobbies);
+        /// dedicated online and ranked matches never enable it, so these are no exploit surface.
+        /// </summary>
+        private bool TryCheat(Session s, string text)
+        {
+            var p = Match.GetPlayer(s.PlayerId);
+            var hero = p?.Hero;
+            if (hero == null) return false;
+            var parts = text.Split(' ');
+            int Arg(int def) => parts.Length > 1 && int.TryParse(parts[1], out var v) ? Math.Max(0, Math.Min(v, 100000)) : def;
+            switch (parts[0].ToLowerInvariant())
+            {
+                case "-gold":
+                    Match.GiveGold(p, Arg(5000), hero.Position, false);
+                    break;
+                case "-lvlup":
+                {
+                    int levels = Math.Max(1, Math.Min(Arg(1), 25));
+                    for (int i = 0; i < levels; i++) Match.AddXp(hero, Math.Max(1, Match.XpForNextLevel(hero) - hero.Xp));
+                    break;
+                }
+                case "-refresh":
+                    foreach (var a in hero.Abilities) { a.Cooldown = 0; if (a.Def.MaxCharges > 0) a.Charges = a.Def.MaxCharges; }
+                    if (hero.Inventory != null) foreach (var it in hero.Inventory) if (it?.Active != null) it.Active.Cooldown = 0;
+                    hero.Hp = hero.Stats.MaxHp;
+                    hero.Mana = hero.Stats.MaxMana;
+                    break;
+                case "-respawn":
+                    if (hero.Dead) Match.RespawnHero(hero);
+                    break;
+                case "-startgame":
+                    if (Match.Phase == MatchPhase.PreGame) Match.Time = -0.05f;
+                    break;
+                default:
+                    SendSystem(s, "Practice cheats: -gold [n], -lvlup [n], -refresh, -respawn, -startgame");
+                    return true;
+            }
+            SendSystem(s, "Cheat applied: " + parts[0]);
+            return true;
         }
 
         /// <summary>Concede vote: every connected human on the team must agree within 60 seconds.</summary>

@@ -93,6 +93,7 @@ namespace Bloodfall.Client.Backend
 
         public Task<ApiResult<AvailabilityResponse>> CheckUsername(string name) => Api.Get<AvailabilityResponse>("api/auth/check-username?name=" + Uri.EscapeDataString(name ?? ""), false);
         public Task<ApiResult<object>> ForgotPassword(string email) => Api.Post<object>("api/auth/forgot-password", new ForgotPasswordRequest { Email = email }, false);
+        public Task<ApiResult<object>> ResetPassword(string token, string newPassword) => Api.Post<object>("api/auth/reset-password", new ResetPasswordRequest { Token = token, NewPassword = newPassword }, false);
 
         /// <summary>Restores a remembered session (refresh token rotation).</summary>
         public async Task<bool> TryResumeSession()
@@ -378,6 +379,16 @@ namespace Bloodfall.Client.Backend
                     break;
                 case RealtimeTypes.Notice:
                     Notice?.Invoke(JsonMapper.FromNode<NoticePayload>(p));
+                    break;
+                case RealtimeTypes.Error:
+                {
+                    // Server-side rejections (flood control, unknown commands, not in channel) shown as system chat.
+                    var m = new ChatMessageView { Channel = "system", System = true, FromName = "System", Text = p["message"].AsString(p.AsString("Request rejected.")), SentAt = DateTime.UtcNow };
+                    ChatReceived?.Invoke(m);
+                    break;
+                }
+                case RealtimeTypes.SessionRevoked:
+                    SessionExpired?.Invoke();
                     break;
             }
         }

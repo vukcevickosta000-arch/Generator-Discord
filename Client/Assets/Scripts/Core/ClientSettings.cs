@@ -104,7 +104,7 @@ namespace Bloodfall.Client.Core
 #else
             QualitySettings.masterTextureLimit = TextureQuality;
 #endif
-            QualitySettings.shadows = ShadowQuality == 0 ? ShadowQuality.Disable : ShadowQuality.All;
+            QualitySettings.shadows = ShadowQuality == 0 ? UnityEngine.ShadowQuality.Disable : UnityEngine.ShadowQuality.All;
             QualitySettings.shadowResolution = (ShadowResolution)Mathf.Clamp(ShadowQuality, 0, 3);
             QualitySettings.shadowDistance = ShadowQuality >= 3 ? 90 : ShadowQuality == 2 ? 70 : 45;
             QualitySettings.antiAliasing = AntiAliasing == 2 ? 4 : 0;
