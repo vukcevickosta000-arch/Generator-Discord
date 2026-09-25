@@ -62,6 +62,8 @@ python3 Tools/art/generate_ui.py               # UI kit, cursors, crests, ranks,
 python3 Tools/art/generate_backdrop.py         # menu backdrop layers
 python3 Tools/art/generate_vfx.py              # particle / decal sprites
 python3 Tools/art/generate_terrain.py          # terrain layer textures
+python3 Tools/art/generate_icons.py            # ability / item / status icons + hero portraits (from game data)
+python3 Tools/audio/generate_audio.py          # UI, SFX, ambience, music, announcer (needs soundfile; espeak-ng for the announcer)
 python3 Tools/dev/gen_gamedata_index.py        # after adding/renaming game data files
 python3 Tools/dev/gen_item_docs.py             # refresh the item table in Docs/ITEM_DATABASE.md
 ```

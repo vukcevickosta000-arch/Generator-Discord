@@ -141,8 +141,11 @@ lobby → hero select → loading → match → post-game.
 | Terrain layer textures (8), VFX sprites (24), Velmoragh heightfield/splat/dressing | Done (procedural) |
 | OFL fonts | Done |
 | Hero/creep/structure/prop 3D models | **Procedural stand-ins only** (clearly stand-ins; Blender pipeline next) |
-| Ability/item/status icons, hero portraits | **Missing** — UI shows empty frames (TODO T-003) |
-| Music, SFX, announcer, voice | **Missing** — the audio system logs each missing clip once and stays silent (TODO T-004) |
+| Ability/item/status icons (73) | Done (procedural embossed emblems, `Tools/art/generate_icons.py`) |
+| Hero portraits | Placeholder silhouettes; to be replaced by renders of the Blender models (T-001) |
+| UI sounds, combat/spell/death SFX, ambience, music loops and stingers (61 clips) | Placeholder quality, procedurally synthesised (`Tools/audio/generate_audio.py`) |
+| Announcer (35 lines) | Placeholder: espeak-ng speech processed into a deep, reverberant voice. Original streak names. |
+| Hero voice lines | **Missing** (no content references any yet) |
 
 ## Next step (exact)
 
@@ -152,10 +155,9 @@ lobby → hero select → loading → match → post-game.
    - Structures and props.
    - Exported as FBX to `Client/Assets/Resources/Models/<modelKey>.fbx`, where the model factory picks them up
      automatically.
-2. Procedural icon and portrait generator: `Tools/art/generate_icons.py` → `Resources/Textures/Icons/...`.
-3. Procedural SFX/music/announcer placeholders: `Tools/audio`.
-4. Vharoth event (milestone 7) in `Match.Vharoth.cs`, with tests.
-5. On a machine with Unity 6000.0.40f1:
+2. New concept heroes in data (Nyxara, Malgrave, Ardyn, Fenrax, Morwen, Thael), with bots and tests.
+3. Vharoth event (milestone 7) in `Match.Vharoth.cs`, with tests.
+4. On a machine with Unity 6000.0.40f1:
    - Open `Client/`, run **Bloodfall ▸ Setup Project**, press Play.
    - Fix anything in the URP/Input System branches and shaders that the headless checks cannot see.
    - Record the results here.

@@ -14,9 +14,9 @@ Everything here is real and reproducible (or a verified limitation). Fixed bugs 
 |---|---|---|---|---|
 | B-001 | S1* | Unity client | The client has **never been run inside Unity**. The C# compiles against Unity reference assemblies, but code behind `BLOODFALL_URP` and `BLOODFALL_INPUT_SYSTEM`, and all HLSL shaders, are unchecked. Expect first-open fixes. | Open `Client/` in Unity 6000.0.40f1. *S1 until verified. |
 | B-002 | S2 | Bots | Low last-hit counts: about 25 last hits per bot in 20 minutes, and the bot match did not end within 20 minutes (13–20 kills, 4 v 2 towers). | `SimRunner -- 20 11`. See T-016. |
-| B-003 | S3 | Art | Heroes, creeps and structures render as procedural stand-in geometry. Icons and portraits are missing (empty slots). | By design until T-001 / T-003. |
+| B-003 | S3 | Art | Heroes, creeps and structures render as procedural stand-in geometry. Portraits are placeholder silhouettes. | By design until T-001. |
 | B-004 | S2 | Backend | Password reset and email verification tokens are **not emailed**. In Development they appear only in the backend log. | T-017 |
-| B-005 | S3 | Audio | No audio clips exist, so the game is silent. The first request for each key logs `[Audio] no clip for …`. | T-004 |
+| B-005 | S3 | Audio | All audio is procedural placeholder quality. The announcer is synthetic speech. There are no hero voice lines. | Replace with recorded/composed audio; keep the file keys. |
 | B-006 | S2 | Networking | No client-side prediction. The local hero responds after one round trip plus interpolation delay (about 100 ms). | T-012 |
 | B-007 | S3 | Unity client | Health bars and floating text are UI Toolkit elements repositioned each frame. Performance with 100+ units is unmeasured. | T-019 |
 | B-008 | S2 | Simulation | Illusion and Resurrect effect types are parsed but do nothing (no current content uses them). | T-018 |

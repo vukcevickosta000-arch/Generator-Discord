@@ -78,6 +78,21 @@ namespace Bloodfall.Client.Editor
             }
         }
 
+        private void OnPreprocessAudio()
+        {
+            string p = assetPath.Replace('\\', '/');
+            if (!p.Contains("/Resources/Audio/")) return;
+            var ai = (AudioImporter)assetImporter;
+            var s = ai.defaultSampleSettings;
+            bool longForm = p.Contains("/Audio/Music/") || p.Contains("/Audio/Ambience/");
+            s.loadType = longForm ? AudioClipLoadType.Streaming : p.Contains("/Audio/Announcer/") ? AudioClipLoadType.CompressedInMemory : AudioClipLoadType.DecompressOnLoad;
+            s.compressionFormat = AudioCompressionFormat.Vorbis;
+            s.quality = longForm ? 0.6f : 0.8f;
+            ai.defaultSampleSettings = s;
+            ai.forceToMono = p.Contains("/Audio/Sfx/");   // positional 3D sources
+            ai.loadInBackground = longForm;
+        }
+
         private void OnPreprocessModel()
         {
             string p = assetPath.Replace('\\', '/');

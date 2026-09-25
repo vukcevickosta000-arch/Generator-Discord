@@ -18,7 +18,8 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
   - scale (1 unit = 1 m)
   - facing (+Z forward)
   - the procedural animation timing relative to server attack points
-- **T-003 Icons and portraits.**
+- **T-003 Icons and portraits.** *Done at placeholder level. Icons are procedural; portraits should become renders of
+  the T-001 models.*
   - Generate with `Tools/art/generate_icons.py` into:
     - `Textures/Icons/Abilities/<icon>`
     - `Textures/Icons/Items/<icon>`
@@ -26,7 +27,8 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
     - `Textures/Icons/Portraits/portrait_<hero>`
   - Filenames must match the `icon`/`portrait` keys in the data.
   - `Bloodfall ▸ Validate Game Data` reports coverage.
-- **T-004 Audio.** Add placeholder SFX, music and announcer clips under `Resources/Audio/{UI,Sfx,Music,Ambience,Announcer,Voice}`.
+- **T-004 Audio.** *Done at placeholder level (`Tools/audio/generate_audio.py`, 96 clips).* Replace with final audio
+  under the same keys: SFX, music and announcer clips under `Resources/Audio/{UI,Sfx,Music,Ambience,Announcer,Voice}`.
   The keys used by the code are listed in the tables below; missing clips are logged once.
 
   | Folder | Keys |

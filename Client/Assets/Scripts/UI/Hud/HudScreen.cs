@@ -480,17 +480,18 @@ namespace Bloodfall.Client.UI.Screens
         private static readonly Dictionary<string, string> AnnounceText = new Dictionary<string, string>
         {
             [AnnouncerKeys.FirstBlood] = "FIRST BLOOD", [AnnouncerKeys.DoubleKill] = "DOUBLE KILL", [AnnouncerKeys.TripleKill] = "TRIPLE KILL",
-            [AnnouncerKeys.QuadKill] = "QUAD KILL", [AnnouncerKeys.Annihilation] = "ANNIHILATION", [AnnouncerKeys.Shutdown] = "SHUTDOWN",
-            [AnnouncerKeys.TeamWipe] = "TEAM WIPE", [AnnouncerKeys.TowerDestroyedAlly] = "YOUR TOWER HAS FALLEN", [AnnouncerKeys.TowerDestroyedEnemy] = "ENEMY TOWER DESTROYED",
+            [AnnouncerKeys.QuadKill] = "QUAD KILL", [AnnouncerKeys.Annihilation] = "MASSACRE", [AnnouncerKeys.Shutdown] = "SHUT DOWN",
+            [AnnouncerKeys.TeamWipe] = "BLOOD HARVEST", [AnnouncerKeys.TowerDestroyedAlly] = "YOUR TOWER HAS FALLEN", [AnnouncerKeys.TowerDestroyedEnemy] = "ENEMY TOWER DESTROYED",
             [AnnouncerKeys.BarracksDestroyedAlly] = "YOUR BARRACKS HAVE FALLEN", [AnnouncerKeys.BarracksDestroyedEnemy] = "ENEMY BARRACKS DESTROYED",
-            [AnnouncerKeys.BattleBegins] = "THE BATTLE BEGINS", [AnnouncerKeys.CreepsSpawned] = "", [AnnouncerKeys.Nightfall] = "NIGHT FALLS",
-            [AnnouncerKeys.Daybreak] = "DAYBREAK", [AnnouncerKeys.MegaCreeps] = "MEGA CREEPS", [AnnouncerKeys.Denied] = "DENIED",
+            [AnnouncerKeys.BattleBegins] = "LET THE BLOOD FLOW", [AnnouncerKeys.CreepsSpawned] = "", [AnnouncerKeys.Nightfall] = "NIGHT FALLS",
+            [AnnouncerKeys.Daybreak] = "DAWN BREAKS", [AnnouncerKeys.MegaCreeps] = "MEGA CREEPS", [AnnouncerKeys.Denied] = "DENIED",
             [AnnouncerKeys.VharothTremor] = "THE EARTH TREMBLES", [AnnouncerKeys.VharothSealBroken] = "A SEAL IS BROKEN",
             [AnnouncerKeys.VharothAwakened] = "VHAROTH AWAKENS", [AnnouncerKeys.VharothBloodMoon] = "BLOOD MOON", [AnnouncerKeys.VharothSlain] = "VHAROTH HAS FALLEN",
             [AnnouncerKeys.PlayerAbandoned] = "", [AnnouncerKeys.PlayerDisconnected] = "", [AnnouncerKeys.PlayerReconnected] = "",
         };
 
-        private static readonly string[] StreakNames = { "", "", "", "KILLING SPREE", "DOMINATING", "MEGA KILL", "UNSTOPPABLE", "WICKED SICK", "MONSTER KILL", "GODLIKE", "BEYOND GODLIKE" };
+        // Original Bloodfall streak titles (streak_3 .. streak_10), matching the announcer lines in Tools/audio.
+        private static readonly string[] StreakNames = { "", "", "", "BLOODLETTING", "RAVAGING", "SLAUGHTEROUS", "UNBROKEN", "CRIMSON TERROR", "HARBINGER", "TITANBORN", "BEYOND DEATH" };
 
         private void Announce(NetEvent e)
         {
