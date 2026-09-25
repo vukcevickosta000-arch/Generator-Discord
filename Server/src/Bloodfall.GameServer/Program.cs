@@ -222,7 +222,7 @@ namespace Bloodfall.GameServer
                 cfg.Players.Add(new PlayerSetup
                 {
                     AccountId = p.AccountId, Name = p.IsBot ? $"{(p.Team == "Dawn" ? "Sunward" : "Nightbound")} Bot {p.Slot + 1}" : p.DisplayName ?? "Player",
-                    Team = p.Team == "Dusk" ? Team.Dusk : Team.Dawn, Slot = p.Slot, IsBot = p.IsBot, HeroId = p.HeroId,
+                    Team = p.Team == "Dusk" ? Team.Dusk : Team.Dawn, Slot = p.Slot, IsBot = p.IsBot, HeroId = p.HeroId, RtsFaction = p.RtsFaction,
                     BotDifficulty = Enum.TryParse<BotDifficulty>(p.BotDifficulty, true, out var bd) ? bd : BotDifficulty.Normal,
                 });
             }

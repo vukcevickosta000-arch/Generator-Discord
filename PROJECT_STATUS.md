@@ -16,8 +16,8 @@ This file is the honest source of truth for what works. Status labels:
 | Check | Result | How to reproduce |
 |---|---|---|
 | Server solution build (`Server/Bloodfall.sln`) | ✅ builds, 0 warnings-as-errors | `dotnet build Server/Bloodfall.sln` |
-| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 93 / 93 pass | `dotnet test Server/tests/Bloodfall.Tests` |
-| End-to-end online test (real backend + game server over UDP) | ✅ **E2E PASSED** | `Tools/dev/run-e2e.sh` |
+| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 95 / 95 pass | `dotnet test Server/tests/Bloodfall.Tests` |
+| End-to-end online test (real backend + game server over UDP): a MOBA match, then an RTS match | ✅ **E2E PASSED** | `Tools/dev/run-e2e.sh` |
 | 20-minute 5v5 bot simulation (all eight heroes) | ✅ runs, 0.28 ms/tick | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- 20 11` |
 | RTS bot games (Ashfields, 24 games) | ✅ decided in 19–24 min on average, factions and start sides even, 0.06–0.08 ms/tick | `... SimRunner -- 30 500 --rts --games 24` |
 | Unity client scripts compile check (UnityEngine 2021.3 reference assemblies) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck` |
@@ -38,7 +38,7 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
 | 5 | Client / account / lobby / server flow | Backend **WORKING** (E2E). Unity screens IMPLEMENTED (unverified). |
 | 6 | Multiple heroes and items | PARTIAL: **8 of 96 heroes** playable (all eight concept heroes: Vorak, Ilyra, Nyxara, Malgrave, Ardyn, Fenrax, Morwen, Thael), each with kit tests and bot usage. 38 items. |
 | 7 | Vharoth event | **WORKING** in simulation: seals, awakening, three boss phases, Blood Moon, Heart of Vharoth with revive, bots that break seals and kill him. 13 tests. Unity presentation (models, effects, HUD boss bar, Blood Moon lighting, corpse): IMPLEMENTED (unverified). |
-| 8 | RTS match | PARTIAL. **R1 and R3 WORKING in simulation** (20 tests): blood-iron and lumber harvesting, construction, training queues, supply, rally points, victory by razing, the Ashfields map, and an RTS AI at four difficulties that plays complete games (BALANCE_NOTES.md §5). Two of four factions (Dawnguard, Ashen Legion). Still missing: heroes at an altar, research and the other two factions (R2), protocol/lobby/queue support (R4) and the Unity RTS interface (R5). **Not playable from the client yet**; the queue and lobbies still refuse RTS with an explanation. |
+| 8 | RTS match | PARTIAL. **R1, R3 and R4 WORKING** (20 simulation tests, 2 protocol tests, E2E section 5): blood-iron and lumber harvesting, construction, training queues, supply, rally points, victory by razing, the Ashfields map, an RTS AI at four difficulties, protocol v5, lobby faction pick and the strategy queue, all played over UDP in the E2E run. Two of four factions (Dawnguard, Ashen Legion). Still missing: heroes at an altar, research and the other two factions (R2), and the Unity RTS interface (R5). **Not playable from the Unity client yet**; the client keeps its strategy queue disabled until R5. |
 | 9 | Content expansion | PLANNED |
 | 10 | Polish | PLANNED |
 
@@ -89,7 +89,9 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
 
 ### Networking (Shared/Runtime/Protocol + GameServer): WORKING
 
-- LiteNetLib UDP transport and binary protocol v4, with fragmentation for large snapshots.
+- LiteNetLib UDP transport and binary protocol v5, with fragmentation for large snapshots.
+- RTS support: group orders, per-entity construction/training/cargo/vein state, private economy, fog for enemy
+  buildings.
 - Content-hash and version handshake. Path separators are normalized, so Windows and Linux hash identically.
 - HMAC-signed match tickets.
 - Command rate limiting.
@@ -180,7 +182,6 @@ lobby → hero select → loading → match → post-game.
 
 1. **RTS mode (milestone 8), in order** (details in TODO.md T-030 to T-034):
    - R2: the Crimson Court and Wild Covenant factions, altars that recruit MOBA heroes, and research.
-   - R4: multi-unit orders and RTS state in the protocol, and RTS enabled in lobbies and the queue.
    - R5: the Unity RTS interface and dedicated models.
 2. **Art (T-001 remainder):** Blender props and trees.
 3. **Hero-specific bot behaviour** (T-022) and last-hitting (T-016). The Nyxara bot is the weakest in bot matches.

@@ -31,10 +31,10 @@
 | Table | Key | Columns | Indexes |
 |---|---|---|---|
 | `stats_matches` | `Id` (match id) | ModeId, MapId, Region, Ranked, Winner, DurationSeconds, StartedAt, EndedAt, ServerId, ContentHash, KillsDawn, KillsDusk | EndedAt |
-| `stats_match_players` | `Id` (long) | MatchId, AccountId (null for bots), Name, Team, Slot, HeroId, IsBot, Won, Abandoned, Level, K/D/A, LastHits, Denies, GoldEarned, NetWorth, Gpm, Xpm, HeroDamage, BuildingDamage, Healing, Wards, Towers, Items (csv), NetWorthTimeline (csv), RatingBefore, RatingChange, AccountXp | MatchId; (AccountId, MatchId) |
+| `stats_match_players` | `Id` (long) | MatchId, AccountId (null for bots), Name, Team, Slot, HeroId, IsBot, Won, Abandoned, Level, K/D/A, LastHits, Denies, GoldEarned, NetWorth, Gpm, Xpm, HeroDamage, BuildingDamage, Healing, Wards, Towers, Items (csv), NetWorthTimeline (csv), RtsFaction, ResourcesGathered, UnitsTrained, UnitsKilled, BuildingsRazed (RTS; empty/zero in the MOBA), RatingBefore, RatingChange, AccountXp | MatchId; (AccountId, MatchId) |
 | `stats_ratings` | (AccountId, Queue, Season) | Rating (1500 start), Peak, Games, Wins, Losses | (Queue, Season, Rating) |
 | `stats_accounts` | `AccountId` | GamesPlayed, Wins, Losses, Abandons, Kills, Deaths, Assists, SumGpm, SumXpm, WardsPlaced, TowersDestroyed, TotalSeconds, BestGpm, BestXpm | PK |
-| `stats_heroes` | (AccountId, HeroId) | Games, Wins, Kills, Deaths, Assists, SumGpm, SumXpm, LastPlayed | PK |
+| `stats_heroes` | (AccountId, HeroId) | Games, Wins, Kills, Deaths, Assists, SumGpm, SumXpm, LastPlayed (only matches played with a hero) | PK |
 | `stats_achievements` | (AccountId, AchievementId) | UnlockedAt | PK |
 | `stats_commendations` | `Id` | MatchId, FromId, ToId, Kind, CreatedAt | unique (MatchId, FromId, ToId) |
 

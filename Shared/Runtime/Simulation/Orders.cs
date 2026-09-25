@@ -51,10 +51,17 @@ namespace Bloodfall.Simulation
         public int Slot2;
         public string ItemId;
         public bool Queue;
+        /// <summary>
+        /// RTS multi-select: further units that receive the same order (the server checks each one's owner).
+        /// Training goes to the selected building with the shortest queue; building and casting use UnitId only.
+        /// </summary>
+        public int[] Group;
         /// <summary>Tick at which the order was issued (for latency statistics / replay).</summary>
         public int IssuedTick;
 
         public const int ItemSlotBase = 100;
+        /// <summary>Most units one group order can command (UnitId plus Group).</summary>
+        public const int MaxGroup = 64;
 
         public static Order MoveTo(int unit, Vector2 p, bool queue = false) => new Order { Type = OrderType.Move, UnitId = unit, Point = p, Queue = queue };
         public static Order Attack(int unit, int target, bool queue = false) => new Order { Type = OrderType.AttackUnit, UnitId = unit, TargetId = target, Queue = queue };

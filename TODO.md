@@ -24,14 +24,12 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
     - Hero use once altars exist (R2).
     - Towers at expansions.
     - Harass and counter-attacks while the enemy army is away.
-  - **T-032 (R4) Networking.**
-    - Multi-unit orders (a selection list in `Order`).
-    - Protocol v5 with RTS fields:
-      - per entity: construction progress, training queue, carried resources, vein amount;
-      - per player (private): lumber, supply and cap.
-    - Lobby faction pick (`PlayerSetup.RtsFaction`).
-    - Enable `rts_1v1` in MatchmakingModule and LobbyModule.
-    - An E2E RTS match.
+  - **T-032 (R4) Networking.** *Done:*
+    - protocol v5: group orders, RTS entity and private fields, RTS fog;
+    - lobby faction pick, the strategy queue with an AI opponent after 45 s, RTS results and history;
+    - E2E section 5 plays an RTS match over UDP.
+
+    The Unity client still keeps the strategy queue disabled until T-033.
   - **T-033 (R5) Unity RTS interface.**
     - Box select, control groups, command card (build/train/rally/cancel), placement ghost using
       `Match.CanPlaceBuilding`, resource and supply bar.

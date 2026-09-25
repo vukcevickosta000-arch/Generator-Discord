@@ -31,6 +31,8 @@ namespace Bloodfall.Backend.Modules.Lobbies
         public int Level;
         public string Rank;
         public int Rating = 1500;
+        /// <summary>RTS: faction id, or null for random.</summary>
+        public string RtsFaction;
     }
 
     public sealed class Lobby
@@ -129,7 +131,7 @@ namespace Bloodfall.Backend.Modules.Lobbies
                 ServerAddress = member ? l.Server?.Address : null, ServerPort = member ? l.Server?.Port ?? 0 : 0,
             };
             foreach (var (team, slot, s) in l.AllSlots())
-                v.Slots.Add(new LobbySlotView { Team = team, Slot = slot, AccountId = s.AccountId?.ToString(), DisplayName = s.IsBot ? $"Bot ({s.BotDifficulty})" : s.Name, IsBot = s.IsBot, BotDifficulty = s.BotDifficulty, Ready = s.Ready, Host = s.AccountId == l.HostId, Level = s.Level, Rank = s.Rank });
+                v.Slots.Add(new LobbySlotView { Team = team, Slot = slot, AccountId = s.AccountId?.ToString(), DisplayName = s.IsBot ? $"Bot ({s.BotDifficulty})" : s.Name, IsBot = s.IsBot, BotDifficulty = s.BotDifficulty, Ready = s.Ready, Host = s.AccountId == l.HostId, Level = s.Level, Rank = s.Rank, RtsFaction = s.RtsFaction });
             foreach (var sp in l.Spectators) v.SpectatorList.Add(new LobbySlotView { Team = "Spectator", AccountId = sp.ToString(), DisplayName = _presence.Name(sp) });
             return v;
         }
@@ -157,10 +159,17 @@ namespace Bloodfall.Backend.Modules.Lobbies
             var name = Validation.CleanText(r.Name, 32);
             if (name.Length < 3) return Api.BadRequest("invalid_name", "Game name must be at least 3 characters.", "name");
             if (!_data.Modes.TryGetValue(r.ModeId ?? "", out var mode)) return Api.BadRequest("invalid_mode", "Unknown game mode.", "modeId");
-            if (mode.Kind == GameModeKind.Rts) return Api.BadRequest("mode_unavailable", "Strategy (RTS) matches are not available yet - the RTS mode is in development.", "modeId");
-            if (!_data.Maps.ContainsKey(r.MapId ?? mode.Map)) return Api.BadRequest("invalid_map", "Unknown map.", "mapId");
+            if (!_data.Maps.TryGetValue(r.MapId ?? mode.Map, out var map)) return Api.BadRequest("invalid_map", "Unknown map.", "mapId");
             if (r.Ranked) return Api.BadRequest("ranked_custom", "Custom games cannot be ranked. Use the ranked queue.", "ranked");
             int teamSize = Math.Clamp(r.TeamSize <= 0 ? mode.TeamSize : r.TeamSize, 1, 5);
+            if (mode.Kind == GameModeKind.Moba && map.Lanes.Count == 0) return Api.BadRequest("invalid_map", "That map is not a Blood War map.", "mapId");
+            if (mode.Kind == GameModeKind.Rts)
+            {
+                // One start location per player on RTS maps.
+                int starts = Math.Min(map.StartLocations.Count(s => s.Team == Team.Dawn), map.StartLocations.Count(s => s.Team == Team.Dusk));
+                if (starts == 0) return Api.BadRequest("invalid_map", "That map has no RTS start locations.", "mapId");
+                teamSize = Math.Min(teamSize, starts);
+            }
             var info = await PlayerInfo(me);
             Lobby l;
             lock (_lock)
@@ -274,6 +283,34 @@ namespace Bloodfall.Backend.Modules.Lobbies
             return Results.NoContent();
         }
 
+        /// <summary>RTS lobbies: a player picks their faction (or "random").</summary>
+        public IResult SetFaction(Guid me, LobbyFactionRequest r)
+        {
+            Lobby l;
+            lock (_lock)
+            {
+                l = LobbyOf(me);
+                var s = l?.SlotOf(me);
+                if (s == null || l.Status != "Waiting") return Api.NotFound("You are not in a waiting lobby slot.");
+                if (!_data.Modes.TryGetValue(l.ModeId, out var mode) || mode.Kind != GameModeKind.Rts) return Api.BadRequest("not_rts", "Factions are only chosen in Strategy games.");
+                if (!ValidFaction(r?.Faction, out var faction)) return Api.BadRequest("invalid_faction", "Unknown faction.", "faction");
+                s.RtsFaction = faction;
+                s.Ready = s.AccountId == l.HostId && s.Ready;
+            }
+            Broadcast(l);
+            return Results.NoContent();
+        }
+
+        /// <summary>null / "random" means random; otherwise a playable RTS faction id.</summary>
+        private bool ValidFaction(string id, out string faction)
+        {
+            faction = null;
+            if (string.IsNullOrEmpty(id) || id == "random") return true;
+            if (!_data.RtsFactions.TryGetValue(id, out var f) || !f.Playable) return false;
+            faction = f.Id;
+            return true;
+        }
+
         public IResult SetReady(Guid me, bool ready)
         {
             Lobby l;
@@ -319,8 +356,10 @@ namespace Bloodfall.Backend.Modules.Lobbies
                 else
                 {
                     if (s.AccountId != null) return Api.Conflict("slot_taken", "That slot is occupied by a player.");
+                    if (!ValidFaction(r.Faction, out var faction)) return Api.BadRequest("invalid_faction", "Unknown faction.", "faction");
                     s.IsBot = true;
                     s.BotDifficulty = Enum.TryParse<BotDifficulty>(r.Difficulty, true, out var d) ? d.ToString() : l.BotDifficulty;
+                    s.RtsFaction = faction;
                     s.Ready = true;
                 }
             }
@@ -361,6 +400,7 @@ namespace Bloodfall.Backend.Modules.Lobbies
                 assignment.Players.Add(new AssignedPlayer
                 {
                     AccountId = s.AccountId?.ToString(), DisplayName = s.IsBot ? null : s.Name, Team = team, Slot = slot, IsBot = s.IsBot, BotDifficulty = s.BotDifficulty,
+                    RtsFaction = s.RtsFaction,
                 });
             }
             var server = _directory.Allocate(regions, assignment, _data.ContentHash, out var region);
@@ -404,7 +444,7 @@ namespace Bloodfall.Backend.Modules.Lobbies
         }
 
         /// <summary>Matchmaking creates lobbies through this path (not listed in the browser).</summary>
-        public Lobby CreateMatchmade(string queue, GameModeDef mode, List<(Guid id, string team, int slot)> players, int fillBots, string region)
+        public Lobby CreateMatchmade(string queue, GameModeDef mode, List<(Guid id, string team, int slot)> players, int fillBots, string region, IReadOnlyDictionary<Guid, string> factions = null)
         {
             var l = new Lobby(mode.TeamSize)
             {
@@ -417,6 +457,7 @@ namespace Bloodfall.Backend.Modules.Lobbies
                 team[p.slot].AccountId = p.id;
                 team[p.slot].Name = _presence.Name(p.id);
                 team[p.slot].Ready = true;
+                if (factions != null && factions.TryGetValue(p.id, out var f)) team[p.slot].RtsFaction = f;
             }
             if (fillBots > 0)
                 foreach (var (_, _, s) in l.AllSlots())
@@ -483,6 +524,7 @@ namespace Bloodfall.Backend.Modules.Lobbies
             g.MapPost("/leave", (LobbyService s, HttpContext c) => s.Leave(c.User.AccountId()));
             g.MapPost("/slot", (LobbySlotRequest r, LobbyService s, HttpContext c) => s.MoveSlot(c.User.AccountId(), r));
             g.MapPost("/ready", (LobbyReadyRequest r, LobbyService s, HttpContext c) => s.SetReady(c.User.AccountId(), r?.Ready ?? true));
+            g.MapPost("/faction", (LobbyFactionRequest r, LobbyService s, HttpContext c) => s.SetFaction(c.User.AccountId(), r));
             g.MapPost("/kick", (LobbyKickRequest r, LobbyService s, HttpContext c) => Guid.TryParse(r?.AccountId, out var t) ? s.Kick(c.User.AccountId(), t) : Api.BadRequest("invalid", "Invalid account."));
             g.MapPost("/bots", (LobbyBotRequest r, LobbyService s, HttpContext c) => s.Bots(c.User.AccountId(), r));
             g.MapPost("/start", (LobbyService s, HttpContext c) => s.Start(c.User.AccountId()));

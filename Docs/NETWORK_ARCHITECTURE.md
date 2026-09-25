@@ -24,7 +24,8 @@ backend.
    - Ticket format: `base64url(json payload) + "." + base64url(HMAC-SHA256(payload, ticketKey))`.
    - Payload: `matchId`, `accountId`, `displayName`, `team`, `slot`, `spectator`, `exp` (unix s), `nonce`.
 3. **The client connects over UDP** (connection key `bloodfall`) and sends `Hello` with:
-   - protocol version (currently **4**; v4 added the Vharoth phase and seal count to the snapshot header)
+   - protocol version (currently **5**; v4 added the Vharoth phase and seal count to the snapshot header, v5 the
+     RTS fields listed in §3)
    - game data content hash
    - client version
    - the ticket
@@ -51,7 +52,7 @@ Every message starts with one `MsgType` byte.
 | Direction | Type | Content |
 |---|---|---|
 | C→S | `Hello` (1) | protocol, content hash, client version, ticket, spectator |
-| C→S | `Command` (2) | `Order`: type, unit, target, point(s), slot(s), item id (content index), queue flag |
+| C→S | `Command` (2) | `Order`: type, unit, target, point(s), slot(s), item id (content index; a unit index for Train/Build), queue flag, group (up to 63 more unit ids, v5) |
 | C→S | `Chat` (3) | team flag, text (≤ 200 chars; `-ff` votes concede; practice cheats when enabled) |
 | C→S | `LoadProgress` (4) | 0–100 |
 | C→S | `PickHero` (5) | hero id or `random` |
@@ -63,6 +64,23 @@ Every message starts with one `MsgType` byte.
 | S→C | `Events` (68) | batched `SimEvent`s visible to the receiving team/player (reliable) |
 | S→C | `ChatBroadcast` (69) | player id, name, team flag, text |
 | S→C | `MatchEnd` (71) | JSON `MatchResult` |
+
+**RTS additions (v5).**
+
+- **Group commands.** The server applies the order to every listed unit that the sender controls. Exceptions:
+  - Train goes to the selected building with the shortest queue.
+  - Build and casts use the first unit only.
+- **Entities.** RTS kinds carry an extra block, keyed by the entity kind so MOBA snapshots are unchanged:
+  - buildings: under-construction flag and progress;
+  - the owner's team only: the training queue, its progress and the rally point;
+  - workers: carried blood-iron and lumber;
+  - veins: blood-iron left.
+- **Player views** carry the RTS faction and whether the player is eliminated.
+- **Private state.** The receiving player gets an RTS block with blood-iron, lumber, supply used and supply cap.
+- **Fog.**
+  - Enemy RTS buildings are sent only while visible. The client is expected to remember last-seen buildings.
+  - MOBA structures stay always known.
+  - Veins are always sent, since they are part of the map.
 
 ### Encoding
 

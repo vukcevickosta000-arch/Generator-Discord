@@ -4,7 +4,7 @@
 
 | Suite | Command | What it covers |
 |---|---|---|
-| Unit and simulation tests (93) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
+| Unit and simulation tests (95) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
 | End-to-end online | `Tools/dev/run-e2e.sh` | Real backend (fresh SQLite database) and a real game server over UDP; see §3 |
 | Bot soak | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- <minutes> <seed> [--deaths] [--trace N] [--mirror \| --heroes id1,id2]` | Full 5v5 bot matches (every playable hero by default): stability, performance, balance numbers |
 | RTS bot soak | `... SimRunner -- <minutes> <seed> --rts [--games N] [--factions a,b] [--difficulty X,Y] [--trace] [--log]` | 1v1 RTS bot games on Ashfields: wins per faction and per start side, economy and army statistics, AI errors |
@@ -15,7 +15,9 @@ What the unit and simulation tests cover:
 
 - **Simulation:** armor math, movement and pathing, attacks and projectiles, denies, towers, creep waves, casting and
   statuses, items and recipes, XP and levels, respawn, fog of war, bots.
-- **Protocol:** buffers, tickets, snapshot visibility, host join/reject/reconnect flows.
+- **Protocol:** buffers, tickets, snapshot visibility, host join/reject/reconnect flows. RTS tests cover:
+  - unit ids in Train/Build commands and the group cap;
+  - a loopback RTS match with private economy, building state, training queue, rally point, group moves and fog.
 - **Data:** the index is current, a client-style load gives the same hash, model and icon keys are declared, and
   every model key has an FBX from the Blender pipeline.
 - **Hero kits** (`HeroKitTests.cs`): every ability of Nyxara, Malgrave, Ardyn, Fenrax, Morwen and Thael, and the
@@ -74,6 +76,16 @@ These need a Unity 6000.0.40f1 editor. See the manual checklist below and BUGS.m
    - A concede ends the match; the right team wins.
    - Profiles, history, match detail and account XP update.
    - A client attempt to submit a result gets 401.
+5. **Strategy (RTS) match** on the same game server, once it frees up:
+   - An RTS lobby opens on Ashfields; an unknown faction is rejected; both factions show in the lobby.
+   - Both clients connect. The private economy streams (500 / 150, supply 5/10), the lobby's factions reach the
+     game server, and the player sees their own hall, workers and a full vein.
+   - Fog hides the enemy base.
+   - A single group order sends all five workers to mine; training is queued and paid.
+   - The opponent's Train and Cancel orders on this player's hall are ignored.
+   - Mined blood-iron and the vein's decline show in snapshots.
+   - A concede ends the match. The result carries the faction and economy; match history shows the RTS win; no
+     empty hero statistics are created.
 
 ## 4. Manual checklist (Unity, per release)
 

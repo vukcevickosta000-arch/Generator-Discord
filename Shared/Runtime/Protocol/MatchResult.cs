@@ -48,6 +48,9 @@ namespace Bloodfall.Protocol
         public string[] Items = new string[0];
         public List<int> NetWorthTimeline = new List<int>();
         public List<int> XpTimeline = new List<int>();
+        /// <summary>RTS matches: faction and economy/army totals (zero in the MOBA).</summary>
+        public string RtsFaction;
+        public int GoldMined, LumberHarvested, UnitsTrained, UnitsLost, UnitsKilled, BuildingsBuilt, BuildingsLost, BuildingsRazed;
         /// <summary>Filled in by the statistics service on the post-game screen (rating delta, account XP).</summary>
         public int RatingChange;
         public int AccountXp;
@@ -95,6 +98,9 @@ namespace Bloodfall.Protocol
                     Items = p.FinalItems.Length > 0 ? p.FinalItems : p.Hero?.Inventory?.Where(i => i != null).Select(i => i.Def.Id).ToArray() ?? new string[0],
                     NetWorthTimeline = new List<int>(p.NetWorthTimeline),
                     XpTimeline = new List<int>(p.XpTimeline),
+                    RtsFaction = p.RtsFaction?.Id,
+                    GoldMined = p.GoldMined, LumberHarvested = p.LumberHarvested, UnitsTrained = p.UnitsTrained, UnitsLost = p.UnitsLost,
+                    UnitsKilled = p.UnitsKilled, BuildingsBuilt = p.BuildingsBuilt, BuildingsLost = p.BuildingsLost, BuildingsRazed = p.BuildingsRazed,
                 });
             }
             return r;

@@ -10,7 +10,7 @@ namespace Bloodfall.Protocol
     public static class ProtocolInfo
     {
         /// <summary>Bump when the wire format changes. Clients with a different version are rejected with a clear message.</summary>
-        public const ushort Version = 4;
+        public const ushort Version = 5;
         public const string ConnectionKey = "bloodfall";
         public const int DefaultGamePort = 27015;
     }
@@ -118,6 +118,17 @@ namespace Bloodfall.Protocol
         public List<StatusView> Statuses = new List<StatusView>();
         public List<AbilityView> HeroAbilities;
         public string[] HeroItems;
+        // RTS
+        public bool UnderConstruction;
+        public float BuildProgress = 1f;
+        /// <summary>Units queued in a building (own team only; null otherwise).</summary>
+        public string[] TrainQueue;
+        public float TrainProgress;
+        /// <summary>Rally point of a friendly building, if set.</summary>
+        public Vector2? Rally;
+        public int CarryGold, CarryLumber;
+        /// <summary>Blood-iron left in a vein.</summary>
+        public int ResourceAmount;
 
         public bool Has(EntityFlags f) => (Flags & f) != 0;
         public EntityState Clone()
@@ -171,6 +182,15 @@ namespace Bloodfall.Protocol
         public int PingMs;
         public float LoadProgress;
         public float Gpm, Xpm;
+        /// <summary>RTS faction id (null in the MOBA).</summary>
+        public string RtsFaction;
+        public bool Eliminated;
+    }
+
+    /// <summary>The viewing player's RTS economy (only sent to that player).</summary>
+    public sealed class RtsPrivateState
+    {
+        public int Gold, Lumber, SupplyUsed, SupplyCap;
     }
 
     public sealed class PrivateState
@@ -203,6 +223,8 @@ namespace Bloodfall.Protocol
         public readonly List<EntityState> Entities = new List<EntityState>();
         public readonly List<PlayerView> Players = new List<PlayerView>();
         public PrivateState Me;
+        /// <summary>RTS matches: the viewer's resources and supply.</summary>
+        public RtsPrivateState Rts;
     }
 
     public sealed class WelcomeInfo

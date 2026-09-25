@@ -254,15 +254,16 @@ namespace Bloodfall.Client.UI.Screens
                 "The real-time strategy mode is not playable in this build. It will pit the four factions of Velmoragh against each " +
                 "other in base-building battles: gather blood-iron and lumber, raise structures, recruit armies and heroes, research " +
                 "upgrades and raze the enemy stronghold.", "t-body"));
-            p.Add(El.Text("PLANNED", "t-subheading", "mt-l"));
+            p.Add(El.Text("READY ON THE SERVER", "t-subheading", "mt-l"));
             p.Add(El.Text(
-                "• Workers, resource nodes and harvesting\n• Faction build trees for the Crimson Court, Ashen Legion, Wild Covenant and Dawnguard\n" +
-                "• Supply, production queues, rally points and research\n• Heroes leading armies, shared ability framework with the MOBA\n" +
-                "• 1v1 ladder and custom games on dedicated servers", "t-body"));
-            p.Add(El.Text("CURRENT STATUS", "t-subheading", "mt-l"));
-            p.Add(El.Text("The simulation already reserves RTS order types (build, train, research, harvest, rally) and unit kinds. " +
-                          "The Strategy queue and RTS lobbies are disabled server-side with an explanation until the mode ships. " +
-                          "Progress is tracked in PROJECT_STATUS.md.", "t-body"));
+                "• Workers mining blood-iron veins and cutting lumber on the Ashfields map\n• Construction, supply, training queues and rally points\n" +
+                "• The Dawnguard and the Ashen Legion\n• RTS bots at four difficulties\n" +
+                "• 1v1 lobbies and a Strategy queue on dedicated servers (tested end to end)", "t-body"));
+            p.Add(El.Text("STILL TO COME", "t-subheading", "mt-l"));
+            p.Add(El.Text(
+                "• This client's RTS controls: box selection, control groups, the command card and building placement\n" +
+                "• The Crimson Court and the Wild Covenant, hero altars and research\n" +
+                "Until the controls ship, the Strategy queue stays disabled in this client. Progress is tracked in PROJECT_STATUS.md.", "t-body"));
             var crests = El.Div("row", "center", "mt-l");
             foreach (var c in new[] { "crimson_court", "ashen_legion", "wild_covenant", "dawnguard" }) crests.Add(El.Img("Textures/UI/Crests/crest_" + c, 140, 160));
             p.Add(crests);

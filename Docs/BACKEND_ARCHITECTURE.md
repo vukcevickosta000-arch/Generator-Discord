@@ -13,9 +13,9 @@ through interfaces and the realtime hub, not through each other's tables.
 | **Social** | Friends and requests, blocks, presence, parties, chat channels and whispers, reports, commendations | `social_*`, in-memory presence/parties/chat |
 | **Clans** | Create, invite, accept, ranks, kick, leave | `social_clan*` |
 | **Directory** | Game server registration and heartbeats, regions (status, free servers, ping host), allocation, tickets | in-memory registry |
-| **Lobbies** | Custom games: create/join/spectate, slots, bots, ready, kick, start, connection info | in-memory |
-| **Matchmaking** | Queues (quick with bot fill after 25 s, unranked, ranked; strategy disabled with a reason), accept/decline, rating-based grouping, party size | in-memory, background loop |
-| **Stats** | Match ingestion (game servers only), ratings (Elo), account/hero stats, XP, achievements, leaderboards, match detail | `stats_*` |
+| **Lobbies** | Custom games: create/join/spectate, slots, bots, ready, kick, start, connection info. RTS lobbies add a faction per slot (players and bots), and team size is capped by the map's start locations. A lobby closes as soon as its match result is recorded. | in-memory |
+| **Matchmaking** | Queues (quick with bot fill after 25 s, unranked, ranked, and strategy 1v1 with a faction preference and an RTS bot after 45 s), accept/decline, rating-based grouping, party size | in-memory, background loop |
+| **Stats** | Match ingestion (game servers only), ratings (Elo), account/hero stats (hero stats only for matches played with a hero), RTS faction and totals, XP, achievements, leaderboards, match detail | `stats_*` |
 | **Content** | News (dev sample news is flagged `DevSample`), client version and content hash, **service status built from real health checks** | `content_news` |
 
 ## Endpoints
@@ -27,7 +27,7 @@ through interfaces and the realtime hub, not through each other's tables.
 | `/api/accounts` | `GET me`, `GET me/profile`, `PATCH me`, `GET {id}/profile`, `GET {id}/matches`, `GET search` |
 | `/api/social` | `GET friends` · `POST friends/requests`, `…/{id}/accept`, `…/{id}/decline` · `DELETE friends/{id}` · `POST/DELETE blocks/{id}` · `GET party` · `POST party/invite, party/{id}/accept, party/{id}/decline, party/leave, party/kick, party/promote` · `GET chat/channels` · `POST reports, commend` |
 | `/api/clans` | `GET mine`, `POST /` (create), `POST invite, invites/{id}/accept, leave, rank, kick`, `GET invites`, `GET {id}` |
-| `/api/lobbies` | `GET /`, `GET mine`, `GET mine/connection`, `GET {id}`, `POST /` (create), `POST {id}/join`, `POST leave, slot, ready, kick, bots, start` |
+| `/api/lobbies` | `GET /`, `GET mine`, `GET mine/connection`, `GET {id}`, `POST /` (create), `POST {id}/join`, `POST leave, slot, ready, faction (RTS), kick, bots, start` |
 | `/api/matchmaking` | `GET queues`, `POST queue`, `DELETE queue`, `GET status`, `POST respond` |
 | `/api/directory` | `GET regions` · `/api/directory/servers`: `POST register, heartbeat`, `GET /` (server key) |
 | `/api/stats` | `POST matches` (**server key only**) · `GET leaderboards?category&region&friends` · `GET matches/{id}` |

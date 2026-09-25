@@ -164,6 +164,12 @@ namespace Bloodfall.Backend.Infrastructure.Data
         public int Towers { get; set; }
         public string Items { get; set; } = "";
         public string NetWorthTimeline { get; set; } = "";
+        /// <summary>RTS matches: faction id and totals (empty / zero in the MOBA).</summary>
+        public string RtsFaction { get; set; } = "";
+        public int ResourcesGathered { get; set; }
+        public int UnitsTrained { get; set; }
+        public int UnitsKilled { get; set; }
+        public int BuildingsRazed { get; set; }
         public int RatingBefore { get; set; }
         public int RatingChange { get; set; }
         public int AccountXp { get; set; }

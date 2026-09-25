@@ -71,6 +71,8 @@ namespace Bloodfall.Backend.Modules.Stats
                     GoldEarned = p.GoldEarned, NetWorth = p.NetWorth, Gpm = p.Gpm, Xpm = p.Xpm, HeroDamage = p.HeroDamage, BuildingDamage = p.BuildingDamage,
                     Healing = p.Healing, Wards = p.WardsPlaced, Towers = p.TowersDestroyed, Items = string.Join(",", p.Items ?? new string[0]),
                     NetWorthTimeline = string.Join(",", p.NetWorthTimeline ?? new List<int>()),
+                    RtsFaction = p.RtsFaction ?? "", ResourcesGathered = p.GoldMined + p.LumberHarvested, UnitsTrained = p.UnitsTrained,
+                    UnitsKilled = p.UnitsKilled, BuildingsRazed = p.BuildingsRazed,
                 };
                 if (acc != null)
                 {
@@ -107,10 +109,14 @@ namespace Bloodfall.Backend.Modules.Stats
                     st.TotalSeconds += r.DurationSeconds;
                     st.BestGpm = Math.Max(st.BestGpm, p.Gpm); st.BestXpm = Math.Max(st.BestXpm, p.Xpm);
 
-                    var hs = await _db.HeroStats.FindAsync(acc.Value, p.HeroId ?? "");
-                    if (hs == null) { hs = new HeroStats { AccountId = acc.Value, HeroId = p.HeroId ?? "" }; _db.HeroStats.Add(hs); }
-                    hs.Games++; if (p.Won) hs.Wins++;
-                    hs.Kills += p.Kills; hs.Deaths += p.Deaths; hs.Assists += p.Assists; hs.SumGpm += p.Gpm; hs.SumXpm += p.Xpm; hs.LastPlayed = DateTime.UtcNow;
+                    // Hero statistics only for matches played with a hero (not RTS games without one).
+                    if (!string.IsNullOrEmpty(p.HeroId))
+                    {
+                        var hs = await _db.HeroStats.FindAsync(acc.Value, p.HeroId);
+                        if (hs == null) { hs = new HeroStats { AccountId = acc.Value, HeroId = p.HeroId }; _db.HeroStats.Add(hs); }
+                        hs.Games++; if (p.Won) hs.Wins++;
+                        hs.Kills += p.Kills; hs.Deaths += p.Deaths; hs.Assists += p.Assists; hs.SumGpm += p.Gpm; hs.SumXpm += p.Xpm; hs.LastPlayed = DateTime.UtcNow;
+                    }
 
                     // Account XP / level.
                     var account = await _db.Accounts.FindAsync(acc.Value);
@@ -220,6 +226,8 @@ namespace Bloodfall.Backend.Modules.Stats
                     Kills = p.Kills, Deaths = p.Deaths, Assists = p.Assists, LastHits = p.LastHits, Denies = p.Denies, NetWorth = p.NetWorth, Gpm = p.Gpm, Xpm = p.Xpm,
                     HeroDamage = p.HeroDamage, BuildingDamage = p.BuildingDamage, Healing = p.Healing, Wards = p.Wards, Towers = p.Towers,
                     Items = string.IsNullOrEmpty(p.Items) ? new string[0] : p.Items.Split(','), RatingChange = p.RatingChange,
+                    RtsFaction = string.IsNullOrEmpty(p.RtsFaction) ? null : p.RtsFaction, ResourcesGathered = p.ResourcesGathered, UnitsTrained = p.UnitsTrained,
+                    UnitsKilled = p.UnitsKilled, BuildingsRazed = p.BuildingsRazed,
                     NetWorthTimeline = string.IsNullOrEmpty(p.NetWorthTimeline) ? new List<int>() : p.NetWorthTimeline.Split(',').Select(int.Parse).ToList(),
                 }).ToList(),
             };
@@ -230,10 +238,14 @@ namespace Bloodfall.Backend.Modules.Stats
     {
         public static void MapStats(this IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/stats/matches", async (MatchResult r, StatsService s) =>
+            app.MapPost("/api/stats/matches", async (MatchResult r, StatsService s, Directory.DirectoryService directory) =>
             {
                 if (r == null || string.IsNullOrEmpty(r.MatchId) || r.Players == null) return Api.BadRequest("invalid", "Match result is incomplete.");
-                return Api.Ok(await s.Ingest(r));
+                var resp = await s.Ingest(r);
+                // The result is final: release the lobby now instead of waiting for the server's next heartbeat, so
+                // players can start another game straight away.
+                directory.NotifyMatchReported(r.MatchId);
+                return Api.Ok(resp);
             }).AddEndpointFilter<GameServerKeyFilter>();
             var g = app.MapGroup("/api/stats").RequireAuthorization();
             g.MapGet("/leaderboards", async (string category, string region, bool? friends, StatsService s, HttpContext c) => Api.Ok(await s.Leaderboard(category, region, c.User.AccountId(), friends ?? false)));

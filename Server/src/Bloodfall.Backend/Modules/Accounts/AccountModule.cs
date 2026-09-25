@@ -110,7 +110,7 @@ namespace Bloodfall.Backend.Modules.Accounts
             return rows.Select(x => new MatchSummary
             {
                 MatchId = x.m.Id, EndedAt = x.m.EndedAt, DurationSeconds = x.m.DurationSeconds, ModeId = x.m.ModeId, MapId = x.m.MapId, Ranked = x.m.Ranked,
-                HeroId = x.mp.HeroId, Won = x.mp.Won, Abandoned = x.mp.Abandoned, Kills = x.mp.Kills, Deaths = x.mp.Deaths, Assists = x.mp.Assists,
+                HeroId = x.mp.HeroId, RtsFaction = string.IsNullOrEmpty(x.mp.RtsFaction) ? null : x.mp.RtsFaction, Won = x.mp.Won, Abandoned = x.mp.Abandoned, Kills = x.mp.Kills, Deaths = x.mp.Deaths, Assists = x.mp.Assists,
                 LastHits = x.mp.LastHits, Denies = x.mp.Denies, NetWorth = x.mp.NetWorth, Gpm = x.mp.Gpm, Xpm = x.mp.Xpm,
                 HeroDamage = x.mp.HeroDamage, BuildingDamage = x.mp.BuildingDamage, Healing = x.mp.Healing, Wards = x.mp.Wards, Towers = x.mp.Towers,
                 Items = string.IsNullOrEmpty(x.mp.Items) ? new string[0] : x.mp.Items.Split(','), RatingChange = x.mp.RatingChange,

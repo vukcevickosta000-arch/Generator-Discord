@@ -86,6 +86,62 @@ namespace Bloodfall.Tests
         }
 
         [Fact]
+        public void Commands_CarryUnitIdsForTrainAndBuild_AndGroups()
+        {
+            var index = new ContentIndex(TestUtil.Data);
+            var train = new Order { Type = OrderType.Train, UnitId = 7, ItemId = "rts_dg_squire" };
+            var back = Codec.ReadCommand(Skip1(Codec.Command(train, index)), index);
+            Assert.Equal("rts_dg_squire", back.ItemId);
+            var buy = Codec.ReadCommand(Skip1(Codec.Command(Order.Buy(3, "item_rusted_blade"), index)), index);
+            Assert.Equal("item_rusted_blade", buy.ItemId);
+            var group = new Order { Type = OrderType.AttackMove, UnitId = 1, Point = new Vector2(10, 20), Group = Enumerable.Range(2, 100).ToArray() };
+            var g = Codec.ReadCommand(Skip1(Codec.Command(group, index)), index);
+            Assert.Equal(Order.MaxGroup - 1, g.Group.Length); // capped
+            Assert.Equal(2, g.Group[0]);
+        }
+
+        private static NetReader Skip1(byte[] msg) { var r = new NetReader(msg); r.ReadByte(); return r; }
+
+        [Fact]
+        public void Rts_Loopback_StreamsEconomy_BuildingState_AndFog()
+        {
+            var data = TestUtil.Data;
+            var cfg = new MatchConfig { ModeId = "rts_1v1", MapId = "map_rts_ashfields", Seed = 5, PreGameTimeOverride = 0.5f };
+            cfg.Players.Add(new PlayerSetup { AccountId = OfflineSession.LocalAccountId, Name = "Me", Team = Team.Dawn, RtsFaction = "dawnguard" });
+            cfg.Players.Add(new PlayerSetup { Name = "Bot", Team = Team.Dusk, IsBot = true, RtsFaction = "ashen_legion" });
+            var host = OfflineSession.CreateHost(data, cfg);
+            var link = new LoopbackConnection(host);
+            var client = new GameClient(data, link, new HelloInfo { Ticket = MatchTickets.OfflinePrefix + "Me", ClientVersion = "test" });
+            client.Connect();
+            Pump(host, client, 0.2f);
+            Assert.Equal(MatchPhase.Loading, client.MatchState.Phase); // no hero draft in the RTS
+            client.SendLoadProgress(1f);
+            Pump(host, client, 1.5f);
+            var f = client.Latest;
+            Assert.NotNull(f.Rts);
+            Assert.Null(f.Me); // no hero
+            Assert.Equal(10, f.Rts.SupplyCap);
+            var hall = f.Entities.Single(e => e.DefId == "rts_dg_citadel");
+            Assert.False(hall.UnderConstruction);
+            Assert.Equal(1f, hall.BuildProgress, 2);
+            Assert.Contains(f.Entities, e => e.Kind == UnitKind.Resource && e.ResourceAmount > 0);
+            Assert.DoesNotContain(f.Entities, e => e.DefId == "rts_al_necropolis"); // enemy base unscouted
+            Assert.Equal("dawnguard", f.Players.Single(p => p.Id == client.LocalPlayerId).RtsFaction);
+
+            // Train over the network; the queue is visible to its owner.
+            var workers = f.Entities.Where(e => e.Kind == UnitKind.Worker && e.OwnerPlayer == client.LocalPlayerId).ToList();
+            client.SendOrder(new Order { Type = OrderType.Train, UnitId = hall.Id, ItemId = "rts_dg_squire" });
+            client.SendOrder(new Order { Type = OrderType.SetRally, UnitId = hall.Id, Point = hall.Position + new Vector2(6, 6) });
+            client.SendOrder(new Order { Type = OrderType.Move, UnitId = workers[0].Id, Point = hall.Position + new Vector2(8, 8), Group = workers.Skip(1).Select(w => w.Id).ToArray() });
+            Pump(host, client, 0.5f);
+            var h = client.Latest.Entities.Single(e => e.Id == hall.Id);
+            Assert.Equal(new[] { "rts_dg_squire" }, h.TrainQueue);
+            Assert.True(h.Rally.HasValue);
+            Assert.Equal(425, client.Latest.Rts.Gold);
+            Assert.All(workers, w => Assert.NotEqual(OrderType.None, host.Match.GetUnit(w.Id).CurrentOrder.Type));
+        }
+
+        [Fact]
         public void Reconnect_RestoresPlayer_AndGraceAbandons()
         {
             var data = TestUtil.Data;

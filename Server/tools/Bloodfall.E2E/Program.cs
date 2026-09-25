@@ -120,7 +120,88 @@ namespace Bloodfall.E2E
             Check(spoof.StatusCode == System.Net.HttpStatusCode.Unauthorized, "clients cannot submit match results");
 
             ca.Disconnect(); cb.Disconnect();
+
+            await StrategyMatch(data, a.http, b.http, suffix);
             return Finish();
+        }
+
+        /// <summary>
+        /// War of the Ancients over the real stack: faction pick in a lobby, RTS state in snapshots, group orders,
+        /// server-side economy, ownership checks, concede, and RTS statistics.
+        /// </summary>
+        static async Task StrategyMatch(GameData data, HttpClient a, HttpClient b, string suffix)
+        {
+            Console.WriteLine("5. Strategy (RTS) match");
+            var lobby = await Post<LobbyView>(a, "api/lobbies", new CreateLobbyRequest { Name = "E2E Ashfields " + suffix, Region = "dev-local", ModeId = "rts_1v1", FillWithBots = false });
+            Check(lobby?.LobbyId != null && lobby.MapId == "map_rts_ashfields" && lobby.TeamSize == 1, $"RTS lobby created on {lobby?.MapId}");
+            if (lobby == null) return;
+            var bad = await a.PostAsJsonAsync("api/lobbies/faction", new LobbyFactionRequest { Faction = "no_such_faction" }, Json);
+            Check((int)bad.StatusCode == 400, "unknown faction rejected");
+            await Post<object>(a, "api/lobbies/faction", new LobbyFactionRequest { Faction = "dawnguard" });
+            await Post<LobbyView>(b, $"api/lobbies/{lobby.LobbyId}/join", new JoinLobbyRequest());
+            await Post<object>(b, "api/lobbies/faction", new LobbyFactionRequest { Faction = "ashen_legion" });
+            await Post<object>(b, "api/lobbies/ready", new LobbyReadyRequest { Ready = true });
+            var view = await a.GetFromJsonAsync<LobbyView>("api/lobbies/mine", Json);
+            Check(view?.Slots.Any(s => s.RtsFaction == "dawnguard") == true && view.Slots.Any(s => s.RtsFaction == "ashen_legion"), "both factions shown in the lobby");
+            // The E2E stack has one game server; it becomes free once it has wrapped up the previous match.
+            HttpResponseMessage start = null;
+            for (int attempt = 0; attempt < 30; attempt++)
+            {
+                start = await a.PostAsJsonAsync("api/lobbies/start", new { }, Json);
+                if ((int)start.StatusCode != 503) break;
+                await Task.Delay(2000);
+            }
+            Check(start.IsSuccessStatusCode, "RTS match started: " + (start.IsSuccessStatusCode ? "ok" : await start.Content.ReadAsStringAsync()));
+            if (!start.IsSuccessStatusCode) return;
+            var connA = await a.GetFromJsonAsync<GameConnectionInfo>("api/lobbies/mine/connection", Json);
+            var connB = await b.GetFromJsonAsync<GameConnectionInfo>("api/lobbies/mine/connection", Json);
+            var ca = await ConnectWithRetry(data, connA);
+            var cb = await ConnectWithRetry(data, connB);
+            Check(ca.State == ClientConnectionState.Connected && cb.State == ClientConnectionState.Connected, "both clients connected to the RTS match");
+            ca.SendLoadProgress(1f);
+            cb.SendLoadProgress(1f);
+            await Pump(new[] { ca, cb }, 5f);
+            var f = ca.Latest;
+            Check(f?.Rts != null && f.Rts.Gold == 500 && f.Rts.Lumber == 150 && f.Rts.SupplyUsed == 5 && f.Rts.SupplyCap == 10,
+                $"private RTS economy streamed (gold {f?.Rts?.Gold}, lumber {f?.Rts?.Lumber}, supply {f?.Rts?.SupplyUsed}/{f?.Rts?.SupplyCap})");
+            if (f?.Rts == null) { ca.Disconnect(); cb.Disconnect(); return; }
+            Check(f.Players.Any(p => p.Id == ca.LocalPlayerId && p.RtsFaction == "dawnguard") && f.Players.Any(p => p.Id == cb.LocalPlayerId && p.RtsFaction == "ashen_legion"), "factions from the lobby reached the game server");
+            var hall = f.Entities.FirstOrDefault(e => e.OwnerPlayer == ca.LocalPlayerId && e.DefId == "rts_dg_citadel");
+            var workers = f.Entities.Where(e => e.OwnerPlayer == ca.LocalPlayerId && e.Kind == UnitKind.Worker).ToList();
+            var vein = f.Entities.Where(e => e.Kind == UnitKind.Resource).OrderBy(e => hall == null ? 0 : System.Numerics.Vector2.Distance(e.Position, hall.Position)).FirstOrDefault();
+            Check(hall != null && workers.Count == 5 && vein?.ResourceAmount == 12500, $"own hall, 5 workers and a full vein visible ({workers.Count} workers, vein {vein?.ResourceAmount})");
+            Check(!f.Entities.Any(e => e.DefId == "rts_al_necropolis"), "fog of war hides the enemy base");
+            if (hall == null || workers.Count == 0 || vein == null) { ca.Disconnect(); cb.Disconnect(); return; }
+
+            // One order for the whole selection, then training at the hall.
+            ca.SendOrder(new Order { Type = OrderType.Harvest, UnitId = workers[0].Id, TargetId = vein.Id, Group = workers.Skip(1).Select(w => w.Id).ToArray() });
+            ca.SendOrder(new Order { Type = OrderType.Train, UnitId = hall.Id, ItemId = "rts_dg_squire" });
+            // The opponent tries to use this player's hall.
+            cb.SendOrder(new Order { Type = OrderType.Train, UnitId = hall.Id, ItemId = "rts_dg_squire" });
+            cb.SendOrder(new Order { Type = OrderType.CancelQueue, UnitId = hall.Id });
+            await Pump(new[] { ca, cb }, 1.5f);
+            var hallNow = ca.Latest.Entities.First(e => e.Id == hall.Id);
+            Check(hallNow.TrainQueue?.Length == 1 && ca.Latest.Rts.Gold <= 500 - 75 + 30, $"training queued and paid (queue {hallNow.TrainQueue?.Length ?? 0}, gold {ca.Latest.Rts.Gold})");
+            Check(cb.Latest.Rts.Gold == 500 && hallNow.TrainQueue?.Length == 1, "orders on another player's building are ignored");
+            await Pump(new[] { ca, cb }, 12f);
+            var fa = ca.Latest;
+            int harvesting = fa.Entities.Count(e => e.OwnerPlayer == ca.LocalPlayerId && e.Kind == UnitKind.Worker && (e.Action == ActionState.Working || e.Action == ActionState.Moving || e.CarryGold > 0));
+            Check(fa.Rts.Gold > 500 - 75, $"blood-iron mined on the server and streamed (gold {fa.Rts.Gold})");
+            Check(harvesting >= 4, $"the group order reached every worker ({harvesting} busy)");
+            var veinNow = fa.Entities.FirstOrDefault(e => e.Id == vein.Id);
+            Check(veinNow != null && veinNow.ResourceAmount < 12500, $"vein depletes ({veinNow?.ResourceAmount})");
+
+            cb.SendChat("-ff", false);
+            await Pump(new[] { ca, cb }, 4f);
+            Check(ca.Result?.Winner == ca.LocalTeam.ToString(), $"RTS match ended by concession, winner {ca.Result?.Winner}");
+            var rp = ca.Result?.Players.FirstOrDefault(p => p.Team == ca.LocalTeam.ToString());
+            Check(rp?.RtsFaction == "dawnguard" && rp.GoldMined > 0, $"result carries faction and economy (mined {rp?.GoldMined})");
+            await Task.Delay(2500);
+            var profile = await a.GetFromJsonAsync<Profile>("api/accounts/me/profile", Json);
+            var last = profile?.RecentMatches.FirstOrDefault();
+            Check(last?.ModeId == "rts_1v1" && last.RtsFaction == "dawnguard" && last.Won, "match history shows the RTS win and faction");
+            Check(profile?.Heroes.All(h => !string.IsNullOrEmpty(h.HeroId)) == true, "no empty hero statistics from an RTS match");
+            ca.Disconnect(); cb.Disconnect();
         }
 
         static int Finish()

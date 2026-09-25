@@ -57,6 +57,14 @@ namespace Bloodfall.Backend.Modules.Directory
         public event Action<string, string> MatchFinished; // (matchId, serverId)
         public event Action<string> ServerLost;              // matchId of a server that disappeared mid-match
 
+        /// <summary>A game server reported the final result of a match (listeners close its lobby).</summary>
+        public void NotifyMatchReported(string matchId)
+        {
+            string serverId;
+            lock (_lock) serverId = _servers.Values.FirstOrDefault(x => x.MatchId == matchId)?.ServerId;
+            MatchFinished?.Invoke(matchId, serverId);
+        }
+
         public void Register(ServerRegistration r)
         {
             lock (_lock)

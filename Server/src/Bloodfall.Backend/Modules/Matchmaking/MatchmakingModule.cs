@@ -46,6 +46,7 @@ namespace Bloodfall.Backend.Modules.Matchmaking
             public string Queue;
             public List<string> Regions = new List<string>();
             public int Rating;
+            public string RtsFaction;
             public DateTime EnqueuedAt = DateTime.UtcNow;
         }
 
@@ -66,7 +67,8 @@ namespace Bloodfall.Backend.Modules.Matchmaking
             new QueueDef { Id = "quick", ModeId = "moba_5v5", BotFillAfter = 25 },
             new QueueDef { Id = "unranked", ModeId = "moba_5v5" },
             new QueueDef { Id = "ranked", ModeId = "moba_5v5_ranked", Ranked = true },
-            new QueueDef { Id = "strategy", ModeId = "rts_1v1", Available = false, UnavailableReason = "The Strategy (RTS) queue opens when War of the Ancients mode is released." },
+            // 1v1 Strategy: a solo player waiting 45 s is matched against the RTS AI.
+            new QueueDef { Id = "strategy", ModeId = "rts_1v1", BotFillAfter = 45 },
         };
 
         private readonly object _lock = new object();
@@ -97,6 +99,15 @@ namespace Bloodfall.Backend.Modules.Matchmaking
             var members = _parties.MembersOf(me);
             if (q.Ranked && members.Count > 1 && members.Count != 5 && members.Count > 2)
                 return Api.BadRequest("party_size", "Ranked parties must be solo, duo or a full team of five.");
+            var qmode = _data.Modes.TryGetValue(q.ModeId, out var qm) ? qm : null;
+            if (qmode != null && members.Count > qmode.TeamSize)
+                return Api.BadRequest("party_size", $"This queue is for teams of {qmode.TeamSize}. Leave your party to queue.");
+            string faction = null;
+            if (qmode?.Kind == GameModeKind.Rts && !string.IsNullOrEmpty(r.RtsFaction) && r.RtsFaction != "random")
+            {
+                if (!_data.RtsFactions.TryGetValue(r.RtsFaction, out var rf) || !rf.Playable) return Api.BadRequest("invalid_faction", "Unknown faction.", "rtsFaction");
+                faction = rf.Id;
+            }
             foreach (var m in members)
                 if (_presence.Get(m) == PresenceStatus.InGame || _presence.Get(m) == PresenceStatus.InLobby)
                     return Api.Conflict("member_busy", $"{_presence.Name(m)} is already in a lobby or game.");
@@ -112,7 +123,7 @@ namespace Bloodfall.Backend.Modules.Matchmaking
             lock (_lock)
             {
                 _tickets.RemoveAll(t => t.Members.Any(members.Contains));
-                _tickets.Add(new Ticket { Members = members, Queue = q.Id, Regions = regions, Rating = rating });
+                _tickets.Add(new Ticket { Members = members, Queue = q.Id, Regions = regions, Rating = rating, RtsFaction = faction });
             }
             foreach (var m in members) _presence.Set(m, PresenceStatus.FindingMatch, $"Searching: {q.Id}");
             _parties.SetQueueStatus(me, "Searching");
@@ -290,7 +301,8 @@ namespace Bloodfall.Backend.Modules.Matchmaking
                 if (toDawn) dawnRating += t.Rating * t.Members.Count; else duskRating += t.Rating * t.Members.Count;
             }
             var players = dawn.Select((id, i) => (id, "Dawn", i)).Concat(dusk.Select((id, i) => (id, "Dusk", i))).ToList();
-            var lobby = _lobbies.CreateMatchmade(pm.Queue, mode, players, pm.BotFill, pm.Region);
+            var factions = pm.Tickets.Where(t => t.RtsFaction != null).SelectMany(t => t.Members.Select(m => (m, t.RtsFaction))).ToDictionary(x => x.m, x => x.RtsFaction);
+            var lobby = _lobbies.CreateMatchmade(pm.Queue, mode, players, pm.BotFill, pm.Region, factions);
             var result = _lobbies.BeginMatch(lobby, new[] { pm.Region });
             foreach (var p in pm.Players) _parties.SetQueueStatus(p, "InGame");
             if (lobby.Server == null)

@@ -136,6 +136,8 @@ namespace Bloodfall.Contracts
         public string ModeId;
         public string MapId;
         public string HeroId;
+        /// <summary>RTS matches: the faction played (HeroId is empty).</summary>
+        public string RtsFaction;
         public bool Won;
         public bool Abandoned;
         public int Kills, Deaths, Assists;
@@ -323,7 +325,8 @@ namespace Bloodfall.Contracts
         public string Name;
         public string Password;
         public string Region;
-        public string MapId = "map_velmoragh";
+        /// <summary>null = the mode's own map.</summary>
+        public string MapId;
         public string ModeId = "moba_5v5";
         public int TeamSize = 5;
         public int MaxSpectators = 4;
@@ -351,6 +354,8 @@ namespace Bloodfall.Contracts
         public int Level;
         public string Rank;
         public int PingMs;
+        /// <summary>RTS lobbies: the slot's faction id, or null for random.</summary>
+        public string RtsFaction;
     }
 
     public sealed class LobbyView
@@ -389,7 +394,9 @@ namespace Bloodfall.Contracts
     public sealed class JoinLobbyRequest { public string Password; public bool Spectate; }
     public sealed class LobbySlotRequest { public string Team; public int Slot; }
     public sealed class LobbyReadyRequest { public bool Ready; }
-    public sealed class LobbyBotRequest { public string Team; public int Slot; public string Difficulty; public bool Remove; }
+    public sealed class LobbyBotRequest { public string Team; public int Slot; public string Difficulty; public bool Remove; public string Faction; }
+    /// <summary>RTS lobbies: pick a faction id, or "random".</summary>
+    public sealed class LobbyFactionRequest { public string Faction; }
     public sealed class LobbyKickRequest { public string AccountId; }
 
     /// <summary>What the client needs to connect to its assigned dedicated game server.</summary>
@@ -412,6 +419,8 @@ namespace Bloodfall.Contracts
         /// <summary>quick, ranked, unranked, strategy</summary>
         public string Queue;
         public List<string> Regions = new List<string>();
+        /// <summary>Strategy queue: preferred faction id, or null / "random".</summary>
+        public string RtsFaction;
     }
 
     public sealed class QueueStatus
@@ -490,6 +499,8 @@ namespace Bloodfall.Contracts
         public bool IsBot;
         public string BotDifficulty;
         public string HeroId;
+        /// <summary>RTS: faction id, or null for random.</summary>
+        public string RtsFaction;
     }
 
     public sealed class HeartbeatResponse
@@ -564,6 +575,9 @@ namespace Bloodfall.Contracts
         public int NetWorth;
         public float Gpm, Xpm, HeroDamage, BuildingDamage, Healing;
         public int Wards, Towers;
+        /// <summary>RTS matches: faction and totals.</summary>
+        public string RtsFaction;
+        public int ResourcesGathered, UnitsTrained, UnitsKilled, BuildingsRazed;
         public string[] Items = new string[0];
         public int RatingChange;
         public List<int> NetWorthTimeline = new List<int>();

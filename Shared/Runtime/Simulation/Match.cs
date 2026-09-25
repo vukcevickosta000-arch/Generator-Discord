@@ -287,12 +287,57 @@ namespace Bloodfall.Simulation
         {
             if (o.Type == OrderType.Ping) { Emit(new SimEvent { Type = SimEventType.Ping, Point = o.Point, Value = o.Slot, Team = p.Team, UnitId = p.Hero?.Id ?? 0, OtherId = p.Id, PlayerId = -1 }); return; }
             if (o.Type == OrderType.Buyback) { TryBuyback(p); return; }
+            if (o.Group != null && o.Group.Length > 0) { ApplyGroupOrder(p, o); return; }
             var unit = GetUnit(o.UnitId) ?? p.Hero;
             if (!PlayerControls(p, unit)) return;
             IssueOrder(unit, o);
         }
 
         /// <summary>Applies an order to a unit (used by players and AI).</summary>
+        private void ApplyGroupOrder(Player p, Order o)
+        {
+            var units = new List<Unit>();
+            foreach (int id in new[] { o.UnitId }.Concat(o.Group))
+            {
+                if (units.Count >= Order.MaxGroup) break;
+                var u = GetUnit(id);
+                if (u != null && PlayerControls(p, u) && !units.Contains(u)) units.Add(u);
+            }
+            if (units.Count == 0) return;
+            o.Group = null;
+            switch (o.Type)
+            {
+                case OrderType.Train:
+                {
+                    // Like classic RTS: the selected building with the shortest queue takes the order.
+                    var b = units.Where(u => u.Kind == UnitKind.Building && !u.Dead && !u.UnderConstruction && u.UnitDef.Trains != null && u.UnitDef.Trains.Contains(o.ItemId ?? ""))
+                                 .OrderBy(u => u.TrainQueue?.Count ?? 0).ThenBy(u => u.Id).FirstOrDefault() ?? units[0];
+                    o.UnitId = b.Id;
+                    IssueOrder(b, o);
+                    return;
+                }
+                case OrderType.Build:
+                case OrderType.CastNoTarget:
+                case OrderType.CastUnit:
+                case OrderType.CastPoint:
+                case OrderType.ToggleAbility:
+                case OrderType.LevelAbility:
+                case OrderType.BuyItem:
+                case OrderType.SellItem:
+                case OrderType.SwapItems:
+                    // One unit acts; the rest of the selection keeps what it was doing.
+                    o.UnitId = units[0].Id;
+                    IssueOrder(units[0], o);
+                    return;
+            }
+            foreach (var u in units)
+            {
+                var copy = o;
+                copy.UnitId = u.Id;
+                IssueOrder(u, copy);
+            }
+        }
+
         public void IssueOrder(Unit unit, Order o)
         {
             if (unit == null || unit.Removed) return;

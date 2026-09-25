@@ -55,8 +55,12 @@ namespace Bloodfall.Protocol
             w.WritePos(o.Point2);
             w.WriteVarUInt((uint)Math.Max(0, o.Slot));
             w.WriteVarUInt((uint)Math.Max(0, o.Slot2));
-            w.WriteVarUInt((uint)index.ItemId(o.ItemId));
+            // Train and Build name a unit definition; everything else names an item.
+            w.WriteVarUInt((uint)(NamesUnit(o.Type) ? index.UnitId(o.ItemId) : index.ItemId(o.ItemId)));
             w.WriteBool(o.Queue);
+            int group = Math.Min(Order.MaxGroup - 1, o.Group?.Length ?? 0);
+            w.WriteVarUInt((uint)group);
+            for (int i = 0; i < group; i++) w.WriteVarUInt((uint)Math.Max(0, o.Group[i]));
             return w.ToArray();
         }
 
@@ -72,13 +76,22 @@ namespace Bloodfall.Protocol
                 Slot = (int)r.ReadVarUInt(),
                 Slot2 = (int)r.ReadVarUInt(),
             };
-            o.ItemId = index.Item((int)r.ReadVarUInt());
+            int named = (int)r.ReadVarUInt();
+            o.ItemId = NamesUnit(o.Type) ? index.Unit(named) : index.Item(named);
             o.Queue = r.ReadBool();
+            int group = (int)Math.Min(r.ReadVarUInt(), (uint)(Order.MaxGroup - 1));
+            if (group > 0)
+            {
+                o.Group = new int[group];
+                for (int i = 0; i < group; i++) o.Group[i] = (int)r.ReadVarUInt();
+            }
             if (!Enum.IsDefined(typeof(OrderType), o.Type)) o.Type = OrderType.None;
             if (o.Slot > 200) o.Slot = 0;
             if (o.Slot2 > 200) o.Slot2 = 0;
             return o;
         }
+
+        private static bool NamesUnit(OrderType t) => t == OrderType.Train || t == OrderType.Build;
 
         public static byte[] Chat(string text, bool teamOnly)
         {
@@ -187,6 +200,8 @@ namespace Bloodfall.Protocol
             w.WriteByte((byte)(Math.Max(0, Math.Min(1, p.LoadProgress)) * 100));
             w.WriteVarUInt((uint)Math.Max(0, p.Gpm));
             w.WriteVarUInt((uint)Math.Max(0, p.Xpm));
+            w.WriteString(p.RtsFaction);
+            w.WriteBool(p.Eliminated);
         }
 
         public static PlayerView ReadPlayerView(NetReader r, ContentIndex index) => new PlayerView
@@ -210,6 +225,8 @@ namespace Bloodfall.Protocol
             LoadProgress = r.ReadByte() / 100f,
             Gpm = r.ReadVarUInt(),
             Xpm = r.ReadVarUInt(),
+            RtsFaction = r.ReadString(64),
+            Eliminated = r.ReadBool(),
         };
 
         public static PlayerView MakePlayerView(Match m, Player p, Team viewer)
@@ -235,6 +252,8 @@ namespace Bloodfall.Protocol
                 LoadProgress = p.LoadProgress,
                 Gpm = p.Gpm(m.MatchSeconds),
                 Xpm = p.Xpm(m.MatchSeconds),
+                RtsFaction = p.RtsFaction?.Id,
+                Eliminated = p.Eliminated,
             };
         }
 
@@ -265,7 +284,11 @@ namespace Bloodfall.Protocol
             if (u.Removed) return false;
             if (viewer == Team.None) return true; // spectator / replay
             if (u.Team == viewer) return true;
-            if (u.IsStructure) return true;        // structures are known (last-seen state rendered client-side)
+            if (u.Kind == UnitKind.Resource) return true; // RTS veins are part of the map layout
+            // MOBA structures are fixed and known (last-seen state rendered client-side); RTS buildings appear
+            // anywhere, so the enemy's stay hidden until scouted.
+            if (u.IsStructure && !m.IsRts) return true;
+            if (u.IsStructure) return u.VisibleTo[(int)viewer];
             if (u.Dead && !u.IsHero) return u.VisibleTo[(int)viewer] || Math.Abs(m.Time - u.DeathTime) < 0.2f;
             return u.VisibleTo[(int)viewer];
         }
@@ -329,6 +352,15 @@ namespace Bloodfall.Protocol
             var hero = viewerPlayer?.Hero;
             w.WriteBool(hero != null);
             if (hero != null) WritePrivate(w, m, viewerPlayer, hero, index);
+            bool rts = viewerPlayer != null && m.IsRts;
+            w.WriteBool(rts);
+            if (rts)
+            {
+                w.WriteVarUInt((uint)Math.Max(0, viewerPlayer.Gold));
+                w.WriteVarUInt((uint)Math.Max(0, viewerPlayer.Lumber));
+                w.WriteVarUInt((uint)Math.Max(0, viewerPlayer.SupplyUsed));
+                w.WriteVarUInt((uint)Math.Max(0, viewerPlayer.SupplyCap));
+            }
             return w.ToArray();
         }
 
@@ -384,6 +416,27 @@ namespace Bloodfall.Protocol
                 w.WriteTenths(s.Permanent ? 0 : s.Duration);
                 w.WriteByte((byte)Math.Min(255, s.Stacks));
             }
+
+            // RTS: construction, training (owner's team only), carried cargo, vein contents.
+            if (u.Kind == UnitKind.Building)
+            {
+                bool friendly = viewer == Team.None || viewer == u.Team;
+                w.WriteBool(u.UnderConstruction);
+                w.WriteByte((byte)Math.Round(MathUtil.Clamp01(u.BuildProgress) * 255));
+                int queued = friendly ? Math.Min(8, u.TrainQueue?.Count ?? 0) : 0;
+                w.WriteByte((byte)queued);
+                for (int i = 0; i < queued; i++) w.WriteVarUInt((uint)index.UnitId(u.TrainQueue[i]));
+                if (queued > 0) w.WriteByte((byte)Math.Round(MathUtil.Clamp01(u.TrainProgress) * 255));
+                bool rally = friendly && u.HasRally;
+                w.WriteBool(rally);
+                if (rally) w.WritePos(u.RallyPoint);
+            }
+            else if (u.Kind == UnitKind.Worker)
+            {
+                w.WriteByte((byte)Math.Min(255, u.CarryGold));
+                w.WriteByte((byte)Math.Min(255, u.CarryLumber));
+            }
+            else if (u.Kind == UnitKind.Resource) w.WriteVarUInt((uint)Math.Max(0, u.ResourceAmount));
 
             // Heroes: ability levels (cooldowns only for friendly viewers) + items.
             if (u.IsHero)
@@ -466,6 +519,8 @@ namespace Bloodfall.Protocol
             int players = r.ReadByte();
             for (int i = 0; i < players; i++) f.Players.Add(ReadPlayerView(r, index));
             if (r.ReadBool()) f.Me = ReadPrivate(r, index);
+            if (r.ReadBool())
+                f.Rts = new RtsPrivateState { Gold = (int)r.ReadVarUInt(), Lumber = (int)r.ReadVarUInt(), SupplyUsed = (int)r.ReadVarUInt(), SupplyCap = (int)r.ReadVarUInt() };
             return f;
         }
 
@@ -501,6 +556,25 @@ namespace Bloodfall.Protocol
             int n = r.ReadByte();
             for (int i = 0; i < n; i++)
                 e.Statuses.Add(new StatusView { Id = index.Status((int)r.ReadVarUInt()), Remaining = r.ReadTenths(), Duration = r.ReadTenths(), Stacks = r.ReadByte() });
+            if (e.Kind == UnitKind.Building)
+            {
+                e.UnderConstruction = r.ReadBool();
+                e.BuildProgress = r.ReadByte() / 255f;
+                int queued = r.ReadByte();
+                if (queued > 0)
+                {
+                    e.TrainQueue = new string[queued];
+                    for (int i = 0; i < queued; i++) e.TrainQueue[i] = index.Unit((int)r.ReadVarUInt());
+                    e.TrainProgress = r.ReadByte() / 255f;
+                }
+                if (r.ReadBool()) e.Rally = r.ReadPos();
+            }
+            else if (e.Kind == UnitKind.Worker)
+            {
+                e.CarryGold = r.ReadByte();
+                e.CarryLumber = r.ReadByte();
+            }
+            else if (e.Kind == UnitKind.Resource) e.ResourceAmount = (int)r.ReadVarUInt();
             if ((e.Flags & EntityFlags.Hero) != 0)
             {
                 int ac = r.ReadByte();
@@ -573,6 +647,7 @@ namespace Bloodfall.Protocol
                 case SimEventType.VharothEvent:
                 case SimEventType.PlayerConnection:
                 case SimEventType.Buyback:
+                case SimEventType.PlayerEliminated:
                     return true;
                 case SimEventType.Ping:
                     return e.Team == viewer;
