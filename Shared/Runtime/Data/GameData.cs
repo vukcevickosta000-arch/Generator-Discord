@@ -279,6 +279,10 @@ namespace Bloodfall.Data
                 foreach (var req in up.Requires ?? new List<string>()) if (!Units.ContainsKey(req)) Errors.Add($"Upgrade '{up.Id}' requires unknown building '{req}'");
                 foreach (var req in up.RequiresUpgrades ?? new List<string>()) if (!Upgrades.ContainsKey(req)) Errors.Add($"Upgrade '{up.Id}' requires unknown upgrade '{req}'");
             }
+            if (Rules.RtsHeroGold == null || Rules.RtsHeroLumber == null || Rules.RtsHeroGold.Length < Rules.RtsMaxHeroes || Rules.RtsHeroLumber.Length < Rules.RtsMaxHeroes)
+                Errors.Add($"rules: rtsHeroGold and rtsHeroLumber need a price for each of the {Rules.RtsMaxHeroes} heroes");
+            foreach (var u in Units.Values)
+                if (u.HeroAltar && u.Kind != UnitKind.Building) Errors.Add($"Unit '{u.Id}' is a hero altar but not a building");
             foreach (var f in RtsFactions.Values)
             {
                 if (f.RaiseUnit != null && !Units.ContainsKey(f.RaiseUnit)) Errors.Add($"RTS faction '{f.Id}' raises unknown unit '{f.RaiseUnit}'");

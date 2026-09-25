@@ -130,6 +130,36 @@
       "hotkey": "F"
     },
     {
+      "id": "rts_wc_altar",
+      "name": "Altar of the Wild",
+      "description": "Heroes of the Ancients answer the call here: recruit up to three, and revive the fallen.",
+      "kind": "Building",
+      "attackType": "Melee",
+      "maxHp": 900,
+      "hpRegen": 1,
+      "armor": 3,
+      "damageMin": 0,
+      "damageMax": 0,
+      "moveSpeed": 0,
+      "turnRate": 100,
+      "collisionRadius": 1.9,
+      "visionDay": 10,
+      "visionNight": 8,
+      "goldCost": 180,
+      "lumberCost": 50,
+      "buildTime": 40,
+      "model": "altar_wild",
+      "modelScale": 0.7,
+      "height": 4.5,
+      "deathSfx": "structure_collapse",
+      "tags": [
+        "rts",
+        "structure"
+      ],
+      "hotkey": "L",
+      "heroAltar": true
+    },
+    {
       "id": "rts_wc_lodge",
       "name": "Hunting Lodge",
       "description": "Trains Moonfang Shifters and Thornshots, and researches claws and hides.",

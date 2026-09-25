@@ -405,6 +405,8 @@ namespace Bloodfall.Data
         public bool SelfBuilds;
         /// <summary>RTS: a status this unit wears at night (a shapeshift, usually with a model override).</summary>
         public string NightForm;
+        /// <summary>RTS buildings: recruits heroes (every playable hero) and revives fallen ones.</summary>
+        public bool HeroAltar;
         /// <summary>Resource nodes: starting amount (gold in a mine).</summary>
         public int ResourceAmount;
         /// <summary>Command card hotkey (RTS UI).</summary>
@@ -635,6 +637,18 @@ namespace Bloodfall.Data
         public float RtsMineClearance = 1.5f;
         /// <summary>Seconds a destroyed RTS building's ruin stays before it is removed.</summary>
         public float RtsRuinRemoveDelay = 3f;
+        /// <summary>RTS hero altars: heroes a player may own at once (alive, dead or being recruited).</summary>
+        public int RtsMaxHeroes = 3;
+        /// <summary>Recruiting cost of a player's first, second and third hero (blood-iron, lumber).</summary>
+        public int[] RtsHeroGold = { 200, 350, 500 };
+        public int[] RtsHeroLumber = { 50, 100, 150 };
+        public float RtsHeroTrainTime = 45f;
+        public int RtsHeroSupply = 5;
+        /// <summary>Reviving a fallen hero at an altar: base + per hero level.</summary>
+        public int RtsReviveGold = 100;
+        public int RtsReviveGoldPerLevel = 30;
+        public float RtsReviveTime = 20f;
+        public float RtsReviveTimePerLevel = 3f;
     }
 
     public sealed class GameModeDef

@@ -136,6 +136,37 @@
       "hotkey": "O"
     },
     {
+      "id": "rts_al_altar",
+      "name": "Bone Altar",
+      "description": "Heroes of the Ancients answer the call here: recruit up to three, and revive the fallen.",
+      "kind": "Building",
+      "attackType": "Melee",
+      "maxHp": 900,
+      "hpRegen": 1,
+      "armor": 3,
+      "damageMin": 0,
+      "damageMax": 0,
+      "moveSpeed": 0,
+      "turnRate": 100,
+      "collisionRadius": 1.9,
+      "visionDay": 10,
+      "visionNight": 8,
+      "goldCost": 180,
+      "lumberCost": 50,
+      "buildTime": 40,
+      "model": "altar_dusk",
+      "modelScale": 0.7,
+      "height": 4.5,
+      "deathSfx": "structure_collapse",
+      "tags": [
+        "rts",
+        "structure"
+      ],
+      "selfBuilds": true,
+      "hotkey": "L",
+      "heroAltar": true
+    },
+    {
       "id": "rts_al_bone_pit",
       "name": "Bone Pit",
       "description": "Raises thralls and bone archers.",

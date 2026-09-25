@@ -395,6 +395,69 @@ def wild_stone_circle(kit, P):
     return 5.7
 
 
+# ================================================================================================ RTS hero altars
+
+def altar(kit, key):
+    """Hero altar: a stepped dais with four pillars around a faction centrepiece where heroes answer the call."""
+    P = team_palette(key)
+    style = P["style"]
+    kit.use(bone="root", color=P["stone2"], mat="bf_matte", smooth=False)
+    kit.box((0, 0, 0.2), (5.4, 5.4, 0.4), bevel=0.06)
+    kit.use(color=P["stone"])
+    kit.box((0, 0, 0.6), (4.4, 4.4, 0.4), bevel=0.05)
+    kit.box((0, 0, 0.95), (3.2, 3.2, 0.3), bevel=0.04)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            x, y = sx * 2.3, sy * 2.3
+            if style == "wild":
+                kit.use(color=P["stone"], smooth=False)
+                kit.box((x, y, 1.4), (0.6, 0.45, 2.8), rot=Euler((0, 0, math.atan2(y, x))), taper=0.65, bevel=0.06)
+                kit.use(color=P["moss"])
+                kit.ellipsoid((x, y, 2.85), (0.35, 0.3, 0.14), seg=8, rings=4)
+            elif style == "grim":
+                kit.use(color=P["bone"])
+                kit.tube([(x, y, 0.4), (x * 1.02, y * 1.02, 1.8), (x * 0.9, y * 0.9, 3.2)], [0.22, 0.17, 0.05], seg=6)
+            else:
+                kit.use(color=P["stone"])
+                kit.lathe([(0.3, 0.4), (0.26, 3.0), (0.36, 3.2), (0.36, 3.4)], center=(x, y, 0), seg=8, close_top=True)
+                kit.use(color=P["trim"], mat="bf_metal")
+                kit.cone((x, y, 3.4), (x, y, 3.9), 0.2, seg=4)
+                kit.use(color=P["stone"], mat="bf_matte")
+            kit.use(color=P["glow"], mat=kit.glow(P["glow"]))
+            kit.ellipsoid((x, y, 3.0 if style == "wild" else 3.3), (0.14,) * 3, seg=8, rings=5)
+            kit.use(color=P["stone"], mat="bf_matte")
+    # Centrepiece.
+    if style == "wild":
+        kit.use(color=P["bark"], smooth=True)
+        kit.lathe([(0.45, 1.1), (0.32, 2.4), (0.28, 3.4)], seg=10, close_top=True, close_bottom=False)
+        for i in range(5):
+            a = i * 2 * math.pi / 5
+            kit.tube([(math.cos(a) * 0.2, math.sin(a) * 0.2, 3.0), (math.cos(a) * 0.9, math.sin(a) * 0.9, 3.7)], [0.12, 0.04], seg=6)
+        kit.use(color=P["leaf2"], mat="bf_matte")
+        kit.ellipsoid((0, 0, 4.1), (1.3, 1.3, 0.9), seg=12, rings=7)
+        kit.use(color=P["glow"], mat=kit.glow(P["glow"]))
+        kit.ellipsoid((0, -0.35, 1.6), (0.16, 0.1, 0.26), seg=8, rings=5)
+    elif style == "grim":
+        kit.use(color=P["stone2"], smooth=False)
+        kit.box((0, 0, 1.5), (1.8, 1.0, 0.9), taper=0.85, bevel=0.05)
+        kit.use(color=P["bone"], smooth=True)
+        kit.ellipsoid((0, 0, 2.3), (0.4, 0.45, 0.42), seg=10, rings=7)
+        kit.spikes((0, 0, 2.0), (0, 0, 1), 0.8, 6, [0.9, 0.6], r=0.08, spread=0.3)
+        kit.use(color=P["glow"], mat=kit.glow(P["glow"]))
+        for sgn in (-1, 1):
+            kit.ellipsoid((sgn * 0.15, -0.38, 2.35), (0.08,) * 3, seg=6, rings=4)
+    else:
+        kit.use(color=P["stone"], smooth=False)
+        kit.lathe([(0.7, 1.1), (0.45, 1.5), (0.45, 2.2), (0.8, 2.5), (0.8, 2.6)], seg=12, close_top=True)
+        kit.use(color=P["trim"], mat="bf_metal")
+        kit.lathe([(0.75, 2.6), (0.6, 2.75), (0.001, 2.8)], seg=12, close_top=True, close_bottom=False)
+        kit.use(color=P["glow"], mat=kit.glow(P["glow"]))
+        kit.ellipsoid((0, 0, 3.15), (0.42,) * 3, seg=12, rings=8)
+        kit.use(color=P["trim"], mat="bf_metal")
+        kit.lathe([(0.62, -0.04), (0.66, 0.04)], center=(0, 0, 3.15), axis=(1, 0, 0), seg=16, close_top=False, close_bottom=False)
+    return 4.5
+
+
 # ================================================================================================ small objects
 
 def ward(kit, key):
@@ -484,7 +547,7 @@ def bloodiron_vein(kit, key):
 
 STATIC = {
     "resource_bloodiron_vein": bloodiron_vein,
-    "tower_": tower, "barracks_": barracks, "core_": core, "fountain_": fountain, "ward_": ward,
+    "tower_": tower, "barracks_": barracks, "core_": core, "fountain_": fountain, "ward_": ward, "altar_": altar,
     "vharoth_seal_active": seal_crystal, "summon_cauldron": cauldron,
 }
 
@@ -494,6 +557,7 @@ STATIC_KEYS = ([f"tower_{t}_t{i}" for t in ("dawn", "dusk") for i in (1, 2, 3, 4
                + [f"tower_{t}_t{i}" for t in ("crimson", "wild") for i in (1, 4)]
                + [f"barracks_{t}_{k}" for t in ("crimson", "wild") for k in ("melee", "ranged")]
                + ["core_crimson", "core_wild", "fountain_crimson", "fountain_wild"]
+               + [f"altar_{t}" for t in ("dawn", "dusk", "crimson", "wild")]
                + ["core_dawn", "core_dusk", "fountain_dawn", "fountain_dusk", "ward_watcher", "ward_sentry",
                   "vharoth_seal_active", "summon_cauldron", "resource_bloodiron_vein"])
 
@@ -503,7 +567,7 @@ def build_static(key):
     arm = static_rig(key)
     kit = L.Kit(key)
     top = fn(kit, key)
-    mesh = kit.to_object(ao_distance=1.2 if key.startswith(("tower", "core", "barracks", "fountain")) else 0.3)
+    mesh = kit.to_object(ao_distance=1.2 if key.startswith(("tower", "core", "barracks", "fountain", "altar")) else 0.3)
     L.bind(mesh, arm)
     if key.startswith("tower_"):
         e = L.add_empty("projectile_origin", arm, "root", (0, top - 1.0, 0))  # bone tail is at z=1; offset along the bone (Y)

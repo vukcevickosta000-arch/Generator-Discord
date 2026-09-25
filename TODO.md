@@ -12,7 +12,11 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
   The remaining phases, in order:
   - **T-030 (R2) Factions and heroes.**
     - **Still to do:** altars that recruit up to three MOBA heroes per player; the heroes level from kills via
-      ShareXp.
+      ShareXp. *Groundwork only:*
+      - an altar building per faction (`rts_*_altar`, `UnitDef.HeroAltar`) with its model;
+      - the rules: three heroes, 200/50 → 350/100 → 500/150, revive 100 + 30 per level.
+
+      The altars are deliberately not in any worker's build list until recruiting works.
     - Crimson Court. *Done* (`rts/crimson_court.json`): Blood Price (20% of each kill's cost), Sanguine Pact
       lifesteal research, its own models.
     - Wild Covenant. *Done* (`rts/wild_covenant.json`): Moonlit (+10% damage at night), Moonfang Shifters in wolf
