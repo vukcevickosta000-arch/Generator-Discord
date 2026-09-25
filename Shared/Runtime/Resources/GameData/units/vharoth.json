@@ -1,0 +1,380 @@
+{
+  "$comment": "Vharoth, the Blood Titan (GAME_DESIGN.md §8): the seals, the boss, the seal-breaking channel every hero has, and the Heart of Vharoth relic.",
+  "units": [
+    {
+      "id": "vharoth_seal",
+      "name": "Blood Seal",
+      "kind": "Objective",
+      "attackType": "Melee",
+      "maxHp": 1000,
+      "damageMin": 0,
+      "damageMax": 0,
+      "attackRange": 0,
+      "moveSpeed": 0,
+      "turnRate": 0,
+      "collisionRadius": 0.9,
+      "visionDay": 0,
+      "visionNight": 0,
+      "acquisitionRange": 0,
+      "innateFlags": "Invulnerable",
+      "model": "vharoth_seal_active",
+      "deathSfx": "seal_break",
+      "height": 2.6,
+      "tags": [
+        "objective"
+      ]
+    },
+    {
+      "id": "vharoth",
+      "name": "Vharoth, the Blood Titan",
+      "kind": "Boss",
+      "attackType": "Melee",
+      "maxHp": 14000,
+      "hpRegen": 10,
+      "armor": 10,
+      "magicResist": 0.35,
+      "damageMin": 160,
+      "damageMax": 190,
+      "attackRange": 3.2,
+      "attackPoint": 0.6,
+      "attackBackswing": 0.7,
+      "baseAttackTime": 1.6,
+      "moveSpeed": 3.2,
+      "turnRate": 6,
+      "collisionRadius": 1.6,
+      "visionDay": 14,
+      "visionNight": 14,
+      "acquisitionRange": 10,
+      "bountyGoldMin": 300,
+      "bountyGoldMax": 300,
+      "bountyXp": 1500,
+      "teamBountyGold": 250,
+      "abilities": [
+        "vharoth_titan_hide",
+        "vharoth_crush",
+        "vharoth_blood_rain",
+        "vharoth_titans_wrath"
+      ],
+      "model": "boss_vharoth",
+      "modelScale": 1.0,
+      "height": 7,
+      "attackSfx": "vharoth_slam",
+      "deathSfx": "vharoth_death",
+      "tags": [
+        "boss"
+      ]
+    }
+  ],
+  "abilities": [
+    {
+      "id": "vharoth_break_seal",
+      "name": "Break Seal",
+      "slot": "Extra1",
+      "targeting": "Unit",
+      "targetTeam": "Enemy",
+      "targetTypes": "Objective",
+      "maxLevel": 1,
+      "hidden": true,
+      "commonHeroAbility": true,
+      "description": "Channel for 3 s beside a Blood Seal to break it. Your team gains gold for every seal broken. Damage from an enemy interrupts the channel, and the channeller is revealed.",
+      "castRange": [
+        2.5
+      ],
+      "castPoint": 0.2,
+      "backswing": 0.2,
+      "channelTime": [
+        3
+      ],
+      "channelInterval": 0.5,
+      "interruptedByDamage": true,
+      "cooldown": [
+        0
+      ],
+      "onCast": [],
+      "onChannelTick": [
+        {
+          "type": "ApplyStatus",
+          "target": "Caster",
+          "status": "revealed",
+          "duration": 0.6
+        }
+      ],
+      "onChannelEnd": [
+        {
+          "type": "Kill",
+          "vfx": "seal_break"
+        }
+      ],
+      "icon": "ability_break_seal",
+      "castAnimation": "Channel",
+      "castSfx": "seal_channel",
+      "castVfx": "seal_channel"
+    },
+    {
+      "id": "vharoth_titan_hide",
+      "name": "Titan's Hide",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 1,
+      "description": "Vharoth shrugs off half of every disable and slow.",
+      "passiveModifiers": [
+        {
+          "stat": "StatusResist",
+          "value": 0.5
+        },
+        {
+          "stat": "SlowResist",
+          "value": 0.5
+        }
+      ],
+      "icon": "ability_vharoth_hide"
+    },
+    {
+      "id": "vharoth_crush",
+      "name": "Crush",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 1,
+      "description": "Every third blow crashes down around the target: 220 physical damage within 3.5 m and a 1 s knock-up.",
+      "triggers": [
+        {
+          "on": "AttackLanded",
+          "everyN": 3,
+          "team": "Enemy",
+          "types": "Units",
+          "effects": [
+            {
+              "type": "Area",
+              "radius": 3.5,
+              "center": "Target",
+              "team": "Enemy",
+              "types": "Units",
+              "vfx": "vharoth_crush",
+              "shake": 0.7,
+              "effects": [
+                {
+                  "type": "Damage",
+                  "amount": 220,
+                  "damageType": "Physical"
+                },
+                {
+                  "type": "ApplyStatus",
+                  "status": "stun",
+                  "duration": 1.0
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "icon": "ability_vharoth_crush"
+    },
+    {
+      "id": "vharoth_blood_rain",
+      "name": "Blood Rain",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 1,
+      "description": "Below 70% health, every 7 s in combat, blood falls on five spots in the pit: 140 magical damage on impact, then pools for 5 s that drain 60 health per second and heal Vharoth for twice that.",
+      "triggers": [
+        {
+          "on": "Interval",
+          "internalCooldown": 7,
+          "effects": [
+            {
+              "type": "Delayed",
+              "delay": 1.3,
+              "radius": 2.2,
+              "center": "Point",
+              "count": 5,
+              "scatter": 8,
+              "condition": "casterHpBelow:0.7&casterInCombat",
+              "vfx": "blood_rain_telegraph",
+              "effects": [
+                {
+                  "type": "Area",
+                  "radius": 2.2,
+                  "center": "Point",
+                  "team": "Enemy",
+                  "types": "Units",
+                  "vfx": "blood_rain_impact",
+                  "effects": [
+                    {
+                      "type": "Damage",
+                      "amount": 140,
+                      "damageType": "Magical"
+                    }
+                  ]
+                },
+                {
+                  "type": "Zone",
+                  "radius": 2.2,
+                  "center": "Point",
+                  "zoneDuration": 5,
+                  "interval": 0.5,
+                  "team": "Enemy",
+                  "types": "Units",
+                  "vfx": "blood_rain_pool",
+                  "effects": [
+                    {
+                      "type": "Damage",
+                      "amount": 30,
+                      "damageType": "Magical",
+                      "healCasterPct": 2.0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "icon": "ability_vharoth_rain"
+    },
+    {
+      "id": "vharoth_titans_wrath",
+      "name": "Titan's Wrath",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 1,
+      "description": "Below 30% health Vharoth enrages (+80 attack speed, +30% damage, +15% movement speed) and every 4 s in combat unleashes a pulse: 140 magical damage within 8 m, knocking enemies back.",
+      "triggers": [
+        {
+          "on": "Interval",
+          "internalCooldown": 4,
+          "effects": [
+            {
+              "type": "ApplyStatus",
+              "target": "Caster",
+              "status": "vharoth_enrage",
+              "duration": 3.5,
+              "condition": "casterHpBelow:0.3"
+            },
+            {
+              "type": "Area",
+              "radius": 8,
+              "center": "Caster",
+              "team": "Enemy",
+              "types": "Units",
+              "condition": "casterHpBelow:0.3&casterInCombat",
+              "vfx": "titan_wrath_pulse",
+              "shake": 0.6,
+              "effects": [
+                {
+                  "type": "Damage",
+                  "amount": 140,
+                  "damageType": "Magical"
+                },
+                {
+                  "type": "Knockback",
+                  "distance": 2.5,
+                  "moveDuration": 0.3
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "id": "vharoth_enrage",
+          "name": "Titan's Wrath",
+          "description": "Enraged.",
+          "isDebuff": false,
+          "dispel": "None",
+          "modifiers": [
+            {
+              "stat": "AttackSpeed",
+              "value": 80
+            },
+            {
+              "stat": "BonusDamagePct",
+              "value": 0.3
+            },
+            {
+              "stat": "MoveSpeedPct",
+              "value": 0.15
+            }
+          ],
+          "icon": "status_titan_wrath",
+          "vfx": "vharoth_enrage"
+        }
+      ],
+      "icon": "ability_vharoth_wrath"
+    }
+  ],
+  "items": [
+    {
+      "id": "item_heart_of_vharoth",
+      "name": "Heart of Vharoth",
+      "description": "The still-beating heart of the Blood Titan, taken by the team that slew him. While carried: +12 to all attributes. If its bearer dies, the Heart is consumed and brings them back where they fell after 4 s. Use: allied heroes within 9 m gain Bloodthirst for 30 s (25% lifesteal, 15% spell vamp); this consumes the Heart.",
+      "lore": "It beats slower than a mortal heart, and it has never once stopped.",
+      "cost": 0,
+      "category": "Relics",
+      "shop": "None",
+      "purchasable": false,
+      "tier": 5,
+      "icon": "item_heart_of_vharoth",
+      "consumable": true,
+      "initialCharges": 1,
+      "tags": [
+        "reincarnation",
+        "relic"
+      ],
+      "modifiers": [
+        {
+          "stat": "AllAttributes",
+          "value": 12
+        }
+      ],
+      "active": {
+        "targeting": "NoTarget",
+        "castPoint": 0,
+        "backswing": 0,
+        "ignoreFacing": true,
+        "cooldown": [
+          0
+        ],
+        "onCast": [
+          {
+            "type": "Area",
+            "radius": 9,
+            "center": "Caster",
+            "team": "AllyOrSelf",
+            "types": "Hero",
+            "vfx": "heart_bloodthirst_burst",
+            "effects": [
+              {
+                "type": "ApplyStatus",
+                "status": "vharoth_bloodthirst",
+                "duration": 30
+              }
+            ]
+          }
+        ],
+        "statuses": [
+          {
+            "id": "vharoth_bloodthirst",
+            "name": "Bloodthirst",
+            "description": "Heals from damage dealt.",
+            "isDebuff": false,
+            "dispel": "Basic",
+            "modifiers": [
+              {
+                "stat": "Lifesteal",
+                "value": 0.25
+              },
+              {
+                "stat": "SpellVamp",
+                "value": 0.15
+              }
+            ],
+            "icon": "status_bloodthirst",
+            "vfx": "bloodthirst_aura"
+          }
+        ],
+        "castSfx": "heart_use"
+      }
+    }
+  ]
+}

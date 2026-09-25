@@ -12,6 +12,8 @@ namespace Bloodfall.Data
         Hero, Creep, Tower, Barracks, Core, Fountain, Shop, Neutral, Boss, Summon, Ward, Illusion,
         // RTS
         Worker, Building,
+        /// <summary>Map objectives that are interacted with rather than attacked (Vharoth's seals).</summary>
+        Objective,
     }
 
     public enum AttackType : byte { Melee, Ranged }
@@ -45,6 +47,8 @@ namespace Bloodfall.Data
         Boss = 64,
         Illusion = 128,
         Courier = 256,
+        /// <summary>Map objectives (Vharoth's seals). Not part of Units/All: only abilities that name it can target them.</summary>
+        Objective = 512,
         Basic = Creep | Neutral | Summon | Boss | Illusion,
         Units = Hero | Basic,
         All = Units | Structure | Ward,

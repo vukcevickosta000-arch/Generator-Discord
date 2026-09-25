@@ -110,6 +110,11 @@ namespace Bloodfall.Simulation
             }
 
             // Channels break on damage only for specific abilities; disables break them via statuses.
+            if (t.Action == ActionState.Channeling && src != null && src.Team != t.Team)
+            {
+                var channel = t.GetAbility(t.ActionAbility);
+                if (channel != null && channel.Def.InterruptedByDamage) InterruptUnit(t);
+            }
             if (!d.NoTriggers)
             {
                 FireTriggers(t, TriggerType.DamageTaken, src, dealt);
@@ -356,7 +361,7 @@ namespace Bloodfall.Simulation
 
             if (victim.IsHero && !victim.IsIllusion) OnHeroDeath(victim, killer, killerPlayer, deny);
             else if (victim.IsStructure) OnStructureDeath(victim, killer, killerPlayer, deny);
-            else OnUnitDeath(victim, killer, killerPlayer, deny);
+            else if (!OnVharothUnitDeath(victim, killer, killerPlayer)) OnUnitDeath(victim, killer, killerPlayer, deny);
 
             if ((victim.IsCreep || victim.IsNeutral) && !victim.Flying)
                 Corpses.Add(new Corpse { Position = victim.Position, UnitId = victim.DefId, Team = victim.Team, Expires = Time + 30f });
@@ -434,6 +439,18 @@ namespace Bloodfall.Simulation
                 vp.Deaths++;
                 float respawn = Rules.RespawnBase + Rules.RespawnPerLevel * victim.Level;
                 victim.RespawnAt = Time + respawn;
+                victim.ReviveAt = null;
+                // Reincarnation relics (the Heart of Vharoth) bring the hero back where it fell.
+                if (victim.Inventory != null)
+                    foreach (var it in victim.Inventory)
+                        if (it != null && Array.IndexOf(it.Def.Tags, "reincarnation") >= 0)
+                        {
+                            RemoveItem(victim, it);
+                            victim.RespawnAt = Time + Rules.ReincarnationDelay;
+                            victim.ReviveAt = victim.Position;
+                            Emit(new SimEvent { Type = SimEventType.EffectVisual, Key = "heart_revive", UnitId = victim.Id, Point = victim.Position, Value = Rules.ReincarnationDelay, PlayerId = -1 });
+                            break;
+                        }
                 int loss = (int)Math.Min(vp.Gold, Rules.DeathGoldLossPerLevel * victim.Level);
                 if (!deny)
                 {
@@ -656,7 +673,8 @@ namespace Bloodfall.Simulation
         public void RespawnHero(Unit h)
         {
             var baseDef = Map.Bases.FirstOrDefault(b => b.Team == h.Team);
-            var pos = Grid.NearestWalkable(baseDef != null ? (Vector2)baseDef.HeroSpawn : h.HomePosition);
+            var pos = Grid.NearestWalkable(h.ReviveAt ?? (baseDef != null ? (Vector2)baseDef.HeroSpawn : h.HomePosition));
+            h.ReviveAt = null;
             h.Dead = false;
             h.Position = pos;
             h.LastPosition = pos;

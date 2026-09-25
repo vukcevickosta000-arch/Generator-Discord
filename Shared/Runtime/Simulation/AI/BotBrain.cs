@@ -14,7 +14,7 @@ namespace Bloodfall.Simulation
     /// </summary>
     public sealed class BotBrain : IUnitBrain
     {
-        private enum Mode { Lane, Retreat, Fight, Push, Defend, Jungle }
+        private enum Mode { Lane, Retreat, Fight, Push, Defend, Jungle, Objective }
 
         private readonly BotDifficulty _difficulty;
         private readonly DeterministicRandom _rng;
@@ -30,6 +30,7 @@ namespace Bloodfall.Simulation
         private List<string> _build;
         private Unit _fightTarget;
         private float _lastShopTime;
+        private bool _bossCommitted;
 
         public string DebugState => _mode.ToString();
 
@@ -109,6 +110,8 @@ namespace Bloodfall.Simulation
             var threatened = m.Units.FirstOrDefault(s => s.Team == u.Team && s.IsStructure && !s.Dead && m.Time - s.LastAttackedTime < 3f && s.Kind != UnitKind.Fountain
                                                         && Vector2.Distance(s.Position, u.Position) < 45f);
             if (threatened != null && hp > 0.5f) { _mode = Mode.Defend; _fightTarget = null; return; }
+            // Vharoth: one bot per team breaks seals when it is safe; a strong, healthy team takes on the Titan.
+            if (enemies.Count == 0 && WantsObjective(m, u)) { _mode = Mode.Objective; return; }
             // Push when the lane has no enemy heroes and we are healthy and past early game.
             _mode = m.MatchSeconds > 600 && enemies.Count == 0 && hp > 0.6f ? Mode.Push : Mode.Lane;
             _ = fountain;
@@ -116,12 +119,14 @@ namespace Bloodfall.Simulation
 
         private void ExecuteMode(Match m, Unit u)
         {
+            if (_mode != Mode.Objective) _bossCommitted = false;
             switch (_mode)
             {
                 case Mode.Retreat: Retreat(m, u); break;
                 case Mode.Fight: Fight(m, u); break;
                 case Mode.Defend: Defend(m, u); break;
                 case Mode.Push: Farm(m, u, push: true); break;
+                case Mode.Objective: Objective(m, u); break;
                 default: Farm(m, u, push: false); break;
             }
         }
@@ -161,6 +166,73 @@ namespace Bloodfall.Simulation
             }
             if (u.CurrentOrder.Type != OrderType.AttackUnit || u.CurrentOrder.TargetId != t.Id)
                 m.IssueOrder(u, Order.Attack(u.Id, t.Id));
+        }
+
+        // ------------------------------------------------------------------ Vharoth
+
+        private bool WantsObjective(Match m, Unit u)
+        {
+            if (m.VharothState == VharothPhase.Awakened || m.VharothState == VharothPhase.BloodMoon)
+            {
+                if (m.Vharoth == null || m.Vharoth.Dead) return false;
+                var team = m.Players.Where(p => p.Team == u.Team && p.Hero != null && !p.Hero.Dead).Select(p => p.Hero).ToList();
+                // Once engaged, stay until personally low; to start, the team must be strong and healthy.
+                if (_bossCommitted) return u.HpFraction > _retreatHp + 0.1f && team.Count >= 3;
+                return team.Count >= 4 && team.Average(h => h.Level) >= 12f && team.Average(h => h.HpFraction) > 0.6f && u.HpFraction > 0.6f;
+            }
+            if (u.HpFraction < 0.7f) return false;
+            if (m.VharothState == VharothPhase.Tremors)
+            {
+                // The lowest-slot living bot of the team is the seal breaker.
+                var breaker = m.Players.Where(p => p.Team == u.Team && p.IsBot && p.Hero != null && !p.Hero.Dead)
+                    .OrderBy(p => p.Slot).FirstOrDefault();
+                return breaker == u.Owner && NearestSeal(m, u) != null;
+            }
+            return false;
+        }
+
+        private static Unit NearestSeal(Match m, Unit u) =>
+            m.Units.Where(x => x.DefId == Match.SealUnitId && x.IsAlive).OrderBy(x => Vector2.Distance(x.Position, u.Position)).FirstOrDefault();
+
+        private void Objective(Match m, Unit u)
+        {
+            if (!WantsObjective(m, u)) { _mode = Mode.Lane; return; }
+            if (u.Action == ActionState.Channeling || u.Action == ActionState.CastWindup || u.Motion != null) return;
+            if (m.VharothState == VharothPhase.Tremors)
+            {
+                var seal = NearestSeal(m, u);
+                int slot = u.Abilities.FindIndex(a => a.Def.Id == "vharoth_break_seal");
+                if (seal == null || slot < 0) { _mode = Mode.Lane; return; }
+                if (Vector2.Distance(u.Position, seal.Position) > 10f || !m.IsVisibleTo(seal, u.Team))
+                {
+                    if (u.CurrentOrder.Type != OrderType.Move) m.IssueOrder(u, Order.MoveTo(u.Id, seal.Position));
+                    return;
+                }
+                if (u.CurrentOrder.Type != OrderType.CastUnit) m.IssueOrder(u, Order.CastUnitOrder(u.Id, slot, seal.Id));
+                return;
+            }
+            var boss = m.Vharoth;
+            if (boss == null || boss.Dead) { _mode = Mode.Lane; return; }
+            if (!_bossCommitted)
+            {
+                // Gather outside the leash, on the side of our base, until three of us are there.
+                Vector2 pit = m.Map.BossPit;
+                var rally = pit + MathUtil.SafeNormalize(Fountain(m, u.Team) - pit, Vector2.UnitX) * (m.Rules.VharothLeash + 3f);
+                int gathered = m.Players.Count(p => p.Team == u.Team && p.Hero != null && !p.Hero.Dead
+                                                    && Vector2.Distance(p.Hero.Position, rally) < 8f);
+                int alive = m.Players.Count(p => p.Team == u.Team && p.Hero != null && !p.Hero.Dead);
+                if (gathered < Math.Min(3, alive))
+                {
+                    if (Vector2.Distance(u.Position, rally) > 3f && u.CurrentOrder.Type != OrderType.Move) m.IssueOrder(u, Order.MoveTo(u.Id, rally));
+                    return;
+                }
+                _bossCommitted = true;
+            }
+            if (Vector2.Distance(u.Position, boss.Position) < 12f && _rng.NextFloat() < _spellChance * 0.5f
+                && (TryCast(m, u, "nuke", boss) || TryCast(m, u, "aoe", boss) || TryCast(m, u, "buff", boss)))
+                return;
+            if (u.CurrentOrder.Type != OrderType.AttackUnit || u.CurrentOrder.TargetId != boss.Id)
+                m.IssueOrder(u, Order.Attack(u.Id, boss.Id));
         }
 
         private void Defend(Match m, Unit u)

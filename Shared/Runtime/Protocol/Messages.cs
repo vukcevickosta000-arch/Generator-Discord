@@ -10,7 +10,7 @@ namespace Bloodfall.Protocol
     public static class ProtocolInfo
     {
         /// <summary>Bump when the wire format changes. Clients with a different version are rejected with a clear message.</summary>
-        public const ushort Version = 3;
+        public const ushort Version = 4;
         public const string ConnectionKey = "bloodfall";
         public const int DefaultGamePort = 27015;
     }
@@ -197,6 +197,9 @@ namespace Bloodfall.Protocol
         public bool IsNight;
         public float DayNightRemaining;
         public int[] TeamKills = new int[2];
+        /// <summary>Vharoth event state (see <see cref="Bloodfall.Simulation.VharothPhase"/>) and seals broken so far.</summary>
+        public byte VharothPhase;
+        public byte VharothSeals;
         public readonly List<EntityState> Entities = new List<EntityState>();
         public readonly List<PlayerView> Players = new List<PlayerView>();
         public PrivateState Me;

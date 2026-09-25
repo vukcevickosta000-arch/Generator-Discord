@@ -41,7 +41,8 @@ namespace Bloodfall.Simulation
             if (!MatchesTeam(caster, t, d.TargetTeam)) { error = t.Team == caster.Team ? "Must target an enemy." : "Must target an ally."; return false; }
             if ((t.TargetTypeOf() & d.TargetTypes) == 0) { error = "Invalid target type."; return false; }
             if (t.Team != caster.Team && t.IsMagicImmune && !d.PiercesMagicImmunity && !d.CanTargetMagicImmune) { error = "Target is magic immune."; return false; }
-            if (t.Team != caster.Team && (t.Invulnerable || t.HasFlag(StatusFlags.Untargetable))) { error = "Target is invulnerable."; return false; }
+            bool objective = (t.TargetTypeOf() & TargetType.Objective) != 0;
+            if (t.Team != caster.Team && !objective && (t.Invulnerable || t.HasFlag(StatusFlags.Untargetable))) { error = "Target is invulnerable."; return false; }
             return true;
         }
 

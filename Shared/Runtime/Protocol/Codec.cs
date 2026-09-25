@@ -305,6 +305,8 @@ namespace Bloodfall.Protocol
             w.WriteTenths(Math.Max(0, m.DayNightTimer));
             w.WriteVarUInt((uint)m.TeamKills[0]);
             w.WriteVarUInt((uint)m.TeamKills[1]);
+            w.WriteByte((byte)m.VharothState);
+            w.WriteByte((byte)m.VharothSealsBroken);
 
             // Entities.
             int countPos = w.Length;
@@ -452,6 +454,8 @@ namespace Bloodfall.Protocol
             };
             f.TeamKills[0] = (int)r.ReadVarUInt();
             f.TeamKills[1] = (int)r.ReadVarUInt();
+            f.VharothPhase = r.ReadByte();
+            f.VharothSeals = r.ReadByte();
             int count = r.ReadUShort();
             for (int i = 0; i < count; i++)
             {

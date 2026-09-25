@@ -106,11 +106,18 @@ namespace Bloodfall.Simulation
         /// Supported: targetHasStatus:&lt;id&gt;, targetLacksStatus:&lt;id&gt;, casterHasStatus:&lt;id&gt;, casterLacksStatus:&lt;id&gt;,
         /// night, day, targetIsHero, targetNotHero, targetHpBelow:&lt;fraction&gt;, casterHpBelow:&lt;fraction&gt;,
         /// casterUnseen (no enemy team can see the caster), casterStacksAtLeast:&lt;status&gt;:&lt;n&gt;,
-        /// casterNearTrees:&lt;count&gt;:&lt;radius&gt;.
+        /// casterNearTrees:&lt;count&gt;:&lt;radius&gt;, casterInCombat. Join conditions with '&amp;' to require all of them.
         /// </summary>
         public bool CheckCondition(string condition, in EffectContext ctx, Unit unit)
         {
             if (string.IsNullOrEmpty(condition)) return true;
+            if (condition.IndexOf('&') >= 0)
+            {
+                // "a&b": every part must hold.
+                foreach (var part in condition.Split('&'))
+                    if (!CheckCondition(part.Trim(), ctx, unit)) return false;
+                return true;
+            }
             int colon = condition.IndexOf(':');
             string key = colon >= 0 ? condition.Substring(0, colon) : condition;
             string arg = colon >= 0 ? condition.Substring(colon + 1) : null;
@@ -126,6 +133,8 @@ namespace Bloodfall.Simulation
                 case "targetNotHero": return unit != null && !unit.IsHero;
                 case "targetHpBelow": return unit != null && float.TryParse(arg, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var tf) && unit.HpFraction < tf;
                 case "casterHpBelow": return ctx.Caster != null && float.TryParse(arg, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var cf) && ctx.Caster.HpFraction < cf;
+                case "casterInCombat":
+                    return ctx.Caster != null && (Time - ctx.Caster.LastAttackedTime < 5f || ctx.Caster.CurrentOrder.Type == OrderType.AttackUnit);
                 case "casterUnseen":
                 {
                     if (ctx.Caster == null) return false;
@@ -270,8 +279,12 @@ namespace Bloodfall.Simulation
                 case EffectType.Delayed:
                 case EffectType.Zone:
                 case EffectType.CreateWall:
-                    CreateZoneFromEffect(e, ctx);
+                {
+                    // With Scatter, Count zones land at random points around the centre (e.g. Vharoth's Blood Rain).
+                    int n = e.Scatter > 0f && e.Count != null ? Math.Max(1, (int)e.Count.Get(L)) : 1;
+                    for (int i = 0; i < n; i++) CreateZoneFromEffect(e, ctx);
                     break;
+                }
                 case EffectType.Reveal:
                     CreateZoneFromEffect(e, ctx);
                     break;

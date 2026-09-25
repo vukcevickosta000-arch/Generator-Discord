@@ -103,6 +103,7 @@ namespace Bloodfall.Simulation
             {
                 if (!u.IsAlive || (u.Team != Team.Dawn && u.Team != Team.Dusk)) continue;
                 float r = u.VisionOverride >= 0 ? u.VisionOverride : (night ? u.Stats.VisionNight : u.Stats.VisionDay);
+                if (!u.IsStructure) r *= _match.VisionScale;   // the Blood Moon shrinks unit vision
                 if (r <= 0) continue;
                 bool flying = u.Flying || u.HasFlag(StatusFlags.FlyingVision);
                 AddVision((int)u.Team, u.Position, r, flying);

@@ -112,6 +112,8 @@ namespace Bloodfall.Simulation
         public bool Removed;
         public float DeathTime;
         public float RespawnAt;
+        /// <summary>Set when a reincarnation relic will bring the hero back where it fell instead of at the fountain.</summary>
+        public System.Numerics.Vector2? ReviveAt;
         public int Level = 1;
         public int Xp;
         public int AbilityPoints;
@@ -232,6 +234,7 @@ namespace Bloodfall.Simulation
                 case UnitKind.Summon: return TargetType.Summon;
                 case UnitKind.Ward: return TargetType.Ward;
                 case UnitKind.Worker: return TargetType.Creep;
+                case UnitKind.Objective: return TargetType.Objective;
                 default: return TargetType.Structure;
             }
         }

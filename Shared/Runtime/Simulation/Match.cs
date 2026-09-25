@@ -560,6 +560,10 @@ namespace Bloodfall.Simulation
                 var inst = new AbilityInstance { Def = ad, Level = ad.Slot == AbilitySlot.Innate ? 1 : 0, Index = u.Abilities.Count, Charges = ad.MaxCharges };
                 u.Abilities.Add(inst);
             }
+            // Abilities every hero has (hidden from the bar), after the hero's own so their slots stay 0..4.
+            foreach (var ad in Data.Abilities.Values.Where(a => a.CommonHeroAbility).OrderBy(a => a.Id, StringComparer.Ordinal))
+                if (!hd.Abilities.Contains(ad.Id))
+                    u.Abilities.Add(new AbilityInstance { Def = ad, Level = 1, Index = u.Abilities.Count, Charges = ad.MaxCharges });
             u.RecomputeStats(Rules);
             u.LastPosition = spawn;
             p.Hero = u;

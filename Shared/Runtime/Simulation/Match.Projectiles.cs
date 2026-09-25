@@ -257,6 +257,11 @@ namespace Bloodfall.Simulation
             int L = ctx.Level;
             Vector2 center = e.Center == AreaCenter.Caster && ctx.Caster != null ? ctx.Caster.Position
                 : e.Center == AreaCenter.Target && ctx.Target != null ? ctx.Target.Position : ctx.Point;
+            if (e.Scatter > 0f)
+            {
+                float a = Rng.NextFloat() * MathUtil.TwoPi, r = e.Scatter * (float)Math.Sqrt(Rng.NextFloat());
+                center = Grid.NearestWalkable(center + MathUtil.FromAngle(a) * r);
+            }
             var z = new Zone
             {
                 Id = _nextZoneId++,

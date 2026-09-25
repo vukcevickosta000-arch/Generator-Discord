@@ -52,6 +52,7 @@ namespace Bloodfall.SimRunner
                         if (deaths) Console.WriteLine($"[{m.Time,6:0}] {victim?.Owner?.Name} ({victim?.Name}) killed by {killer?.Name ?? "?"} ({k}) at {e.Point}");
                     }
                     if (e.Type == SimEventType.StructureDestroyed && deaths) Console.WriteLine($"[{m.Time,6:0}] STRUCTURE {m.GetUnit(e.UnitId)?.StructureId} destroyed");
+                    if (e.Type == SimEventType.VharothEvent && deaths) Console.WriteLine($"[{m.Time,6:0}] VHAROTH {e.Key} (team {e.Team})");
                 }
                 m.Events.Clear();
                 if (trace >= 0 && m.Time >= nextTrace)
@@ -69,6 +70,9 @@ namespace Bloodfall.SimRunner
                 Console.WriteLine($"{p.Name,-7} {p.HeroId,-11} L{p.Hero.Level,2} K/D/A {p.Kills,2}/{p.Deaths,2}/{p.Assists,2} LH {p.LastHits,3} DN {p.Denies,2} NW {m.NetWorth(p),5} GPM {p.Gpm(m.MatchSeconds),4:0} XPM {p.Xpm(m.MatchSeconds),4:0}");
             Console.WriteLine($"Kills {m.TeamKills[0]}-{m.TeamKills[1]}  towers down Dawn {m.Units.Count(u => u.Kind == UnitKind.Tower && u.Dead && u.Team == Team.Dawn)} Dusk {m.Units.Count(u => u.Kind == UnitKind.Tower && u.Dead && u.Team == Team.Dusk)}  winner {m.Winner}");
             Console.WriteLine("Hero deaths by killer type: " + string.Join(", ", killers.Select(kv => $"{kv.Key}={kv.Value}")));
+            Console.WriteLine($"Vharoth: {m.VharothState}, seals broken {m.VharothSealsBroken}"
+                + (m.VharothState >= VharothPhase.Awakened ? $", awakened at {m.VharothAwakenedAt / 60f:0.0} min" : "")
+                + (m.VharothState == VharothPhase.Slain ? $", slain by {m.VharothSlainBy}" : m.Vharoth != null ? $", HP {m.Vharoth.HpFraction:P0}" : ""));
             return 0;
         }
     }

@@ -107,6 +107,8 @@ namespace Bloodfall.Data
         public bool BehindTarget;
 
         // ---- Delayed / Zone ----
+        /// <summary>Random offset (up to this radius) applied to each zone's centre; with Count, scatters several zones.</summary>
+        public float Scatter;
         public LeveledValue Delay;
         public float Interval = 1f;
         public LeveledValue ZoneDuration;
@@ -249,6 +251,10 @@ namespace Bloodfall.Data
         public string BotUsage;
         /// <summary>Casting this ability does not break BreakOnAction statuses (e.g. the veil ability itself).</summary>
         public bool KeepsStealth;
+        /// <summary>The channel breaks when an enemy damages the caster (contested objectives such as Vharoth's seals).</summary>
+        public bool InterruptedByDamage;
+        /// <summary>Granted to every hero at spawn (kept hidden from the ability bar), e.g. the seal-breaking channel.</summary>
+        public bool CommonHeroAbility;
         public bool Hidden;
 
         public int RequiredHeroLevel(int nextAbilityLevel)
@@ -554,6 +560,16 @@ namespace Bloodfall.Data
         public float ReconnectGraceSeconds = 300f;
         public float AbandonAfterSeconds = 300f;
         public float VharothMinTime = 1500f;
+        /// <summary>Seconds after awakening before the Blood Moon rises (if Vharoth still lives).</summary>
+        public float VharothBloodMoonDelay = 180f;
+        /// <summary>Vision multiplier for everyone during the Blood Moon.</summary>
+        public float VharothBloodMoonVision = 0.7f;
+        /// <summary>Gold for every hero of the team that breaks a seal.</summary>
+        public int VharothSealGold = 100;
+        /// <summary>How far Vharoth follows targets from the centre of his pit before returning.</summary>
+        public float VharothLeash = 12f;
+        /// <summary>Seconds a reincarnation relic takes to revive its holder.</summary>
+        public float ReincarnationDelay = 4f;
         /// <summary>Lane creep unit ids keyed "Dawn.melee", "Dusk.ranged", "Dawn.siege", "Dawn.melee.super", "Dawn.melee.mega"...</summary>
         public Dictionary<string, string> CreepUnits = new Dictionary<string, string>();
         public int WaveMelee = 3;

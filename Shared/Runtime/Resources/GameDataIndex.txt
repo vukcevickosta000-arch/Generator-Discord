@@ -14,3 +14,4 @@ units/creeps.json
 units/neutrals.json
 units/structures.json
 units/summons.json
+units/vharoth.json
