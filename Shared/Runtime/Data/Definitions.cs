@@ -419,8 +419,10 @@ namespace Bloodfall.Data
         public float Facing;
         public string Lane;
         public int Tier;
-        /// <summary>Structures that must be destroyed before this one becomes vulnerable.</summary>
+        /// <summary>Structures that must ALL be destroyed before this one becomes vulnerable.</summary>
         public List<string> ProtectedBy;
+        /// <summary>Alternative rule: this structure becomes vulnerable once ANY of these is destroyed (tier 4 towers).</summary>
+        public List<string> UnlockedByAny;
         /// <summary>Barracks: which creep type this barracks upgrades when destroyed ("melee"/"ranged").</summary>
         public string BarracksType;
     }

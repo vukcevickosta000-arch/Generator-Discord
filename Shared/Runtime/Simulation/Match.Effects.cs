@@ -164,7 +164,21 @@ namespace Bloodfall.Simulation
                     var mover = e.Target == EffectTarget.Target && ctx.Target != null && e.Type == EffectType.Teleport ? ctx.Target : ctx.Caster;
                     if (mover == null) return;
                     Vector2 dest = ctx.Point;
-                    if (e.BehindTarget && ctx.Target != null)
+                    if (e.Condition == "alliedStructure")
+                    {
+                        // Teleport scrolls: land next to the allied structure closest to the chosen point.
+                        Unit best = null; float bd = float.MaxValue;
+                        foreach (var s in Units)
+                        {
+                            if (!s.IsStructure || s.Dead || s.Team != mover.Team || s.Kind == UnitKind.Shop) continue;
+                            float dd = Vector2.DistanceSquared(s.Position, ctx.Point);
+                            if (dd < bd) { bd = dd; best = s; }
+                        }
+                        if (best == null) return;
+                        var towardFountain = MathUtil.SafeNormalize(ctx.Point - best.Position, Vector2.UnitX);
+                        dest = best.Position + towardFountain * (best.Radius + 1.5f);
+                    }
+                    else if (e.BehindTarget && ctx.Target != null)
                     {
                         var dir = MathUtil.SafeNormalize(ctx.Target.Position - mover.Position, MathUtil.FromAngle(mover.Facing));
                         dest = ctx.Target.Position + dir * (ctx.Target.Radius + mover.Radius + 0.3f);
@@ -219,7 +233,13 @@ namespace Bloodfall.Simulation
                     }
                     break;
                 case EffectType.ModifyCooldowns:
-                    if (unit != null)
+                    if (e.Condition == "itemMin" && ctx.Item?.Active != null)
+                    {
+                        // e.g. blink items are disabled for a few seconds after taking hero damage.
+                        ctx.Item.Active.Cooldown = Math.Max(ctx.Item.Active.Cooldown, e.CooldownDelta?.Get(L) ?? 0f);
+                        ctx.Item.Active.CooldownTotal = Math.Max(ctx.Item.Active.CooldownTotal, ctx.Item.Active.Cooldown);
+                    }
+                    else if (unit != null)
                         foreach (var ab in unit.Abilities)
                             if (ab.Level > 0) ab.Cooldown = Math.Max(0f, ab.Cooldown + (e.CooldownDelta?.Get(L) ?? 0f));
                     break;

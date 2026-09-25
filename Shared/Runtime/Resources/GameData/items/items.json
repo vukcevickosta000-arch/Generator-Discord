@@ -1,0 +1,1027 @@
+{
+  "$comment": "Initial item catalogue (Phase 2). See Docs/ITEM_DATABASE.md for the full 150-200 item plan.",
+  "items": [
+    {
+      "id": "item_crimson_draught",
+      "name": "Crimson Draught",
+      "cost": 90,
+      "category": "Consumables",
+      "description": "Drink to restore 400 health over 10 s. Broken by damage from enemy heroes.",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_crimson_draught",
+      "consumable": true,
+      "initialCharges": 1,
+      "maxStack": 5,
+      "active": {
+        "targeting": "NoTarget",
+        "cooldown": 1,
+        "castPoint": 0,
+        "backswing": 0,
+        "ignoreFacing": true,
+        "onCast": [
+          {
+            "type": "ApplyStatus",
+            "target": "Caster",
+            "status": "draught_regen",
+            "duration": 10,
+            "vfx": "drink_potion"
+          }
+        ]
+      }
+    },
+    {
+      "id": "item_mana_ember",
+      "name": "Ember of Clarity",
+      "cost": 50,
+      "category": "Consumables",
+      "description": "Inhale to restore 160 mana over 25 s. Broken by damage from enemy heroes.",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_mana_ember",
+      "consumable": true,
+      "initialCharges": 1,
+      "maxStack": 5,
+      "active": {
+        "targeting": "NoTarget",
+        "cooldown": 1,
+        "castPoint": 0,
+        "backswing": 0,
+        "ignoreFacing": true,
+        "onCast": [
+          {
+            "type": "ApplyStatus",
+            "target": "Caster",
+            "status": "ember_regen",
+            "duration": 25
+          }
+        ]
+      }
+    },
+    {
+      "id": "item_waystone",
+      "name": "Waystone Shard",
+      "cost": 90,
+      "category": "Consumables",
+      "description": "Channel for 3 s to teleport beside the allied structure closest to the target point.",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_waystone",
+      "consumable": true,
+      "initialCharges": 1,
+      "maxStack": 3,
+      "active": {
+        "targeting": "Point",
+        "targetTeam": "Ally",
+        "castRange": 400,
+        "cooldown": 70,
+        "castPoint": 0,
+        "backswing": 0,
+        "channelTime": 3,
+        "ignoreFacing": true,
+        "onCast": [],
+        "onChannelEnd": [
+          {
+            "type": "Teleport",
+            "target": "Caster",
+            "condition": "alliedStructure",
+            "vfx": "waystone_arrive"
+          }
+        ],
+        "castAnimation": "Channel"
+      }
+    },
+    {
+      "id": "item_watcher_eye",
+      "name": "Watcher's Eye",
+      "cost": 75,
+      "category": "Wards",
+      "description": "Plants an invisible ward that grants vision in a 16 m radius for 6 minutes. Stock limited.",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_watcher_eye",
+      "consumable": true,
+      "initialCharges": 1,
+      "maxStack": 4,
+      "stockMax": 2,
+      "stockRestockTime": 150,
+      "active": {
+        "targeting": "Point",
+        "castRange": 6,
+        "cooldown": 0.5,
+        "castPoint": 0,
+        "backswing": 0,
+        "onCast": [
+          {
+            "type": "SpawnUnit",
+            "unitId": "ward_watcher",
+            "center": "Point",
+            "summonDuration": 360,
+            "controlledByOwner": false,
+            "vfx": "ward_plant"
+          }
+        ]
+      }
+    },
+    {
+      "id": "item_truesight_lantern",
+      "name": "Truesight Lantern",
+      "cost": 50,
+      "category": "Wards",
+      "description": "Plants an invisible lantern that reveals invisible units within 11 m for 7 minutes.",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_truesight_lantern",
+      "consumable": true,
+      "initialCharges": 1,
+      "maxStack": 4,
+      "active": {
+        "targeting": "Point",
+        "castRange": 6,
+        "cooldown": 0.5,
+        "castPoint": 0,
+        "backswing": 0,
+        "onCast": [
+          {
+            "type": "SpawnUnit",
+            "unitId": "ward_sentry",
+            "center": "Point",
+            "summonDuration": 420,
+            "controlledByOwner": false,
+            "vfx": "ward_plant"
+          }
+        ]
+      }
+    },
+    {
+      "id": "item_gauntlets_might",
+      "name": "Gauntlets of Might",
+      "cost": 150,
+      "category": "Attributes",
+      "description": "+3 Strength",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_gauntlets_might",
+      "modifiers": [
+        {
+          "stat": "Str",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "item_nightrunner_slippers",
+      "name": "Nightrunner Slippers",
+      "cost": 150,
+      "category": "Attributes",
+      "description": "+3 Agility",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_nightrunner_slippers",
+      "modifiers": [
+        {
+          "stat": "Agi",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "item_mantle_lore",
+      "name": "Mantle of Lore",
+      "cost": 150,
+      "category": "Attributes",
+      "description": "+3 Intelligence",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_mantle_lore",
+      "modifiers": [
+        {
+          "stat": "Int",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "item_iron_circlet",
+      "name": "Iron Circlet",
+      "cost": 165,
+      "category": "Attributes",
+      "description": "+2 to all attributes",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_iron_circlet",
+      "modifiers": [
+        {
+          "stat": "AllAttributes",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "item_brutes_belt",
+      "name": "Brute's Belt",
+      "cost": 450,
+      "category": "Attributes",
+      "description": "+6 Strength",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_brutes_belt",
+      "modifiers": [
+        {
+          "stat": "Str",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "id": "item_serpent_bands",
+      "name": "Serpent Bands",
+      "cost": 450,
+      "category": "Attributes",
+      "description": "+6 Agility",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_serpent_bands",
+      "modifiers": [
+        {
+          "stat": "Agi",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "id": "item_scholars_cowl",
+      "name": "Scholar's Cowl",
+      "cost": 450,
+      "category": "Attributes",
+      "description": "+6 Intelligence",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_scholars_cowl",
+      "modifiers": [
+        {
+          "stat": "Int",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "id": "item_rusted_blade",
+      "name": "Rusted Blade",
+      "cost": 300,
+      "category": "Armaments",
+      "description": "+8 damage",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_rusted_blade",
+      "modifiers": [
+        {
+          "stat": "BonusDamage",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "id": "item_warforged_broadsword",
+      "name": "Warforged Broadsword",
+      "cost": 1000,
+      "category": "Armaments",
+      "description": "+18 damage",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_warforged_broadsword",
+      "modifiers": [
+        {
+          "stat": "BonusDamage",
+          "value": 18
+        }
+      ]
+    },
+    {
+      "id": "item_headsman_axe",
+      "name": "Headsman's Axe",
+      "cost": 1350,
+      "category": "Armaments",
+      "description": "+24 damage",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_headsman_axe",
+      "modifiers": [
+        {
+          "stat": "BonusDamage",
+          "value": 24
+        }
+      ]
+    },
+    {
+      "id": "item_quickblade_gloves",
+      "name": "Quickblade Gloves",
+      "cost": 450,
+      "category": "Armaments",
+      "description": "+15 attack speed",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_quickblade_gloves",
+      "modifiers": [
+        {
+          "stat": "AttackSpeed",
+          "value": 15
+        }
+      ]
+    },
+    {
+      "id": "item_ring_warding",
+      "name": "Ring of Warding",
+      "cost": 175,
+      "category": "Armaments",
+      "description": "+2 armor",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_ring_warding",
+      "modifiers": [
+        {
+          "stat": "Armor",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "item_blackened_chainmail",
+      "name": "Blackened Chainmail",
+      "cost": 550,
+      "category": "Armaments",
+      "description": "+5 armor",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_blackened_chainmail",
+      "modifiers": [
+        {
+          "stat": "Armor",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "item_bloodstone_shard",
+      "name": "Bloodstone Shard",
+      "cost": 900,
+      "category": "Armaments",
+      "description": "+10% lifesteal",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_bloodstone_shard",
+      "modifiers": [
+        {
+          "stat": "Lifesteal",
+          "value": 0.1
+        }
+      ]
+    },
+    {
+      "id": "item_wellspring_ring",
+      "name": "Ring of the Wellspring",
+      "cost": 175,
+      "category": "Arcane",
+      "description": "+1.5 health regeneration",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_wellspring_ring",
+      "modifiers": [
+        {
+          "stat": "HpRegen",
+          "value": 1.5
+        }
+      ]
+    },
+    {
+      "id": "item_sapphire_band",
+      "name": "Sapphire Band",
+      "cost": 175,
+      "category": "Arcane",
+      "description": "+0.75 mana regeneration",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_sapphire_band",
+      "modifiers": [
+        {
+          "stat": "ManaRegen",
+          "value": 0.75
+        }
+      ]
+    },
+    {
+      "id": "item_vitality_charm",
+      "name": "Vitality Charm",
+      "cost": 900,
+      "category": "Arcane",
+      "description": "+250 health",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_vitality_charm",
+      "modifiers": [
+        {
+          "stat": "MaxHp",
+          "value": 250
+        }
+      ]
+    },
+    {
+      "id": "item_arcane_crystal",
+      "name": "Arcane Crystal",
+      "cost": 500,
+      "category": "Arcane",
+      "description": "+150 mana",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_arcane_crystal",
+      "modifiers": [
+        {
+          "stat": "MaxMana",
+          "value": 150
+        }
+      ]
+    },
+    {
+      "id": "item_void_cloak",
+      "name": "Void Cloak",
+      "cost": 450,
+      "category": "Arcane",
+      "description": "+15% magic resistance",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_void_cloak",
+      "modifiers": [
+        {
+          "stat": "MagicResist",
+          "value": 0.15
+        }
+      ]
+    },
+    {
+      "id": "item_worn_boots",
+      "name": "Worn Boots",
+      "cost": 500,
+      "category": "Boots",
+      "description": "+0.55 m/s movement speed",
+      "shop": "Main",
+      "tier": 1,
+      "icon": "item_worn_boots",
+      "modifiers": [
+        {
+          "stat": "MoveSpeed",
+          "value": 0.55
+        }
+      ],
+      "uniquePassiveGroup": "boots"
+    },
+    {
+      "id": "item_marchers_haste",
+      "name": "Marchers of Haste",
+      "cost": 0,
+      "category": "Boots",
+      "description": "+0.6 m/s movement speed, +25 attack speed. Combines Worn Boots and Quickblade Gloves.",
+      "shop": "Main",
+      "tier": 2,
+      "icon": "item_marchers_haste",
+      "modifiers": [
+        {
+          "stat": "MoveSpeed",
+          "value": 0.6
+        },
+        {
+          "stat": "AttackSpeed",
+          "value": 25
+        }
+      ],
+      "components": [
+        "item_worn_boots",
+        "item_quickblade_gloves"
+      ],
+      "uniquePassiveGroup": "boots"
+    },
+    {
+      "id": "item_pilgrim_greaves",
+      "name": "Pilgrim's Greaves",
+      "cost": 250,
+      "category": "Boots",
+      "description": "+0.7 m/s movement speed, +1.5 mana regeneration, +1 health regeneration.",
+      "shop": "Main",
+      "tier": 2,
+      "icon": "item_pilgrim_greaves",
+      "modifiers": [
+        {
+          "stat": "MoveSpeed",
+          "value": 0.7
+        },
+        {
+          "stat": "ManaRegen",
+          "value": 1.5
+        },
+        {
+          "stat": "HpRegen",
+          "value": 1
+        }
+      ],
+      "components": [
+        "item_worn_boots",
+        "item_sapphire_band"
+      ],
+      "uniquePassiveGroup": "boots"
+    },
+    {
+      "id": "item_vampiric_mask",
+      "name": "Mask of the Thirsting",
+      "cost": 200,
+      "category": "Offense",
+      "description": "+15 damage, +16% lifesteal. Active - Bloodlust: +20 attack speed and +20% lifesteal for 5 s.",
+      "shop": "Main",
+      "tier": 2,
+      "icon": "item_vampiric_mask",
+      "modifiers": [
+        {
+          "stat": "BonusDamage",
+          "value": 15
+        },
+        {
+          "stat": "Lifesteal",
+          "value": 0.16
+        }
+      ],
+      "components": [
+        "item_bloodstone_shard",
+        "item_rusted_blade"
+      ],
+      "active": {
+        "targeting": "NoTarget",
+        "cooldown": 25,
+        "castPoint": 0,
+        "backswing": 0,
+        "ignoreFacing": true,
+        "onCast": [
+          {
+            "type": "ApplyStatus",
+            "target": "Caster",
+            "status": "item_bloodlust",
+            "duration": 5,
+            "vfx": "bloodlust"
+          }
+        ],
+        "statuses": [
+          {
+            "id": "item_bloodlust",
+            "name": "Bloodlust",
+            "isDebuff": false,
+            "modifiers": [
+              {
+                "stat": "AttackSpeed",
+                "value": 20
+              },
+              {
+                "stat": "Lifesteal",
+                "value": 0.2
+              }
+            ],
+            "icon": "item_vampiric_mask"
+          }
+        ]
+      }
+    },
+    {
+      "id": "item_headsman_cleaver",
+      "name": "Cleaver of the Headsman",
+      "cost": 600,
+      "category": "Offense",
+      "description": "+30 damage, +8 Strength. Passive - Cleave: melee attacks deal 35% damage in a cone behind the target.",
+      "shop": "Main",
+      "tier": 3,
+      "icon": "item_headsman_cleaver",
+      "modifiers": [
+        {
+          "stat": "BonusDamage",
+          "value": 30
+        },
+        {
+          "stat": "Str",
+          "value": 8
+        }
+      ],
+      "components": [
+        "item_headsman_axe",
+        "item_brutes_belt"
+      ],
+      "triggers": [
+        {
+          "on": "AttackLanded",
+          "meleeOnly": true,
+          "types": "Units",
+          "team": "Enemy",
+          "effects": [
+            {
+              "type": "Area",
+              "center": "Target",
+              "radius": 3.2,
+              "coneAngle": 50,
+              "excludePrimary": true,
+              "team": "Enemy",
+              "types": "Units",
+              "vfx": "cleave_arc",
+              "effects": [
+                {
+                  "type": "Damage",
+                  "amount": 0.35,
+                  "condition": "triggerAmount",
+                  "damageType": "Physical"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "item_nightfang_greatsword",
+      "name": "Nightfang Greatsword",
+      "cost": 1000,
+      "category": "Offense",
+      "description": "+50 damage. Passive - Critical Strike: 30% chance to deal 200% damage.",
+      "shop": "Main",
+      "tier": 3,
+      "icon": "item_nightfang_greatsword",
+      "modifiers": [
+        {
+          "stat": "BonusDamage",
+          "value": 50
+        },
+        {
+          "stat": "CritChance",
+          "value": 0.3
+        },
+        {
+          "stat": "CritMultiplier",
+          "value": 2.0
+        }
+      ],
+      "components": [
+        "item_warforged_broadsword",
+        "item_headsman_axe"
+      ],
+      "uniquePassiveGroup": "crit"
+    },
+    {
+      "id": "item_voidpiercer",
+      "name": "Voidpiercer",
+      "cost": 500,
+      "category": "Offense",
+      "description": "+25 damage, +20 attack speed. Passive - Corrode: attacks reduce armor by 5 for 7 s.",
+      "shop": "Main",
+      "tier": 3,
+      "icon": "item_voidpiercer",
+      "modifiers": [
+        {
+          "stat": "BonusDamage",
+          "value": 25
+        },
+        {
+          "stat": "AttackSpeed",
+          "value": 20
+        }
+      ],
+      "components": [
+        "item_warforged_broadsword",
+        "item_quickblade_gloves"
+      ],
+      "triggers": [
+        {
+          "on": "AttackLanded",
+          "types": "All",
+          "team": "Enemy",
+          "effects": [
+            {
+              "type": "ApplyStatus",
+              "status": "item_corrode",
+              "duration": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "item_bulwark_plate",
+      "name": "Bulwark of the Last Keep",
+      "cost": 400,
+      "category": "Defense",
+      "description": "+8 armor, +300 health. Aura - Hold the Line: allies within 9 m gain +3 armor.",
+      "shop": "Main",
+      "tier": 3,
+      "icon": "item_bulwark_plate",
+      "modifiers": [
+        {
+          "stat": "Armor",
+          "value": 8
+        },
+        {
+          "stat": "MaxHp",
+          "value": 300
+        }
+      ],
+      "components": [
+        "item_blackened_chainmail",
+        "item_vitality_charm"
+      ],
+      "aura": {
+        "radius": 9,
+        "team": "AllyOrSelf",
+        "types": "Units",
+        "status": "item_hold_the_line"
+      }
+    },
+    {
+      "id": "item_heart_colossus",
+      "name": "Heart of the Colossus",
+      "cost": 1300,
+      "category": "Defense",
+      "description": "+40 Strength, +400 health, regenerates 1.6% of maximum health per second.",
+      "shop": "Main",
+      "tier": 4,
+      "icon": "item_heart_colossus",
+      "modifiers": [
+        {
+          "stat": "Str",
+          "value": 40
+        },
+        {
+          "stat": "MaxHp",
+          "value": 400
+        },
+        {
+          "stat": "HpRegenPct",
+          "value": 0.016
+        }
+      ],
+      "components": [
+        "item_vitality_charm",
+        "item_brutes_belt",
+        "item_brutes_belt"
+      ]
+    },
+    {
+      "id": "item_grave_ward_amulet",
+      "name": "Grave-Ward Amulet",
+      "cost": 400,
+      "category": "Defense",
+      "description": "+20% magic resistance, +4 health regeneration. Active - Warding Barrier: allies within 9 m gain a shield that absorbs 300 magical damage for 10 s.",
+      "shop": "Main",
+      "tier": 3,
+      "icon": "item_grave_ward_amulet",
+      "modifiers": [
+        {
+          "stat": "MagicResist",
+          "value": 0.2
+        },
+        {
+          "stat": "HpRegen",
+          "value": 4
+        }
+      ],
+      "components": [
+        "item_void_cloak",
+        "item_wellspring_ring",
+        "item_wellspring_ring"
+      ],
+      "active": {
+        "targeting": "NoTarget",
+        "cooldown": 60,
+        "castPoint": 0,
+        "backswing": 0,
+        "ignoreFacing": true,
+        "onCast": [
+          {
+            "type": "Area",
+            "radius": 9,
+            "center": "Caster",
+            "team": "AllyOrSelf",
+            "types": "Hero",
+            "effects": [
+              {
+                "type": "ApplyStatus",
+                "status": "shield_barrier",
+                "duration": 10
+              }
+            ],
+            "vfx": "barrier_pulse"
+          }
+        ]
+      }
+    },
+    {
+      "id": "item_stormcaller_rod",
+      "name": "Stormcaller's Rod",
+      "cost": 500,
+      "category": "Magic",
+      "description": "+10 Intelligence, +200 mana. Active - Thunderbrand: 250 magical damage and a 1.5 s silence on an enemy.",
+      "shop": "Main",
+      "tier": 3,
+      "icon": "item_stormcaller_rod",
+      "modifiers": [
+        {
+          "stat": "Int",
+          "value": 10
+        },
+        {
+          "stat": "MaxMana",
+          "value": 200
+        }
+      ],
+      "components": [
+        "item_scholars_cowl",
+        "item_arcane_crystal"
+      ],
+      "active": {
+        "targeting": "Unit",
+        "targetTeam": "Enemy",
+        "targetTypes": "Units",
+        "castRange": 8,
+        "cooldown": 25,
+        "manaCost": 100,
+        "castPoint": 0,
+        "backswing": 0,
+        "onCast": [
+          {
+            "type": "Damage",
+            "amount": 250,
+            "damageType": "Magical",
+            "vfx": "lightning_strike"
+          },
+          {
+            "type": "ApplyStatus",
+            "status": "silence",
+            "duration": 1.5
+          }
+        ]
+      }
+    },
+    {
+      "id": "item_sanguine_scepter",
+      "name": "Sanguine Scepter",
+      "cost": 450,
+      "category": "Magic",
+      "description": "+12 Intelligence, +8% spell amplification, +15% spell lifesteal.",
+      "shop": "Main",
+      "tier": 3,
+      "icon": "item_sanguine_scepter",
+      "modifiers": [
+        {
+          "stat": "Int",
+          "value": 12
+        },
+        {
+          "stat": "SpellAmp",
+          "value": 0.08
+        },
+        {
+          "stat": "SpellVamp",
+          "value": 0.15
+        }
+      ],
+      "components": [
+        "item_scholars_cowl",
+        "item_bloodstone_shard"
+      ]
+    },
+    {
+      "id": "item_shadowstep_talisman",
+      "name": "Shadowstep Talisman",
+      "cost": 2250,
+      "category": "Magic",
+      "description": "Active - Shadowstep: teleport up to 12 m. Disabled for 3 s after taking damage from an enemy hero.",
+      "shop": "Main",
+      "tier": 3,
+      "icon": "item_shadowstep_talisman",
+      "active": {
+        "targeting": "Point",
+        "castRange": 12,
+        "cooldown": 12,
+        "castPoint": 0,
+        "backswing": 0,
+        "ignoreFacing": true,
+        "onCast": [
+          {
+            "type": "Blink",
+            "target": "Caster",
+            "maxDistance": 12,
+            "vfx": "shadowstep"
+          }
+        ]
+      },
+      "triggers": [
+        {
+          "on": "DamageTaken",
+          "types": "Hero",
+          "team": "Enemy",
+          "effects": [
+            {
+              "type": "ModifyCooldowns",
+              "condition": "itemMin",
+              "cooldownDelta": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "item_crown_of_mercy",
+      "name": "Crown of Mercy",
+      "cost": 300,
+      "category": "Support",
+      "description": "+2 all attributes, +4 armor aura. Active - Mend: heals nearby allied heroes for 250.",
+      "shop": "Main",
+      "tier": 2,
+      "icon": "item_crown_of_mercy",
+      "modifiers": [
+        {
+          "stat": "AllAttributes",
+          "value": 2
+        }
+      ],
+      "components": [
+        "item_iron_circlet",
+        "item_ring_warding",
+        "item_wellspring_ring"
+      ],
+      "aura": {
+        "radius": 9,
+        "team": "AllyOrSelf",
+        "types": "Units",
+        "status": "item_crown_aura"
+      },
+      "active": {
+        "targeting": "NoTarget",
+        "cooldown": 45,
+        "manaCost": 75,
+        "castPoint": 0,
+        "backswing": 0,
+        "ignoreFacing": true,
+        "onCast": [
+          {
+            "type": "Area",
+            "radius": 9,
+            "center": "Caster",
+            "team": "AllyOrSelf",
+            "types": "Hero",
+            "effects": [
+              {
+                "type": "Heal",
+                "amount": 250
+              }
+            ],
+            "vfx": "mend_pulse"
+          }
+        ]
+      }
+    }
+  ],
+  "statuses": [
+    {
+      "id": "item_corrode",
+      "name": "Corroded",
+      "isDebuff": true,
+      "modifiers": [
+        {
+          "stat": "Armor",
+          "value": -5
+        }
+      ],
+      "icon": "item_voidpiercer"
+    },
+    {
+      "id": "item_hold_the_line",
+      "name": "Hold the Line",
+      "isDebuff": false,
+      "dispel": "None",
+      "modifiers": [
+        {
+          "stat": "Armor",
+          "value": 3
+        }
+      ],
+      "icon": "item_bulwark_plate"
+    },
+    {
+      "id": "item_crown_aura",
+      "name": "Crown of Mercy",
+      "isDebuff": false,
+      "dispel": "None",
+      "modifiers": [
+        {
+          "stat": "Armor",
+          "value": 2
+        },
+        {
+          "stat": "HpRegen",
+          "value": 1
+        }
+      ],
+      "icon": "item_crown_of_mercy"
+    }
+  ]
+}

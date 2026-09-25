@@ -152,6 +152,12 @@ namespace Bloodfall.Simulation
             {
                 foreach (var p in u.ProtectedBy) if (!p.Dead) { f |= StatusFlags.Invulnerable; break; }
             }
+            if (u.IsStructure && u.UnlockedByAny != null && u.UnlockedByAny.Count > 0)
+            {
+                bool anyDown = false;
+                foreach (var p in u.UnlockedByAny) if (p.Dead) { anyDown = true; break; }
+                if (!anyDown) f |= StatusFlags.Invulnerable;
+            }
             u.Flags = f;
         }
 
@@ -266,6 +272,7 @@ namespace Bloodfall.Simulation
                 if (t.Team != TargetTeam.Any && t.Team != TargetTeam.None && !MatchesTeam(unit, other, t.Team)) return;
             }
             if (t.MeleeOnly && unit.AttackType != AttackType.Melee) return;
+            if (t.Radius != null && other != null && System.Numerics.Vector2.Distance(other.Position, unit.Position) > t.Radius.Get(level)) return;
             if (t.Threshold > 0 && amount < t.Threshold) return;
             var st = unit.GetTriggerState(t);
             if (st.CooldownUntil > Time) return;

@@ -38,6 +38,11 @@ namespace Bloodfall.Simulation
                 if (s.ProtectedBy == null || !byId.TryGetValue(s.Id, out var u)) continue;
                 u.ProtectedBy = s.ProtectedBy.Where(byId.ContainsKey).Select(id => byId[id]).ToList();
             }
+            foreach (var s in Map.Structures)
+            {
+                if (s.UnlockedByAny == null || !byId.TryGetValue(s.Id, out var u)) continue;
+                u.UnlockedByAny = s.UnlockedByAny.Where(byId.ContainsKey).Select(id => byId[id]).ToList();
+            }
             // Structures are created before the world runs: move them from the spawn queue now.
             foreach (var u in _spawnQueue) { Units.Add(u); UnitById[u.Id] = u; }
             _spawnQueue.Clear();

@@ -1,0 +1,106 @@
+{
+  "$comment": "Lane creeps. Dawn = Sunward host (human levies). Dusk = Nightbound host (risen dead).",
+  "units": [
+    {
+      "id": "creep_dawn_footman", "name": "Sunward Footman", "kind": "Creep", "attackType": "Melee",
+      "maxHp": 550, "armor": 2, "magicResist": 0, "damageMin": 19, "damageMax": 23,
+      "attackRange": 1.25, "attackPoint": 0.467, "attackBackswing": 0.53, "baseAttackTime": 1.0,
+      "moveSpeed": 3.9, "turnRate": 10, "collisionRadius": 0.3, "visionDay": 9, "visionNight": 6, "acquisitionRange": 6.5,
+      "bountyGoldMin": 36, "bountyGoldMax": 46, "bountyXp": 57,
+      "hpPerUpgrade": 12, "damagePerUpgrade": 1, "goldPerUpgrade": 1,
+      "model": "creep_dawn_footman", "attackSfx": "sword_light", "deathSfx": "death_human", "tags": ["lane"]
+    },
+    {
+      "id": "creep_dawn_arbalist", "name": "Sunward Arbalist", "kind": "Creep", "attackType": "Ranged",
+      "maxHp": 300, "armor": 0, "damageMin": 21, "damageMax": 26,
+      "attackRange": 6.25, "attackPoint": 0.5, "attackBackswing": 0.67, "baseAttackTime": 1.0, "projectileSpeed": 11.25,
+      "moveSpeed": 3.9, "turnRate": 10, "collisionRadius": 0.3, "visionDay": 9, "visionNight": 6, "acquisitionRange": 6.5,
+      "bountyGoldMin": 41, "bountyGoldMax": 49, "bountyXp": 69,
+      "hpPerUpgrade": 12, "damagePerUpgrade": 2, "goldPerUpgrade": 1,
+      "model": "creep_dawn_arbalist", "projectileVisual": "bolt_crossbow", "attackSfx": "crossbow", "deathSfx": "death_human", "tags": ["lane"]
+    },
+    {
+      "id": "creep_dawn_ballista", "name": "Sunward Ballista", "kind": "Creep", "attackType": "Ranged",
+      "maxHp": 875, "armor": 0, "magicResist": 0.8, "damageMin": 35, "damageMax": 46,
+      "attackRange": 8.1, "attackPoint": 0.7, "attackBackswing": 0.3, "baseAttackTime": 3.0, "projectileSpeed": 13,
+      "moveSpeed": 3.4, "turnRate": 5, "collisionRadius": 0.5, "visionDay": 10, "visionNight": 10, "acquisitionRange": 8,
+      "bountyGoldMin": 66, "bountyGoldMax": 80, "bountyXp": 88, "siegeMultiplier": 2.5,
+      "model": "creep_dawn_ballista", "projectileVisual": "bolt_ballista", "attackSfx": "ballista", "deathSfx": "death_wood", "tags": ["lane", "siege"]
+    },
+    {
+      "id": "creep_dawn_footman_elite", "name": "Sunward Veteran", "kind": "Creep", "attackType": "Melee",
+      "maxHp": 700, "armor": 3, "damageMin": 36, "damageMax": 44,
+      "attackRange": 1.25, "attackPoint": 0.467, "attackBackswing": 0.53, "baseAttackTime": 1.0,
+      "moveSpeed": 3.9, "turnRate": 10, "collisionRadius": 0.3, "visionDay": 9, "visionNight": 6, "acquisitionRange": 6.5,
+      "bountyGoldMin": 20, "bountyGoldMax": 26, "bountyXp": 25, "hpPerUpgrade": 19, "damagePerUpgrade": 2,
+      "model": "creep_dawn_footman_elite", "attackSfx": "sword_heavy", "deathSfx": "death_human", "tags": ["lane", "super"]
+    },
+    {
+      "id": "creep_dawn_arbalist_elite", "name": "Sunward Marksman", "kind": "Creep", "attackType": "Ranged",
+      "maxHp": 475, "armor": 1, "damageMin": 41, "damageMax": 46,
+      "attackRange": 6.25, "attackPoint": 0.5, "attackBackswing": 0.67, "baseAttackTime": 1.0, "projectileSpeed": 11.25,
+      "moveSpeed": 3.9, "collisionRadius": 0.3, "visionDay": 9, "visionNight": 6, "acquisitionRange": 6.5,
+      "bountyGoldMin": 18, "bountyGoldMax": 26, "bountyXp": 22, "hpPerUpgrade": 18, "damagePerUpgrade": 3,
+      "model": "creep_dawn_arbalist_elite", "projectileVisual": "bolt_crossbow", "attackSfx": "crossbow", "deathSfx": "death_human", "tags": ["lane", "super"]
+    },
+    {
+      "id": "creep_dawn_paladin", "name": "Dawnforged Paladin", "kind": "Creep", "attackType": "Melee",
+      "maxHp": 1270, "armor": 4, "damageMin": 90, "damageMax": 100,
+      "attackRange": 1.4, "attackPoint": 0.467, "attackBackswing": 0.53, "baseAttackTime": 1.0,
+      "moveSpeed": 3.9, "collisionRadius": 0.35, "visionDay": 9, "visionNight": 6, "acquisitionRange": 6.5,
+      "bountyGoldMin": 16, "bountyGoldMax": 22, "bountyXp": 20, "hpPerUpgrade": 19, "damagePerUpgrade": 2,
+      "model": "creep_dawn_paladin", "attackSfx": "hammer_heavy", "deathSfx": "death_human", "tags": ["lane", "mega"]
+    },
+
+    {
+      "id": "creep_dusk_thrall", "name": "Grave Thrall", "kind": "Creep", "attackType": "Melee",
+      "maxHp": 550, "armor": 2, "damageMin": 19, "damageMax": 23,
+      "attackRange": 1.25, "attackPoint": 0.467, "attackBackswing": 0.53, "baseAttackTime": 1.0,
+      "moveSpeed": 3.9, "turnRate": 10, "collisionRadius": 0.3, "visionDay": 9, "visionNight": 6, "acquisitionRange": 6.5,
+      "bountyGoldMin": 36, "bountyGoldMax": 46, "bountyXp": 57,
+      "hpPerUpgrade": 12, "damagePerUpgrade": 1, "goldPerUpgrade": 1,
+      "model": "creep_dusk_thrall", "attackSfx": "claw_bone", "deathSfx": "death_bone", "tags": ["lane"]
+    },
+    {
+      "id": "creep_dusk_bonearcher", "name": "Bone Archer", "kind": "Creep", "attackType": "Ranged",
+      "maxHp": 300, "armor": 0, "damageMin": 21, "damageMax": 26,
+      "attackRange": 6.25, "attackPoint": 0.5, "attackBackswing": 0.67, "baseAttackTime": 1.0, "projectileSpeed": 11.25,
+      "moveSpeed": 3.9, "turnRate": 10, "collisionRadius": 0.3, "visionDay": 9, "visionNight": 6, "acquisitionRange": 6.5,
+      "bountyGoldMin": 41, "bountyGoldMax": 49, "bountyXp": 69,
+      "hpPerUpgrade": 12, "damagePerUpgrade": 2, "goldPerUpgrade": 1,
+      "model": "creep_dusk_bonearcher", "projectileVisual": "arrow_bone", "attackSfx": "bow", "deathSfx": "death_bone", "tags": ["lane"]
+    },
+    {
+      "id": "creep_dusk_catapult", "name": "Corpse Catapult", "kind": "Creep", "attackType": "Ranged",
+      "maxHp": 875, "armor": 0, "magicResist": 0.8, "damageMin": 35, "damageMax": 46,
+      "attackRange": 8.1, "attackPoint": 0.7, "attackBackswing": 0.3, "baseAttackTime": 3.0, "projectileSpeed": 12,
+      "moveSpeed": 3.4, "turnRate": 5, "collisionRadius": 0.5, "visionDay": 10, "visionNight": 10, "acquisitionRange": 8,
+      "bountyGoldMin": 66, "bountyGoldMax": 80, "bountyXp": 88, "siegeMultiplier": 2.5,
+      "model": "creep_dusk_catapult", "projectileVisual": "corpse_ball", "attackSfx": "catapult", "deathSfx": "death_wood", "tags": ["lane", "siege"]
+    },
+    {
+      "id": "creep_dusk_thrall_elite", "name": "Grave Champion", "kind": "Creep", "attackType": "Melee",
+      "maxHp": 700, "armor": 3, "damageMin": 36, "damageMax": 44,
+      "attackRange": 1.25, "attackPoint": 0.467, "attackBackswing": 0.53, "baseAttackTime": 1.0,
+      "moveSpeed": 3.9, "collisionRadius": 0.3, "visionDay": 9, "visionNight": 6, "acquisitionRange": 6.5,
+      "bountyGoldMin": 20, "bountyGoldMax": 26, "bountyXp": 25, "hpPerUpgrade": 19, "damagePerUpgrade": 2,
+      "model": "creep_dusk_thrall_elite", "attackSfx": "claw_bone", "deathSfx": "death_bone", "tags": ["lane", "super"]
+    },
+    {
+      "id": "creep_dusk_bonearcher_elite", "name": "Bone Sniper", "kind": "Creep", "attackType": "Ranged",
+      "maxHp": 475, "armor": 1, "damageMin": 41, "damageMax": 46,
+      "attackRange": 6.25, "attackPoint": 0.5, "attackBackswing": 0.67, "baseAttackTime": 1.0, "projectileSpeed": 11.25,
+      "moveSpeed": 3.9, "collisionRadius": 0.3, "visionDay": 9, "visionNight": 6, "acquisitionRange": 6.5,
+      "bountyGoldMin": 18, "bountyGoldMax": 26, "bountyXp": 22, "hpPerUpgrade": 18, "damagePerUpgrade": 3,
+      "model": "creep_dusk_bonearcher_elite", "projectileVisual": "arrow_bone", "attackSfx": "bow", "deathSfx": "death_bone", "tags": ["lane", "super"]
+    },
+    {
+      "id": "creep_dusk_crypthorror", "name": "Crypt Horror", "kind": "Creep", "attackType": "Melee",
+      "maxHp": 1270, "armor": 4, "damageMin": 90, "damageMax": 100,
+      "attackRange": 1.4, "attackPoint": 0.467, "attackBackswing": 0.53, "baseAttackTime": 1.0,
+      "moveSpeed": 3.9, "collisionRadius": 0.4, "visionDay": 9, "visionNight": 6, "acquisitionRange": 6.5,
+      "bountyGoldMin": 16, "bountyGoldMax": 22, "bountyXp": 20, "hpPerUpgrade": 19, "damagePerUpgrade": 2,
+      "model": "creep_dusk_crypthorror", "attackSfx": "claw_heavy", "deathSfx": "death_monster", "tags": ["lane", "mega"]
+    }
+  ]
+}

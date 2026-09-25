@@ -177,6 +177,7 @@ namespace Bloodfall.Simulation
         // ---- Structures ----
         public bool Invulnerable => (Flags & StatusFlags.Invulnerable) != 0;
         public List<Unit> ProtectedBy;
+        public List<Unit> UnlockedByAny;
         public string StructureId;
         public int Tier;
         public string Lane;
@@ -351,7 +352,7 @@ namespace Bloodfall.Simulation
             s.MaxHp = (h.BaseHp + s.Str * r.StrHp + a.Add[(int)StatType.MaxHp]) * (1f + a.Add[(int)StatType.MaxHpPct]);
             s.HpRegen = h.BaseHpRegen + s.Str * r.StrHpRegen + a.Add[(int)StatType.HpRegen] + s.MaxHp * a.Add[(int)StatType.HpRegenPct];
             s.MaxMana = h.BaseMana + s.Int * r.IntMana + a.Add[(int)StatType.MaxMana];
-            s.ManaRegen = h.BaseManaRegen + s.Int * r.IntManaRegen + a.Add[(int)StatType.ManaRegen];
+            s.ManaRegen = h.BaseManaRegen + s.Int * r.IntManaRegen + a.Add[(int)StatType.ManaRegen] + s.MaxMana * a.Add[(int)StatType.ManaRegenPct];
             s.Armor = (h.BaseArmor + s.Agi * r.AgiArmor + a.Add[(int)StatType.Armor]) * (1f + a.Add[(int)StatType.ArmorPct]);
             s.MagicResist = 1f - (1f - h.MagicResist) * a.InvProduct[(int)StatType.MagicResist] + a.Add[(int)StatType.MagicResist];
 
@@ -381,7 +382,7 @@ namespace Bloodfall.Simulation
             s.MaxHp = (d.MaxHp + upgradeHp + a.Add[(int)StatType.MaxHp]) * (1f + a.Add[(int)StatType.MaxHpPct]);
             s.HpRegen = d.HpRegen + a.Add[(int)StatType.HpRegen] + s.MaxHp * a.Add[(int)StatType.HpRegenPct];
             s.MaxMana = d.MaxMana + a.Add[(int)StatType.MaxMana];
-            s.ManaRegen = d.ManaRegen + a.Add[(int)StatType.ManaRegen];
+            s.ManaRegen = d.ManaRegen + a.Add[(int)StatType.ManaRegen] + s.MaxMana * a.Add[(int)StatType.ManaRegenPct];
             s.Armor = (d.Armor + a.Add[(int)StatType.Armor]) * (1f + a.Add[(int)StatType.ArmorPct]);
             s.MagicResist = 1f - (1f - d.MagicResist) * a.InvProduct[(int)StatType.MagicResist] + a.Add[(int)StatType.MagicResist];
             s.DamageMin = d.DamageMin + upgradeDmg + a.Add[(int)StatType.BaseDamage];

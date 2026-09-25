@@ -233,6 +233,7 @@ namespace Bloodfall.Simulation
                     Kind = ProjectileKind.Tracking,
                     Source = u,
                     Target = target,
+                    LastKnownTargetPos = target.Position,
                     Position = u.Position + MathUtil.FromAngle(u.Facing) * (u.Radius + 0.2f),
                     Speed = u.ProjectileSpeed,
                     IsAttack = true,
@@ -421,7 +422,7 @@ namespace Bloodfall.Simulation
                 OnBarracksDestroyed(victim);
             }
             // Unlock structures that this one was protecting.
-            foreach (var u in Units) if (u.ProtectedBy != null && u.ProtectedBy.Contains(victim)) RecomputeFlags(u);
+            foreach (var u in Units) if ((u.ProtectedBy != null && u.ProtectedBy.Contains(victim)) || (u.UnlockedByAny != null && u.UnlockedByAny.Contains(victim))) RecomputeFlags(u);
         }
 
         private void OnHeroDeath(Unit victim, Unit killer, Player killerPlayer, bool deny)

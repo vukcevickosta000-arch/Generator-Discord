@@ -67,6 +67,7 @@ namespace Bloodfall.Simulation
                 MoveToLaneFront(m, u, safe: true);
                 return;
             }
+            UseConsumables(m, u);
             if (m.Time < _nextDecision && _mode != Mode.Fight) { ExecuteMode(m, u); return; }
             _nextDecision = m.Time + _reaction * (0.7f + _rng.NextFloat() * 0.6f);
             ChooseMode(m, u);
@@ -81,7 +82,8 @@ namespace Bloodfall.Simulation
             var fountain = Fountain(m, u.Team);
             if (_mode == Mode.Retreat)
             {
-                bool healed = hp > 0.9f && (u.Stats.MaxMana <= 0 || u.Mana / Math.Max(1, u.Stats.MaxMana) > 0.6f);
+                bool healed = (hp > 0.9f && (u.Stats.MaxMana <= 0 || u.Mana / Math.Max(1, u.Stats.MaxMana) > 0.6f))
+                              || (hp > 0.6f && u.FindStatus("draught_regen") != null);
                 if (!healed) return;
             }
             var enemies = VisibleEnemyHeroes(m, u, 11f);
@@ -130,6 +132,12 @@ namespace Bloodfall.Simulation
         {
             var fountain = Fountain(m, u.Team);
             // Escape abilities while chased.
+            if (u.HpFraction > 0.18f && VisibleEnemyHeroes(m, u, 12f).Count == 0 && HasItem(u, "item_crimson_draught"))
+            {
+                // Heal up with consumables instead of walking all the way home.
+                _mode = Mode.Lane;
+                return;
+            }
             var chasers = VisibleEnemyHeroes(m, u, 8f);
             if (chasers.Count > 0 && u.HpFraction < 0.4f) TryCast(m, u, "escape", chasers[0]);
             if (Vector2.Distance(u.Position, fountain) > 4f && (u.CurrentOrder.Type != OrderType.Move || Vector2.Distance(u.CurrentOrder.Point, fountain) > 1f))
@@ -169,6 +177,15 @@ namespace Bloodfall.Simulation
         private void Farm(Match m, Unit u, bool push)
         {
             if (u.Action == ActionState.AttackWindup) return;
+            // Never stand inside enemy tower fire unless creeps are tanking it and we are pushing.
+            var danger = TowerThreat(m, u, u.Position);
+            if (danger != null && (!push || danger.AttackTargetId == u.Id || !CreepsTankingStructure(m, danger, u.Team)))
+            {
+                var away = MathUtil.SafeNormalize(u.Position - danger.Position, Vector2.UnitX);
+                var safe = m.Grid.NearestWalkable(danger.Position + away * (m.AttackReach(danger, u) + 3f));
+                if (u.CurrentOrder.Type != OrderType.Move || Vector2.Distance(u.CurrentOrder.Point, safe) > 1.5f) m.IssueOrder(u, Order.MoveTo(u.Id, safe));
+                return;
+            }
             float myDmg = u.Stats.AverageDamage;
             // Last hit / deny candidates near the lane front.
             Unit lastHit = null, deny = null, harass = null, pushTarget = null;
@@ -182,7 +199,8 @@ namespace Bloodfall.Simulation
                 float travel = u.ProjectileSpeed > 0 ? Vector2.Distance(u.Position, c.Position) / u.ProjectileSpeed : 0f;
                 float incoming = c.IsCreep ? IncomingDps(m, c) * (u.Stats.AttackPoint + travel) : 0f;
                 float margin = 1f + (1f - _lastHitSkill) * 0.9f * (_rng.NextFloat() - 0.3f);
-                if (c.Team != u.Team && c.Team != Team.Neutral && !c.IsStructure)
+                bool unsafeTarget = TowerThreat(m, u, c.Position) != null && !push;
+                if (c.Team != u.Team && c.Team != Team.Neutral && !c.IsStructure && !unsafeTarget)
                 {
                     if (c.Hp - incoming * _lastHitSkill <= effective * margin && c.Hp < bestLh) { bestLh = c.Hp; lastHit = c; }
                     if (push && pushTarget == null) pushTarget = c;
@@ -239,16 +257,60 @@ namespace Bloodfall.Simulation
             var wps = lane.Waypoints;
             // Front = the most advanced allied creep in the lane; otherwise our outer tower.
             Vector2 front = FrontPosition(m, u);
-            Vector2 enemyDir = u.Team == Team.Dawn ? (Vector2)wps[wps.Count - 1] - (Vector2)wps[0] : (Vector2)wps[0] - (Vector2)wps[wps.Count - 1];
-            enemyDir = MathUtil.SafeNormalize(enemyDir, Vector2.UnitX);
-            float backoff = u.AttackType == AttackType.Ranged ? 3.5f : 1.5f;
+            Vector2 enemyDir = LocalLaneDirection(wps, front, u.Team);
+            float backoff = u.AttackType == AttackType.Ranged ? 4.5f : 2.5f;
             if (safe) backoff += 1.5f;
             var goal = m.Grid.NearestWalkable(front - enemyDir * backoff);
+            // Pull back along the lane until the spot is outside enemy tower fire.
+            for (int i = 0; i < 12 && TowerThreat(m, u, goal) != null; i++) goal = m.Grid.NearestWalkable(goal - enemyDir * 2.5f);
             if (Vector2.Distance(u.Position, goal) > 1.5f &&
                 (u.CurrentOrder.Type != OrderType.Move || Vector2.Distance(u.CurrentOrder.Point, goal) > 2f))
                 m.IssueOrder(u, Order.MoveTo(u.Id, goal));
             else if (Vector2.Distance(u.Position, goal) <= 1.5f && u.CurrentOrder.Type == OrderType.Move)
                 m.IssueOrder(u, Order.StopOrder(u.Id));
+        }
+
+        /// <summary>Direction toward the enemy base along the lane segment nearest to 'p'.</summary>
+        private static Vector2 LocalLaneDirection(List<JVec2> wps, Vector2 p, Team team)
+        {
+            int best = 0; float bd = float.MaxValue;
+            for (int i = 0; i < wps.Count - 1; i++)
+            {
+                var c = MathUtil.ClosestPointOnSegment(wps[i], wps[i + 1], p);
+                float d = Vector2.DistanceSquared(c, p);
+                if (d < bd) { bd = d; best = i; }
+            }
+            var dir = MathUtil.SafeNormalize((Vector2)wps[best + 1] - (Vector2)wps[best], Vector2.UnitX);
+            return team == Team.Dawn ? dir : -dir;
+        }
+
+        /// <summary>Returns an enemy tower that would shoot a hero standing at 'pos' (null if safe).</summary>
+        private static Unit TowerThreat(Match m, Unit u, Vector2 pos)
+        {
+            foreach (var t in m.Units)
+            {
+                if ((t.Kind != UnitKind.Tower && t.Kind != UnitKind.Fountain) || t.Dead || t.Team == u.Team || t.Team == Team.Neutral) continue;
+                float reach = t.Stats.AttackRange + t.Radius + u.Radius + 1.5f;
+                if (Vector2.DistanceSquared(t.Position, pos) > reach * reach) continue;
+                return t;
+            }
+            return null;
+        }
+
+        private void UseConsumables(Match m, Unit u)
+        {
+            if (u.Dead || u.Inventory == null || m.AtBase(u)) return;
+            bool enemyNear = VisibleEnemyHeroes(m, u, 9f).Count > 0;
+            for (int s = 0; s < u.Inventory.Length; s++)
+            {
+                var it = u.Inventory[s];
+                if (it?.Active == null || !it.Active.IsReady) continue;
+                string id = it.Def.Id;
+                if (id == "item_crimson_draught" && u.HpFraction < 0.55f && !enemyNear && u.FindStatus("draught_regen") == null)
+                { m.IssueOrder(u, Order.CastNoTargetOrder(u.Id, Order.ItemSlotBase + s)); return; }
+                if (id == "item_mana_ember" && u.Stats.MaxMana > 0 && u.Mana / u.Stats.MaxMana < 0.4f && !enemyNear && u.FindStatus("ember_regen") == null)
+                { m.IssueOrder(u, Order.CastNoTargetOrder(u.Id, Order.ItemSlotBase + s)); return; }
+            }
         }
 
         private Vector2 FrontPosition(Match m, Unit u)
@@ -287,7 +349,7 @@ namespace Bloodfall.Simulation
                 string usage = d.BotUsage ?? "";
                 bool match = usage.Contains(intent) || (intent == "ultimate" && d.IsUltimate && usage.Length > 0 && !usage.Contains("escape"));
                 if (!match) continue;
-                if (u.Mana < m.ManaCostOf(u, ab) || (m.HealthCostOf(u, ab) > 0 && u.HpFraction < 0.35f)) continue;
+                if (u.Mana < m.ManaCostOf(u, ab) || (m.HealthCostOf(u, ab) > 0 && u.HpFraction < (intent == "farm" ? 0.75f : 0.35f))) continue;
                 if (d.IsUltimate && intent != "ultimate" && target != null && target.HpFraction > 0.7f && _difficulty < BotDifficulty.Nightmare) continue;
                 float range = m.EffectiveCastRange(u, ab);
                 switch (d.Targeting)
@@ -368,6 +430,8 @@ namespace Bloodfall.Simulation
             if (u.HpFraction < 0.5f && m.AtBase(u) && p.Gold > 150 && m.Data.Items.ContainsKey("item_crimson_draught") && !OwnsItem(u, "item_crimson_draught"))
                 m.IssueOrder(u, Order.Buy(u.Id, "item_crimson_draught"));
         }
+
+        private static bool HasItem(Unit u, string id) => u.Inventory != null && u.Inventory.Any(i => i?.Def.Id == id);
 
         private static bool OwnsItem(Unit u, string id)
         {

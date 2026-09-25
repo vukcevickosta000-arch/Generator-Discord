@@ -197,6 +197,9 @@ namespace Bloodfall.Simulation
             if (!u.CanCast && ab.Item == null) { EndChannel(u, true); CompleteOrder(u); return; }
             var target = GetUnit(u.ActionTargetId);
             if (u.ActionTargetId != 0 && (target == null || target.Dead)) { EndChannel(u, true); CompleteOrder(u); return; }
+            // Channels on a unit break when the target escapes well beyond cast range.
+            if (target != null && target != u && Vector2.Distance(target.Position, u.Position) > EffectiveCastRange(u, ab) * 1.5f + 2f)
+            { EndChannel(u, true); CompleteOrder(u); return; }
             u.ChannelRemaining -= dt;
             u.ChannelTickTimer -= dt;
             if (ab.Def.OnChannelTick != null && u.ChannelTickTimer <= 0f)

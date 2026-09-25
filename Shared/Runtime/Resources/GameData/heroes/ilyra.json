@@ -1,0 +1,164 @@
+{
+  "hero": {
+    "id": "hero_ilyra",
+    "name": "Ilyra",
+    "title": "The Blood Witch",
+    "faction": "CrimsonCourt",
+    "primaryAttribute": "Intelligence",
+    "roles": ["Nuker", "Battle Mage", "Controller"],
+    "difficulty": 2,
+    "resource": "Health",
+    "attackType": "Ranged",
+    "lore": "Ilyra was a physician of the Court, the one who kept the Ancients' thralls alive long enough to be useful. She learned that blood remembers everything: every wound, every oath, every lie. When the Court fell she opened her own veins and found an ocean of power waiting there. Now she spends herself like coin, bleeding for every spell, and smiles through it, because blood always comes back to the one who knows how to call it.",
+    "personality": "Clinical, darkly witty, fascinated by pain as a science rather than a pleasure.",
+    "strengths": ["Enormous burst while healthy", "Self-sustain through Exsanguinate", "Excellent lane harass with Blood Lance"],
+    "weaknesses": ["Spending health makes her fragile", "Channelled ultimate can be interrupted", "Low armour"],
+    "counters": ["Burst assassins that punish low health", "Silences and stuns during Exsanguinate"],
+    "synergies": ["Initiators that hold enemies still (Vorak, Thael)", "Healers and shield supports"],
+    "baseHp": 200, "baseHpRegen": 0.5, "baseMana": 75, "baseManaRegen": 0.3, "baseArmor": 0, "magicResist": 0.25,
+    "damageMin": 22, "damageMax": 28, "attackRange": 6.9, "attackPoint": 0.45, "attackBackswing": 0.55, "baseAttackTime": 1.7,
+    "projectileSpeed": 11.25, "moveSpeed": 3.65, "turnRate": 13, "collisionRadius": 0.33, "visionDay": 22, "visionNight": 10,
+    "str": 18, "strGain": 1.9, "agi": 16, "agiGain": 1.6, "int": 24, "intGain": 3.0,
+    "abilities": ["ilyra_sanguine_covenant", "ilyra_blood_lance", "ilyra_hemorrhage_field", "ilyra_sanguine_offering", "ilyra_exsanguinate"],
+    "recommendedItems": {
+      "start": ["item_crimson_draught", "item_mantle_lore", "item_mantle_lore", "item_iron_circlet"],
+      "early": ["item_pilgrim_greaves", "item_wellspring_ring"],
+      "core": ["item_stormcaller_rod", "item_sanguine_scepter", "item_shadowstep_talisman"],
+      "late": ["item_grave_ward_amulet", "item_heart_colossus"]
+    },
+    "model": "hero_ilyra",
+    "portrait": "portrait_ilyra",
+    "projectileVisual": "blood_orb",
+    "attackSfx": "ilyra_bolt",
+    "voiceSet": "ilyra",
+    "botProfile": "nuker"
+  },
+  "abilities": [
+    {
+      "id": "ilyra_sanguine_covenant",
+      "name": "Sanguine Covenant",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 1,
+      "description": "Each spell Ilyra casts grants a stack of Blood Surge (+4% spell amplification for 8 s, up to 5 stacks). Her basic spells cost health instead of mana.",
+      "triggers": [
+        { "on": "AbilityCast", "team": "Any", "effects": [ { "type": "ApplyStatus", "target": "Caster", "status": "ilyra_blood_surge", "duration": 8 } ] }
+      ],
+      "statuses": [
+        { "id": "ilyra_blood_surge", "name": "Blood Surge", "description": "Spell amplification per stack.", "isDebuff": false, "dispel": "Basic",
+          "stacking": "Intensity", "maxStacks": 5, "modifiers": [ { "stat": "SpellAmp", "value": 0.04, "perStack": true } ], "icon": "status_blood_surge", "vfx": "blood_surge" }
+      ],
+      "icon": "ability_ilyra_covenant"
+    },
+    {
+      "id": "ilyra_blood_lance",
+      "name": "Blood Lance",
+      "slot": "Q",
+      "targeting": "Point",
+      "targetTeam": "Enemy",
+      "description": "Hurls a lance of congealed blood in a line, piercing all enemies for 80/150/220/290 magical damage and slowing them by 20% for 1.5 s. Costs 40/55/70/85 health.",
+      "castRange": [11, 11, 11, 11],
+      "castPoint": 0.3,
+      "backswing": 0.4,
+      "cooldown": [8, 7, 6, 5],
+      "healthCost": [40, 55, 70, 85],
+      "onCast": [
+        { "type": "Projectile", "projectile": "Linear", "speed": 22, "range": 11, "width": 1.0, "stopOnFirstHit": false, "team": "Enemy", "types": "Units", "vfx": "blood_lance",
+          "onHit": [
+            { "type": "Damage", "amount": [80, 150, 220, 290], "damageType": "Magical", "vfx": "blood_splash" },
+            { "type": "ApplyStatus", "status": "slow_light", "duration": 1.5 }
+          ] }
+      ],
+      "icon": "ability_ilyra_lance",
+      "castAnimation": "Cast1",
+      "castSfx": "ilyra_lance",
+      "botUsage": "nuke"
+    },
+    {
+      "id": "ilyra_hemorrhage_field",
+      "name": "Hemorrhage Field",
+      "slot": "W",
+      "targeting": "Point",
+      "targetTeam": "Enemy",
+      "description": "After 0.8 s, blood erupts from the ground in a 3.5 m radius, dealing 60/100/140/180 magical damage and leaving a hemorrhaging pool for 4 s that deals 20/30/40/50 damage per second and slows by 20%.",
+      "castRange": [9, 9, 9, 9],
+      "castPoint": 0.35,
+      "backswing": 0.4,
+      "cooldown": [14, 13, 12, 11],
+      "manaCost": [100, 110, 120, 130],
+      "aoeRadius": 3.5,
+      "onCast": [
+        { "type": "Delayed", "delay": 0.8, "radius": 3.5, "center": "Point", "vfx": "hemorrhage_telegraph",
+          "effects": [
+            { "type": "Area", "radius": 3.5, "center": "Point", "team": "Enemy", "types": "Units", "vfx": "hemorrhage_eruption", "shake": 0.25,
+              "effects": [ { "type": "Damage", "amount": [60, 100, 140, 180], "damageType": "Magical" } ] },
+            { "type": "Zone", "radius": 3.5, "center": "Point", "zoneDuration": 4, "interval": 0.5, "team": "Enemy", "types": "Units", "vfx": "hemorrhage_pool",
+              "effects": [
+                { "type": "Damage", "amount": [10, 15, 20, 25], "damageType": "Magical" },
+                { "type": "ApplyStatus", "status": "slow_light", "duration": 0.6 }
+              ] }
+          ] }
+      ],
+      "icon": "ability_ilyra_hemorrhage",
+      "castAnimation": "Cast2",
+      "castSfx": "ilyra_hemorrhage",
+      "botUsage": "aoe,farm,nuke"
+    },
+    {
+      "id": "ilyra_sanguine_offering",
+      "name": "Sanguine Offering",
+      "slot": "E",
+      "targeting": "NoTarget",
+      "description": "Ilyra opens her veins, sacrificing 15% of her current health to restore 60/90/120/150 mana and gain 10/15/20/25% spell amplification for 8 s.",
+      "castPoint": 0,
+      "backswing": 0,
+      "ignoreFacing": true,
+      "cooldown": [20, 18, 16, 14],
+      "onCast": [
+        { "type": "SpendResource", "target": "Caster", "pctCurrentHp": 0.15, "vfx": "blood_offering" },
+        { "type": "RestoreMana", "target": "Caster", "amount": [60, 90, 120, 150] },
+        { "type": "ApplyStatus", "target": "Caster", "status": "ilyra_offering", "duration": 8 }
+      ],
+      "statuses": [
+        { "id": "ilyra_offering", "name": "Sanguine Offering", "isDebuff": false, "dispel": "Basic",
+          "modifiers": [ { "stat": "SpellAmp", "value": [0.10, 0.15, 0.20, 0.25] } ], "icon": "status_offering", "vfx": "offering_glow" }
+      ],
+      "icon": "ability_ilyra_offering",
+      "castAnimation": "Cast3",
+      "castSfx": "ilyra_offering",
+      "botUsage": "buff"
+    },
+    {
+      "id": "ilyra_exsanguinate",
+      "name": "Exsanguinate",
+      "slot": "R",
+      "isUltimate": true,
+      "maxLevel": 3,
+      "targeting": "Unit",
+      "targetTeam": "Enemy",
+      "targetTypes": "Hero, Creep, Neutral, Summon",
+      "description": "Channels for up to 3 s, draining 60/100/140 magical damage per second from the target and healing Ilyra for the full amount. If the channel completes, the target's blood boils: 150/250/350 magical damage and a 1.5 s stun.",
+      "castRange": [7, 7.5, 8],
+      "castPoint": 0.2,
+      "backswing": 0.3,
+      "channelTime": 3,
+      "channelInterval": 0.25,
+      "cooldown": [110, 90, 70],
+      "manaCost": [150, 225, 300],
+      "onCast": [],
+      "onChannelTick": [
+        { "type": "Damage", "amount": [15, 25, 35], "damageType": "Magical", "healCasterPct": 1.0, "vfx": "exsanguinate_beam" },
+        { "type": "ApplyStatus", "status": "slow_light", "duration": 0.3 }
+      ],
+      "onChannelEnd": [
+        { "type": "Damage", "amount": [150, 250, 350], "damageType": "Magical", "vfx": "blood_boil", "shake": 0.4 },
+        { "type": "ApplyStatus", "status": "stun", "duration": 1.5 }
+      ],
+      "icon": "ability_ilyra_exsanguinate",
+      "castAnimation": "Channel",
+      "castSfx": "ilyra_exsanguinate",
+      "voiceLine": "ilyra_ult",
+      "botUsage": "ultimate,nuke"
+    }
+  ]
+}

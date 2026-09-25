@@ -1,0 +1,488 @@
+{
+  "hero": {
+    "id": "hero_vorak",
+    "name": "Vorak",
+    "title": "The Blood Tyrant",
+    "faction": "CrimsonCourt",
+    "primaryAttribute": "Strength",
+    "roles": [
+      "Initiator",
+      "Bruiser",
+      "Carry"
+    ],
+    "difficulty": 1,
+    "resource": "Mana",
+    "attackType": "Melee",
+    "lore": "Before the Bloodfall, Vorak ruled the eastern marches of Velmoragh from a throne carved out of a single ruby the size of a cathedral door. When the Blood Moon cracked and the Ancients were chained, his court was burned and his name was chiselled out of every monument. It was not enough. Nine centuries later the crimson rain woke him in the ossuary where his knights had hidden him, and he walked out still wearing the crown they buried him in. He fights for whoever promises him Velmoragh's throne, and he intends to collect.",
+    "personality": "Imperious, patient, amused by mortal courage. Speaks of battles as banquets and enemies as courses.",
+    "strengths": [
+      "Reliable single-target initiation",
+      "Sustains through lane with feast heals",
+      "Ultimate turns team fights"
+    ],
+    "weaknesses": [
+      "Commits hard with Crimson Charge",
+      "Mana hungry early",
+      "Kited by slows and roots"
+    ],
+    "counters": [
+      "Heroes with long disables",
+      "Healing reduction",
+      "Kiting ranged carries"
+    ],
+    "synergies": [
+      "Area-damage mages who follow Bloodfall",
+      "Hook initiators such as Thael"
+    ],
+    "baseHp": 200,
+    "baseHpRegen": 1.0,
+    "baseMana": 75,
+    "baseManaRegen": 0.3,
+    "baseArmor": 1.0,
+    "magicResist": 0.25,
+    "damageMin": 28,
+    "damageMax": 34,
+    "attackRange": 1.6,
+    "attackPoint": 0.4,
+    "attackBackswing": 0.5,
+    "baseAttackTime": 1.7,
+    "moveSpeed": 3.8,
+    "turnRate": 15,
+    "collisionRadius": 0.35,
+    "visionDay": 22,
+    "visionNight": 10,
+    "str": 25,
+    "strGain": 3.1,
+    "agi": 16,
+    "agiGain": 1.8,
+    "int": 15,
+    "intGain": 1.6,
+    "abilities": [
+      "vorak_lord_of_the_feast",
+      "vorak_crimson_charge",
+      "vorak_blood_rend",
+      "vorak_sovereigns_wrath",
+      "vorak_bloodfall"
+    ],
+    "recommendedItems": {
+      "start": [
+        "item_crimson_draught",
+        "item_gauntlets_might",
+        "item_gauntlets_might",
+        "item_rusted_blade"
+      ],
+      "early": [
+        "item_marchers_haste",
+        "item_vampiric_mask"
+      ],
+      "core": [
+        "item_shadowstep_talisman",
+        "item_headsman_cleaver",
+        "item_bulwark_plate"
+      ],
+      "late": [
+        "item_heart_colossus",
+        "item_nightfang_greatsword"
+      ]
+    },
+    "model": "hero_vorak",
+    "portrait": "portrait_vorak",
+    "modelScale": 1.0,
+    "attackSfx": "vorak_greatsword",
+    "voiceSet": "vorak",
+    "botProfile": "initiator"
+  },
+  "abilities": [
+    {
+      "id": "vorak_lord_of_the_feast",
+      "name": "Lord of the Feast",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 1,
+      "description": "Every death within 7 m nourishes Vorak: he restores 2% of his maximum health when a unit dies nearby and 10% when a hero falls.",
+      "triggers": [
+        {
+          "on": "NearbyDeath",
+          "types": "Basic",
+          "team": "Any",
+          "effects": [
+            {
+              "type": "Heal",
+              "target": "Caster",
+              "pctMaxHp": 0.02
+            }
+          ],
+          "radius": 7
+        },
+        {
+          "on": "NearbyDeath",
+          "types": "Hero",
+          "team": "Any",
+          "effects": [
+            {
+              "type": "Heal",
+              "target": "Caster",
+              "pctMaxHp": 0.1,
+              "vfx": "feast_heal"
+            }
+          ],
+          "radius": 7
+        }
+      ],
+      "icon": "ability_vorak_feast"
+    },
+    {
+      "id": "vorak_crimson_charge",
+      "name": "Crimson Charge",
+      "slot": "Q",
+      "targeting": "Point",
+      "targetTeam": "Enemy",
+      "description": "Vorak charges toward a point, trampling enemies he passes for 30/50/70/90 physical damage and knocking them aside. The first enemy hero struck ends the charge, taking 60/120/180/240 damage and a 1.0/1.2/1.4/1.6s stun. On arrival he slams the ground for 40/60/80/100 damage around him.",
+      "castRange": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "castPoint": 0.25,
+      "backswing": 0.3,
+      "cooldown": [
+        16,
+        14,
+        12,
+        10
+      ],
+      "manaCost": [
+        90,
+        100,
+        110,
+        120
+      ],
+      "aoeRadius": 2.5,
+      "onCast": [
+        {
+          "type": "Dash",
+          "speed": 22,
+          "maxDistance": [
+            9,
+            10,
+            11,
+            12
+          ],
+          "stopOnUnitCollision": true,
+          "collisionRadius": 1.1,
+          "collisionTypes": "Hero",
+          "vfx": "crimson_charge_trail",
+          "onCollide": [
+            {
+              "type": "Damage",
+              "amount": [
+                60,
+                120,
+                180,
+                240
+              ],
+              "damageType": "Physical",
+              "vfx": "blood_impact_heavy"
+            },
+            {
+              "type": "ApplyStatus",
+              "status": "stun",
+              "duration": [
+                1.0,
+                1.2,
+                1.4,
+                1.6
+              ]
+            }
+          ],
+          "onPass": [
+            {
+              "type": "Damage",
+              "amount": [
+                30,
+                50,
+                70,
+                90
+              ],
+              "damageType": "Physical",
+              "vfx": "blood_impact"
+            },
+            {
+              "type": "Knockback",
+              "distance": 1.5,
+              "moveDuration": 0.2
+            }
+          ],
+          "onArrive": [
+            {
+              "type": "Area",
+              "radius": 2.5,
+              "center": "Caster",
+              "team": "Enemy",
+              "types": "Units",
+              "vfx": "ground_slam_blood",
+              "shake": 0.35,
+              "effects": [
+                {
+                  "type": "Damage",
+                  "amount": [
+                    40,
+                    60,
+                    80,
+                    100
+                  ],
+                  "damageType": "Physical"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "icon": "ability_vorak_charge",
+      "castAnimation": "Cast1",
+      "castSfx": "vorak_charge",
+      "botUsage": "engage"
+    },
+    {
+      "id": "vorak_blood_rend",
+      "name": "Blood Rend",
+      "slot": "W",
+      "targeting": "NoTarget",
+      "description": "Vorak rends everything around him with his greatsword, dealing 70/110/150/190 physical damage, healing for 20% of damage dealt and applying Bleeding: 8/12/16/20 damage per second and 12% slow per stack for 4 s. Stacks 3 times.",
+      "castPoint": 0.3,
+      "backswing": 0.35,
+      "cooldown": [
+        11,
+        10,
+        9,
+        8
+      ],
+      "manaCost": [
+        70,
+        80,
+        90,
+        100
+      ],
+      "aoeRadius": 3.2,
+      "onCast": [
+        {
+          "type": "Area",
+          "radius": 3.2,
+          "center": "Caster",
+          "team": "Enemy",
+          "types": "Units",
+          "vfx": "blood_rend_sweep",
+          "effects": [
+            {
+              "type": "Damage",
+              "amount": [
+                70,
+                110,
+                150,
+                190
+              ],
+              "damageType": "Physical",
+              "healCasterPct": 0.2,
+              "vfx": "blood_impact"
+            },
+            {
+              "type": "ApplyStatus",
+              "status": "vorak_bleed",
+              "duration": 4
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "id": "vorak_bleed",
+          "name": "Bleeding",
+          "description": "Taking physical damage over time and slowed. Stacks.",
+          "isDebuff": true,
+          "dispel": "Basic",
+          "stacking": "Intensity",
+          "maxStacks": 3,
+          "modifiers": [
+            {
+              "stat": "MoveSpeedPct",
+              "value": -0.12,
+              "perStack": true
+            }
+          ],
+          "interval": 1.0,
+          "onInterval": [
+            {
+              "type": "Damage",
+              "amount": [
+                8,
+                12,
+                16,
+                20
+              ],
+              "damageType": "Physical"
+            }
+          ],
+          "icon": "status_bleed",
+          "vfx": "bleed_drip"
+        }
+      ],
+      "icon": "ability_vorak_rend",
+      "castAnimation": "Cast2",
+      "castSfx": "vorak_rend",
+      "botUsage": "aoe,farm"
+    },
+    {
+      "id": "vorak_sovereigns_wrath",
+      "name": "Sovereign's Wrath",
+      "slot": "E",
+      "targeting": "Passive",
+      "description": "Every 4th consecutive attack on the same target crushes it for 40/70/100/130 bonus physical damage and a 0.3 s stun. Also grants 1/2/3/4 armor.",
+      "triggers": [
+        {
+          "on": "AttackLanded",
+          "everyN": 4,
+          "sameTarget": true,
+          "types": "Units",
+          "team": "Enemy",
+          "effects": [
+            {
+              "type": "Damage",
+              "amount": [
+                40,
+                70,
+                100,
+                130
+              ],
+              "damageType": "Physical",
+              "isAttackDamage": false,
+              "vfx": "wrath_bash",
+              "shake": 0.15
+            },
+            {
+              "type": "ApplyStatus",
+              "status": "ministun",
+              "duration": 0.3
+            }
+          ]
+        }
+      ],
+      "passiveModifiers": [
+        {
+          "stat": "Armor",
+          "value": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "icon": "ability_vorak_wrath"
+    },
+    {
+      "id": "vorak_bloodfall",
+      "name": "Bloodfall",
+      "slot": "R",
+      "isUltimate": true,
+      "maxLevel": 3,
+      "targeting": "Point",
+      "targetTeam": "Enemy",
+      "description": "Vorak leaps into the sky and crashes down like the crimson rain of the first Bloodfall. While airborne he is invulnerable. The impact deals 150/275/400 physical damage in a 4 m radius, stuns for 1.2/1.5/1.8 s and marks victims with Blood Tithe: they take 12/16/20% more damage from all sources for 6 s.",
+      "castRange": [
+        10,
+        11,
+        12
+      ],
+      "castPoint": 0.35,
+      "backswing": 0.4,
+      "cooldown": [
+        100,
+        85,
+        70
+      ],
+      "manaCost": [
+        150,
+        200,
+        250
+      ],
+      "aoeRadius": 4,
+      "onCast": [
+        {
+          "type": "Leap",
+          "maxDistance": [
+            10,
+            11,
+            12
+          ],
+          "moveDuration": 0.75,
+          "height": 6,
+          "invulnerable": true,
+          "vfx": "bloodfall_leap",
+          "onArrive": [
+            {
+              "type": "Area",
+              "radius": 4,
+              "center": "Caster",
+              "team": "Enemy",
+              "types": "Units",
+              "vfx": "bloodfall_impact",
+              "shake": 0.9,
+              "effects": [
+                {
+                  "type": "Damage",
+                  "amount": [
+                    150,
+                    275,
+                    400
+                  ],
+                  "damageType": "Physical"
+                },
+                {
+                  "type": "ApplyStatus",
+                  "status": "stun",
+                  "duration": [
+                    1.2,
+                    1.5,
+                    1.8
+                  ]
+                },
+                {
+                  "type": "ApplyStatus",
+                  "status": "vorak_blood_tithe",
+                  "duration": 6
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "id": "vorak_blood_tithe",
+          "name": "Blood Tithe",
+          "description": "Takes increased damage from all sources.",
+          "isDebuff": true,
+          "dispel": "Strong",
+          "modifiers": [
+            {
+              "stat": "DamageTakenPct",
+              "value": [
+                0.12,
+                0.16,
+                0.2
+              ]
+            }
+          ],
+          "icon": "status_blood_tithe",
+          "vfx": "blood_tithe_mark"
+        }
+      ],
+      "icon": "ability_vorak_bloodfall",
+      "castAnimation": "CastUlt",
+      "castSfx": "vorak_bloodfall",
+      "voiceLine": "vorak_ult",
+      "botUsage": "ultimate,engage"
+    }
+  ]
+}

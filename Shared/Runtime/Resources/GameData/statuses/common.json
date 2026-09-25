@@ -1,0 +1,34 @@
+{
+  "$comment": "Status effects shared by many heroes and items. Hero-specific statuses live in the hero files.",
+  "statuses": [
+    { "id": "stun", "name": "Stunned", "description": "Cannot move, attack or cast.", "isDebuff": true, "dispel": "Strong", "flags": "Stunned", "icon": "status_stun", "vfx": "stun_stars" },
+    { "id": "ministun", "name": "Stunned", "isDebuff": true, "dispel": "Strong", "flags": "Stunned", "icon": "status_stun", "vfx": "stun_flash" },
+    { "id": "root", "name": "Rooted", "description": "Cannot move.", "isDebuff": true, "dispel": "Basic", "flags": "Rooted", "icon": "status_root", "vfx": "root_chains" },
+    { "id": "silence", "name": "Silenced", "description": "Cannot cast abilities.", "isDebuff": true, "dispel": "Basic", "flags": "Silenced", "icon": "status_silence", "vfx": "silence_rune" },
+    { "id": "disarm", "name": "Disarmed", "description": "Cannot attack.", "isDebuff": true, "dispel": "Basic", "flags": "Disarmed", "icon": "status_disarm" },
+    { "id": "fear", "name": "Feared", "description": "Flees uncontrollably.", "isDebuff": true, "dispel": "Strong", "flags": "Feared", "icon": "status_fear", "vfx": "fear_skull" },
+    { "id": "hex", "name": "Hexed", "description": "Transformed into a harmless creature.", "isDebuff": true, "dispel": "Strong", "flags": "Hexed|Silenced|Disarmed|Muted",
+      "modifiers": [{ "stat": "MoveSpeedPct", "value": -0.4 }], "icon": "status_hex", "modelOverride": "hex_bat" },
+    { "id": "slow_light", "name": "Slowed", "isDebuff": true, "dispel": "Basic", "modifiers": [{ "stat": "MoveSpeedPct", "value": -0.2 }], "icon": "status_slow" },
+    { "id": "slow_heavy", "name": "Crippled", "isDebuff": true, "dispel": "Basic", "modifiers": [{ "stat": "MoveSpeedPct", "value": -0.5 }], "icon": "status_slow" },
+    { "id": "revealed", "name": "Revealed", "isDebuff": true, "dispel": "None", "flags": "Revealed", "icon": "status_reveal" },
+    { "id": "magic_immune", "name": "Magic Immunity", "isDebuff": false, "dispel": "None", "flags": "MagicImmune", "icon": "status_immune", "vfx": "magic_immune" },
+    { "id": "invulnerable", "name": "Invulnerable", "isDebuff": false, "dispel": "None", "flags": "Invulnerable", "icon": "status_invuln" },
+    { "id": "deniable", "name": "Deniable", "hidden": true, "isDebuff": true, "dispel": "None" },
+    { "id": "fountain_restoration", "name": "Fountain Restoration", "isDebuff": false, "dispel": "None", "hidden": false,
+      "modifiers": [{ "stat": "HpRegenPct", "value": 0.05 }, { "stat": "ManaRegenPct", "value": 0.05 }], "icon": "status_fountain" },
+    { "id": "draught_regen", "name": "Crimson Draught", "description": "Restoring health. Broken by damage from enemy heroes.", "isDebuff": false, "dispel": "Basic",
+      "modifiers": [{ "stat": "HpRegen", "value": 40 }], "icon": "item_crimson_draught", "vfx": "heal_blood",
+      "triggers": [{ "on": "DamageTaken", "types": "Hero", "team": "Enemy", "effects": [{ "type": "RemoveStatus", "target": "Caster", "status": "draught_regen" }] }] },
+    { "id": "ember_regen", "name": "Ember of Clarity", "description": "Restoring mana. Broken by damage from enemy heroes.", "isDebuff": false, "dispel": "Basic",
+      "modifiers": [{ "stat": "ManaRegen", "value": 6.4 }], "icon": "item_mana_ember", "vfx": "mana_ember",
+      "triggers": [{ "on": "DamageTaken", "types": "Hero", "team": "Enemy", "effects": [{ "type": "RemoveStatus", "target": "Caster", "status": "ember_regen" }] }] },
+    { "id": "shield_barrier", "name": "Warding Barrier", "isDebuff": false, "dispel": "Basic", "shield": 300, "shieldType": "Magical", "icon": "status_barrier", "vfx": "barrier" },
+    { "id": "bloodbound", "name": "Bloodbound", "description": "Empowered by the Heart of Vharoth.", "isDebuff": false, "dispel": "None", "flags": "Bloodbound",
+      "modifiers": [{ "stat": "OutgoingDamagePct", "value": 0.15 }, { "stat": "HpRegen", "value": 10 }, { "stat": "MoveSpeedPct", "value": 0.08 }], "icon": "status_bloodbound", "vfx": "bloodbound_aura" }
+  ],
+  "abilities": [
+    { "id": "fountain_restoration", "name": "Font of Renewal", "slot": "Innate", "targeting": "Passive", "maxLevel": 1,
+      "aura": { "radius": 10, "team": "AllyOrSelf", "types": "Units", "status": "fountain_restoration" } }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "$comment": "Wards and generic summons. Hero-specific summons live in the hero's own file.",
+  "units": [
+    { "id": "ward_watcher", "name": "Watcher's Eye", "kind": "Ward", "maxHp": 4, "armor": 0, "damageMin": 0, "damageMax": 0,
+      "moveSpeed": 0, "collisionRadius": 0.2, "visionDay": 16, "visionNight": 16, "innateFlags": "Invisible|FlyingVision",
+      "bountyGoldMin": 50, "bountyGoldMax": 50, "bountyXp": 50, "model": "ward_watcher", "deathSfx": "ward_break" },
+    { "id": "ward_sentry", "name": "Truesight Lantern", "kind": "Ward", "maxHp": 4, "armor": 0, "damageMin": 0, "damageMax": 0,
+      "moveSpeed": 0, "collisionRadius": 0.2, "visionDay": 2, "visionNight": 2, "trueSightRadius": 11, "innateFlags": "Invisible",
+      "bountyGoldMin": 50, "bountyGoldMax": 50, "bountyXp": 50, "model": "ward_sentry", "deathSfx": "ward_break" }
+  ]
+}

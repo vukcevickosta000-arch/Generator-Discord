@@ -108,7 +108,7 @@ namespace Bloodfall.Data
         Lifesteal, SpellVamp, Evasion, CritChance, CritMultiplier,
         CooldownReduction, StatusResist, SpellAmp, DamageTakenPct, OutgoingDamagePct,
         HealAmp, VisionDay, VisionNight, ManaCostReduction, HpRegenPct, SlowResist,
-        MaxHpPct, BaseAttackTimeOverride, ArmorPct, HealthCostReduction, BonusVision,
+        MaxHpPct, BaseAttackTimeOverride, ArmorPct, HealthCostReduction, BonusVision, ManaRegenPct,
         Count
     }
 
