@@ -40,8 +40,9 @@ namespace Bloodfall.Client.UI.Screens
             _left.Add(QueueCard("quick", "Quick Match", "5v5 on Velmoragh. Empty slots are filled with bots after 25 seconds so you are never stuck waiting."));
             _left.Add(QueueCard("unranked", "Unranked 5v5", "Players only. Normal matchmaking by rating, no rating changes."));
             _left.Add(QueueCard("ranked", "Ranked 5v5", "Competitive matches that change your rank. Placement: first 10 matches."));
-            var strategy = QueueCard("strategy", "War of the Ancients (RTS)", "Base building, harvesting and armies. In development - not yet playable.");
-            strategy.SetEnabled(false);
+            var strategy = QueueCard("strategy", "War of the Ancients (1v1)", "Build a base on the Ashfields, harvest blood-iron and lumber, raise an army and raze the enemy. A solo player waiting 45 seconds is matched against the RTS AI.");
+            var factions = Factions.Choices(App.Data);
+            strategy.Add(El.Dropdown("Faction", factions.Select(f => f.name).ToList(), 0, i => _strategyFaction = factions[Math.Max(0, i)].id));
             _left.Add(strategy);
             _left.Add(PracticeCard());
 
@@ -92,11 +93,13 @@ namespace Bloodfall.Client.UI.Screens
             return c;
         }
 
+        private string _strategyFaction;
+
         private async void EnterQueue(string queue)
         {
             if (Offline) { UI.Error("Offline", "Matchmaking requires the Bloodfall services. Sign in, or use Practice vs Bots."); return; }
             var regions = _selectedRegions.Count > 0 ? _selectedRegions.ToList() : App.Backend.Regions.Select(r => r.Id).ToList();
-            var r = await App.Backend.EnterQueue(queue, regions);
+            var r = await App.Backend.EnterQueue(queue, regions, queue == "strategy" ? _strategyFaction : null);
             if (!r.Ok) UI.Error("Cannot join queue", r.Message);
             RefreshQueue();
         }
@@ -444,8 +447,9 @@ namespace Bloodfall.Client.UI.Screens
             App.Backend.JoinChannel("lobby:" + l.LobbyId);
             _title.text = l.Name;
             _info.text = $"{l.ModeName ?? El.Pretty(l.ModeId)} · {El.Pretty(l.MapId)} · {l.Region} · {l.PickMode}" + (l.Ranked ? " · Ranked" : "") + (l.HasPassword ? " · 🔒" : "") + $" · {l.Status}";
-            FillTeam(_dawn, l, "Dawn", "THE DAWN (Sunforge)");
-            FillTeam(_dusk, l, "Dusk", "THE DUSK (Velmoragh)");
+            bool rts = App.Data.Modes.TryGetValue(l.ModeId ?? "", out var lm) && lm.Kind == GameModeKind.Rts;
+            FillTeam(_dawn, l, "Dawn", rts ? "WEST" : "THE DAWN (Sunforge)", rts);
+            FillTeam(_dusk, l, "Dusk", rts ? "EAST" : "THE DUSK (Velmoragh)", rts);
             _specs.Clear();
             _specs.Add(El.Text($"Spectators ({l.SpectatorList.Count}/{l.MaxSpectators}): ", "t-label"));
             foreach (var s in l.SpectatorList) _specs.Add(El.Text(s.DisplayName, "pill"));
@@ -458,8 +462,9 @@ namespace Bloodfall.Client.UI.Screens
             RenderChat();
         }
 
-        private void FillTeam(VisualElement host, LobbyView l, string team, string title)
+        private void FillTeam(VisualElement host, LobbyView l, string team, string title, bool rts)
         {
+            var factions = Factions.Choices(App.Data);
             host.Clear();
             var header = El.Div("panel-header");
             header.Add(El.Text(title, "t-heading", team == "Dawn" ? "t-gold" : "t-red"));
@@ -479,6 +484,15 @@ namespace Bloodfall.Client.UI.Screens
                 else if (slot.IsBot)
                 {
                     row.Add(El.Text("🤖 " + (slot.DisplayName ?? "Bot"), "grow"));
+                    if (rts && IsHost)
+                    {
+                        var botDiff = slot.BotDifficulty ?? "Normal";
+                        var fdd = El.Dropdown("", factions.Select(f => f.name).ToList(), Math.Max(0, factions.FindIndex(f => f.id == slot.RtsFaction)),
+                            async idx => await App.Backend.LobbyBot(team, slotIndex, botDiff, false, factions[Math.Max(0, idx)].id ?? "random"));
+                        fdd.style.width = 150;
+                        row.Add(fdd);
+                    }
+                    else if (rts) row.Add(El.Text(Factions.Name(App.Data, slot.RtsFaction), "pill"));
                     row.Add(El.Text(slot.BotDifficulty ?? "Normal", "pill"));
                     if (IsHost)
                     {
@@ -492,6 +506,17 @@ namespace Bloodfall.Client.UI.Screens
                 else
                 {
                     row.Add(El.Text((slot.Host ? "♛ " : "") + slot.DisplayName, "grow", slot.AccountId == App.Backend.MyId ? "t-gold" : ""));
+                    if (rts && slot.AccountId == App.Backend.MyId && l.Status == "Waiting")
+                    {
+                        var fdd = El.Dropdown("", factions.Select(f => f.name).ToList(), Math.Max(0, factions.FindIndex(f => f.id == slot.RtsFaction)), async idx =>
+                        {
+                            var fr = await App.Backend.LobbyFaction(factions[Math.Max(0, idx)].id ?? "random");
+                            if (!fr.Ok) App.UI.Toast(fr.Message, ToastKind.Error);
+                        });
+                        fdd.style.width = 150;
+                        row.Add(fdd);
+                    }
+                    else if (rts) row.Add(El.Text(Factions.Name(App.Data, slot.RtsFaction), "pill"));
                     row.Add(El.Text($"Lv {slot.Level}", "t-small", "mr-m"));
                     if (!string.IsNullOrEmpty(slot.Rank)) row.Add(El.Text(El.Pretty(slot.Rank), "pill"));
                     row.Add(El.Text(slot.Host ? "HOST" : slot.Ready ? "READY" : "…", slot.Ready || slot.Host ? "status-online" : "t-muted").Width(60));
@@ -544,7 +569,7 @@ namespace Bloodfall.Client.UI.Screens
             d.Add(El.Div("divider"));
             var name = El.Field("Game name", false, (app.Backend.Session.Account?.DisplayName ?? "Player") + "'s game", 40);
             var password = El.Field("Password (optional)", true, "", 32);
-            var modes = app.Data.Modes.Values.Where(m => m.Kind == GameModeKind.Moba).ToList();
+            var modes = app.Data.Modes.Values.Where(m => !m.Ranked).ToList();
             var modeDd = El.Dropdown("Mode", modes.Select(m => m.Name).ToList(), Math.Max(0, modes.FindIndex(m => m.Id == "moba_5v5")), null);
             var regions = app.Backend.Regions;
             var regionDd = El.Dropdown("Region", regions.Count > 0 ? regions.Select(r => r.Name).ToList() : new List<string> { "(no regions online)" }, 0, null);
@@ -592,6 +617,11 @@ namespace Bloodfall.Client.UI.Screens
             d.Add(El.Text("Practice vs Bots", "t-title", "t-center"));
             d.Add(El.Text("Hosted locally by your client - works offline.", "t-small", "t-center"));
             d.Add(El.Div("divider"));
+            var factions = Factions.Choices(app.Data);
+            var game = El.Dropdown("Game", new List<string> { "Blood War (MOBA)", "War of the Ancients (RTS 1v1)" }, 0, null);
+            var myFaction = El.Dropdown("Your faction", factions.Select(f => f.name).ToList(), 0, null);
+            var theirFaction = El.Dropdown("Enemy faction", factions.Select(f => f.name).ToList(), 0, null);
+            d.Add(game);
             var sizes = new List<string> { "5v5", "3v3", "1v1" };
             var size = El.Dropdown("Team size", sizes, 0, null);
             var diffs = new List<string> { "Beginner", "Normal", "Veteran", "Nightmare" };
@@ -600,12 +630,30 @@ namespace Bloodfall.Client.UI.Screens
             var fillAllies = El.Check("Fill my team with bots", true);
             var cheats = El.Check("Enable practice cheats", true);
             var name = El.Field("Your name", false, app.Backend.Session.Account?.DisplayName ?? "Player", 24);
-            foreach (var e in new VisualElement[] { name, size, ally, enemy, fillAllies, cheats }) d.Add(e);
+            foreach (var e in new VisualElement[] { name, size, ally, enemy, fillAllies, myFaction, theirFaction, cheats }) d.Add(e);
+            void ShowFor(int g)
+            {
+                bool rtsGame = g == 1;
+                size.Show(!rtsGame); ally.Show(!rtsGame); fillAllies.Show(!rtsGame);
+                myFaction.Show(rtsGame); theirFaction.Show(rtsGame);
+                enemy.label = rtsGame ? "AI difficulty" : "Enemy bots";
+            }
+            game.RegisterValueChangedCallback(_ => ShowFor(game.index));
+            ShowFor(0);
             var row = El.Div("row", "center", "mt-m");
             VisualElement ov = null;
             row.Add(El.Btn("Start", () =>
             {
                 app.UI.CloseOverlay(ov);
+                if (game.index == 1)
+                {
+                    app.Flow.StartOfflineMatch(new OfflineMatchOptions
+                    {
+                        ModeId = "rts_1v1", TeamSize = 1, EnemyDifficulty = (BotDifficulty)Math.Max(0, enemy.index), Cheats = cheats.value, PlayerName = name.value,
+                        RtsFaction = factions[Math.Max(0, myFaction.index)].id, EnemyRtsFaction = factions[Math.Max(0, theirFaction.index)].id,
+                    });
+                    return;
+                }
                 int ts = size.index == 1 ? 3 : size.index == 2 ? 1 : 5;
                 app.Flow.StartOfflineMatch(new OfflineMatchOptions
                 {
@@ -639,5 +687,19 @@ namespace Bloodfall.Client.UI.Screens
             pw.Focus();
             return tcs.Task;
         }
+    }
+
+    /// <summary>RTS faction choices for menus: "Random" first (id null), then every playable faction.</summary>
+    public static class Factions
+    {
+        public static List<(string id, string name)> Choices(GameData data)
+        {
+            var list = new List<(string id, string name)> { (null, "Random") };
+            foreach (var id in data.RtsFactionOrder)
+                if (data.RtsFactions.TryGetValue(id, out var f) && f.Playable) list.Add((f.Id, f.Name));
+            return list;
+        }
+
+        public static string Name(GameData data, string id) => id != null && data.RtsFactions.TryGetValue(id, out var f) ? f.Name : "Random";
     }
 }

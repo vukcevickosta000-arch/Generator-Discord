@@ -70,16 +70,24 @@ namespace Bloodfall.Client.Match
 
         public static MatchController StartOffline(GameApp app, OfflineMatchOptions o)
         {
+            bool rts = app.Data.Modes.TryGetValue(o.ModeId ?? "", out var mode) && mode.Kind == GameModeKind.Rts;
             var cfg = new MatchConfig
             {
                 ModeId = o.ModeId,
-                MapId = "map_velmoragh",
+                MapId = rts ? mode.Map : "map_velmoragh",
                 Seed = o.Seed != 0 ? o.Seed : (ulong)DateTime.UtcNow.Ticks,
                 AllowCheats = o.Cheats,
                 DisableVharoth = o.DisableVharoth,
-                PreGameTimeOverride = 30f,
+                PreGameTimeOverride = rts ? app.Data.Rules.RtsPreGameTime : 30f,
             };
             string name = string.IsNullOrWhiteSpace(o.PlayerName) ? "Player" : o.PlayerName.Trim();
+            if (rts)
+            {
+                // War of the Ancients practice: the player against one RTS AI.
+                cfg.Players.Add(new PlayerSetup { AccountId = OfflineSession.LocalAccountId, Name = name, Team = Team.Dawn, Slot = 0, RtsFaction = o.RtsFaction });
+                cfg.Players.Add(new PlayerSetup { Name = "Warlord (AI)", Team = Team.Dusk, Slot = 0, IsBot = true, BotDifficulty = o.EnemyDifficulty, RtsFaction = o.EnemyRtsFaction });
+                return StartHost(app, cfg, name);
+            }
             cfg.Players.Add(new PlayerSetup { AccountId = OfflineSession.LocalAccountId, Name = name, Team = Team.Dawn, Slot = 0 });
             string[] botNames = { "Grimwald", "Seraphine", "Oskar the Pale", "Maelis", "Thorne", "Vex", "Corvin", "Ysolde", "Harrow", "Lucan" };
             int n = 0;
@@ -89,6 +97,11 @@ namespace Bloodfall.Client.Match
             if (o.FillEnemies)
                 for (int i = 0; i < o.TeamSize; i++)
                     cfg.Players.Add(new PlayerSetup { Name = botNames[n++ % botNames.Length] + " (Bot)", Team = Team.Dusk, Slot = i, IsBot = true, BotDifficulty = o.EnemyDifficulty });
+            return StartHost(app, cfg, name);
+        }
+
+        private static MatchController StartHost(GameApp app, MatchConfig cfg, string name)
+        {
             var host = OfflineSession.CreateHost(app.Data, cfg);
             host.ConcedeMinTime = 0f;
             host.Log += msg => Debug.Log("[OfflineHost] " + msg);
@@ -163,11 +176,21 @@ namespace Bloodfall.Client.Match
             _loadProgress = 0f;
         }
 
+        /// <summary>True for War of the Ancients (RTS) matches.</summary>
+        public bool IsRts => World != null ? World.IsRts : Data.Modes.TryGetValue(Client?.Welcome?.ModeId ?? "", out var m) && m.Kind == GameModeKind.Rts;
+
         private void ShowHud()
         {
-            if (App.UI.Current is HudScreen) return;
-            var hud = App.UI.Show<HudScreen>();
-            hud.Bind(this);
+            if (IsRts)
+            {
+                if (App.UI.Current is RtsHudScreen) return;
+                App.UI.Show<RtsHudScreen>().Bind(this);
+            }
+            else
+            {
+                if (App.UI.Current is HudScreen) return;
+                App.UI.Show<HudScreen>().Bind(this);
+            }
             App.Audio.PlayMusic(null);
             App.Audio.PlayAmbience("velmoragh_night");
         }
@@ -269,6 +292,7 @@ namespace Bloodfall.Client.Match
             try { Client.Disconnect(); } catch { }
             Dispose();
             App.UI.Discard<HudScreen>();
+            App.UI.Discard<RtsHudScreen>();
             App.UI.Discard<HeroSelectScreen>();
             App.UI.Discard<LoadingScreen>();
             App.UI.CloseAllOverlays();

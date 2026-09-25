@@ -314,7 +314,7 @@ namespace Bloodfall.Client.UI.Screens
                 if (p.HeroId != null && App.Data.Heroes.TryGetValue(p.HeroId, out var hd)) El.SetImage(portrait, GameText.PortraitPath(hd));
                 row.Add(portrait);
                 var col = El.Div("col", "ml-m", "grow");
-                string hn = p.HeroId != null && App.Data.Heroes.TryGetValue(p.HeroId, out var h2) ? h2.Name : "";
+                string hn = GameText.PlayedAs(App.Data, p.HeroId, p.RtsFaction);
                 col.Add(El.Text($"{p.Name}  ·  {hn}"));
                 var (bar, fill, _) = El.Bar(team == Team.Dawn ? "bar-fill--xp" : "bar-fill--enemy", 8);
                 El.SetFill(fill, p.IsBot ? 1f : p.LoadProgress);
@@ -402,7 +402,7 @@ namespace Bloodfall.Client.UI.Screens
                 foreach (var p in _result.Players.Where(p => p.Team == team).OrderBy(p => p.Slot))
                 {
                     var row = El.Div("scoreboard-row", p.AccountId == _me ? "list-row--selected" : "");
-                    string hero = App.Data.Heroes.TryGetValue(p.HeroId ?? "", out var hd) ? hd.Name : El.Pretty(p.HeroId);
+                    string hero = GameText.PlayedAs(App.Data, p.HeroId, p.RtsFaction);
                     string[] vals =
                     {
                         p.Name + (p.IsBot ? " (bot)" : "") + (p.Abandoned ? " ✖" : ""), hero, p.Level.ToString(), $"{p.Kills}/{p.Deaths}/{p.Assists}", $"{p.LastHits}/{p.Denies}",

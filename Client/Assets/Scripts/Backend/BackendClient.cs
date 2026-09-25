@@ -260,7 +260,9 @@ namespace Bloodfall.Client.Backend
         public Task<ApiResult<object>> LobbySlot(string team, int slot) => Api.Post<object>("api/lobbies/slot", new LobbySlotRequest { Team = team, Slot = slot });
         public Task<ApiResult<object>> LobbyReady(bool ready) => Api.Post<object>("api/lobbies/ready", new LobbyReadyRequest { Ready = ready });
         public Task<ApiResult<object>> LobbyKick(string accountId) => Api.Post<object>("api/lobbies/kick", new LobbyKickRequest { AccountId = accountId });
-        public Task<ApiResult<object>> LobbyBot(string team, int slot, string difficulty, bool remove) => Api.Post<object>("api/lobbies/bots", new LobbyBotRequest { Team = team, Slot = slot, Difficulty = difficulty, Remove = remove });
+        public Task<ApiResult<object>> LobbyBot(string team, int slot, string difficulty, bool remove, string faction = null) => Api.Post<object>("api/lobbies/bots", new LobbyBotRequest { Team = team, Slot = slot, Difficulty = difficulty, Remove = remove, Faction = faction });
+        /// <summary>RTS lobbies: choose a faction id or "random".</summary>
+        public Task<ApiResult<object>> LobbyFaction(string faction) => Api.Post<object>("api/lobbies/faction", new LobbyFactionRequest { Faction = faction });
         public Task<ApiResult<LobbyView>> StartLobby() => Api.Post<LobbyView>("api/lobbies/start", null);
         public async Task RefreshLobby()
         {
@@ -271,9 +273,9 @@ namespace Bloodfall.Client.Backend
 
         // ------------------------------------------------------------------ matchmaking
 
-        public async Task<ApiResult<QueueStatus>> EnterQueue(string queue, List<string> regions)
+        public async Task<ApiResult<QueueStatus>> EnterQueue(string queue, List<string> regions, string rtsFaction = null)
         {
-            var r = await Api.Post<QueueStatus>("api/matchmaking/queue", new QueueRequest { Queue = queue, Regions = regions });
+            var r = await Api.Post<QueueStatus>("api/matchmaking/queue", new QueueRequest { Queue = queue, Regions = regions, RtsFaction = rtsFaction });
             if (r.Ok) { Queue = r.Value; QueueChanged?.Invoke(); }
             return r;
         }

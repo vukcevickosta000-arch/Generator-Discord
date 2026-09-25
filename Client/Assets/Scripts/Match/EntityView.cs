@@ -28,7 +28,11 @@ namespace Bloodfall.Client.Match
         public float Radius;
         public float Height => Model.Height;
         public bool IsHero => Kind == UnitKind.Hero;
-        public bool IsStructure => Kind == UnitKind.Tower || Kind == UnitKind.Barracks || Kind == UnitKind.Core || Kind == UnitKind.Fountain || Kind == UnitKind.Shop;
+        public bool IsStructure => Kind == UnitKind.Tower || Kind == UnitKind.Barracks || Kind == UnitKind.Core || Kind == UnitKind.Fountain || Kind == UnitKind.Shop || Kind == UnitKind.Building;
+        /// <summary>RTS: an enemy building out of sight, shown as last seen until its ground is scouted again.</summary>
+        public bool Remembered;
+        /// <summary>RTS: how far a building under construction is sunk into the ground (world units).</summary>
+        public float ConstructionSink => State != null && State.UnderConstruction ? (1f - State.BuildProgress) * Model.Height * 0.75f : 0f;
         public bool Hovered, Selected;
         public string CurrentModelKey;
         public float HitFlash;
@@ -47,6 +51,10 @@ namespace Bloodfall.Client.Match
         private readonly GameData _data;
         private GameObject _selectionRing;
         private Mesh _ringMesh;
+        private float _workSwing;
+        private GameObject _cargo;
+        private Renderer _cargoRenderer;
+        private int _cargoKind = -1;
 
         public EntityView(EntityState s, GameData data, Transform parent)
         {
@@ -111,6 +119,14 @@ namespace Bloodfall.Client.Match
                         }
                         break;
                     case ActionState.Channeling: anim = AnimState.Channel; break;
+                    case ActionState.Working:
+                        // RTS workers mining, chopping or building: a steady swing, restarted every 1.2 s.
+                        anim = AnimState.Attack;
+                        impact = 0.45f;
+                        if (Time.time - _workSwing > 1.2f) { _workSwing = Time.time; Animator.SetState(anim, impact, s.MoveSpeed, null, true); UpdateCargo(s); return; }
+                        UpdateCargo(s);
+                        if (Animator.State == anim) return;
+                        break;
                     case ActionState.Dashing:
                     case ActionState.Airborne: anim = AnimState.Airborne; break;
                     case ActionState.Moving: anim = AnimState.Run; break;
@@ -129,6 +145,41 @@ namespace Bloodfall.Client.Match
                 if (Animator.State == anim && !restart) { Animator.SetState(anim, impact, s.MoveSpeed, variant); return; }
             }
             Animator.SetState(anim, impact, s.MoveSpeed, variant, restart);
+            UpdateCargo(s);
+        }
+
+        /// <summary>RTS workers show what they carry: a red blood-iron chunk or a log on their back.</summary>
+        private void UpdateCargo(EntityState s)
+        {
+            if (Kind != UnitKind.Worker) return;
+            int kind = s.CarryGold > 0 ? 0 : s.CarryLumber > 0 ? 1 : -1;
+            if (kind == _cargoKind) return;
+            _cargoKind = kind;
+            if (kind < 0) { if (_cargo != null) _cargo.SetActive(false); return; }
+            if (_cargo == null)
+            {
+                _cargo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                Object.Destroy(_cargo.GetComponent<Collider>());
+                _cargo.name = "Cargo";
+                _cargo.transform.SetParent(Model.Root.transform, false);
+                _cargoRenderer = _cargo.GetComponent<Renderer>();
+            }
+            _cargo.SetActive(true);
+            float h = Model.Height;
+            if (kind == 0)
+            {
+                _cargo.transform.localPosition = new Vector3(0f, h * 0.62f, -0.22f);
+                _cargo.transform.localRotation = Quaternion.Euler(20f, 35f, 10f);
+                _cargo.transform.localScale = new Vector3(0.26f, 0.22f, 0.24f);
+                _cargoRenderer.sharedMaterial = ModelFactory.GlowMat(new Color(1f, 0.1f, 0.12f), 1.5f);
+            }
+            else
+            {
+                _cargo.transform.localPosition = new Vector3(0f, h * 0.66f, -0.24f);
+                _cargo.transform.localRotation = Quaternion.Euler(0f, 90f, 12f);
+                _cargo.transform.localScale = new Vector3(0.7f, 0.16f, 0.16f);
+                _cargoRenderer.sharedMaterial = ModelFactory.PlainMat(new Color(0.42f, 0.28f, 0.16f));
+            }
         }
 
         public void Tick(float dt, MatchWorld world)
@@ -149,6 +200,7 @@ namespace Bloodfall.Client.Match
                 _dissolve = invisibleAlly ? 0.45f : 1f - FadeIn;
             }
 
+            if (Remembered) _dissolve = Mathf.Max(_dissolve, 0.3f); // last-seen enemy building: faded
             var rim = Selected ? new Color(0.35f, 1f, 0.45f, 0.55f) : Hovered ? (world.IsEnemy(Team) ? new Color(1f, 0.2f, 0.15f, 0.8f) : new Color(0.4f, 0.9f, 1f, 0.6f)) : new Color(0, 0, 0, 0);
             if (Mathf.Abs(_appliedFlash - HitFlash) > 0.01f || Mathf.Abs(_appliedDissolve - _dissolve) > 0.005f || rim != _appliedRim)
             {
@@ -214,6 +266,7 @@ namespace Bloodfall.Client.Match
             Animator.Dispose();
             foreach (var a in Attachments.Values) if (a != null) Object.Destroy(a);
             if (_selectionRing != null) Object.Destroy(_selectionRing);
+            if (_cargo != null) Object.Destroy(_cargo);
             if (Model.Root != null) Object.Destroy(Model.Root);
         }
 

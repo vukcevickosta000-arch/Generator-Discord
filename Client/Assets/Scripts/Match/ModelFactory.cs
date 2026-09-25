@@ -87,6 +87,19 @@ namespace Bloodfall.Client.Match
             return m;
         }
 
+        /// <summary>Flat-coloured lit material for simple primitives (no vertex colours).</summary>
+        public static Material PlainMat(Color c)
+        {
+            string key = "plain_" + ColorUtility.ToHtmlStringRGB(c);
+            if (Mats.TryGetValue(key, out var m) && m != null) return m;
+            m = new Material(LitShader) { name = key, enableInstancing = true };
+            m.SetColor("_BaseColor", c);
+            m.SetColor("_Color", c);
+            m.SetFloat("_Smoothness", 0.2f);
+            Mats[key] = m;
+            return m;
+        }
+
         /// <summary>Vertex-coloured material tinted with the team accent (imported models' bf_team parts).</summary>
         public static Material TeamMat(Team team)
         {

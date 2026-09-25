@@ -38,7 +38,7 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
 | 5 | Client / account / lobby / server flow | Backend **WORKING** (E2E). Unity screens IMPLEMENTED (unverified). |
 | 6 | Multiple heroes and items | PARTIAL: **8 of 96 heroes** playable (all eight concept heroes: Vorak, Ilyra, Nyxara, Malgrave, Ardyn, Fenrax, Morwen, Thael), each with kit tests and bot usage. 38 items. |
 | 7 | Vharoth event | **WORKING** in simulation: seals, awakening, three boss phases, Blood Moon, Heart of Vharoth with revive, bots that break seals and kill him. 13 tests. Unity presentation (models, effects, HUD boss bar, Blood Moon lighting, corpse): IMPLEMENTED (unverified). |
-| 8 | RTS match | PARTIAL. **R1, R3 and R4 WORKING** (20 simulation tests, 2 protocol tests, E2E section 5): blood-iron and lumber harvesting, construction, training queues, supply, rally points, victory by razing, the Ashfields map, an RTS AI at four difficulties, protocol v5, lobby faction pick and the strategy queue, all played over UDP in the E2E run. Two of four factions (Dawnguard, Ashen Legion). Still missing: heroes at an altar, research and the other two factions (R2), and the Unity RTS interface (R5). **Not playable from the Unity client yet**; the client keeps its strategy queue disabled until R5. |
+| 8 | RTS match | PARTIAL.<br>**Server side WORKING** (R1, R3, R4: 20 simulation tests, 2 protocol tests, E2E section 5): harvesting, construction, training, supply, rally points, victory by razing, the Ashfields map, an RTS AI at four difficulties, protocol v5, lobby factions and the strategy queue, all played over UDP.<br>**Unity interface IMPLEMENTED (unverified)** (R5): selection, control groups, command card, placement ghost, resource HUD, practice vs AI, Strategy queue and lobby factions. It compiles against the reference assemblies but has never been run in Unity.<br>Two of four factions (Dawnguard, Ashen Legion). Still missing: the other two factions, hero altars and research (R2). |
 | 9 | Content expansion | PLANNED |
 | 10 | Polish | PLANNED |
 
@@ -160,6 +160,16 @@ lobby → hero select → loading → match → post-game.
 
 **Offline practice** hosts the same server code in-process.
 
+**War of the Ancients (RTS).** Its own input and HUD are chosen automatically for RTS matches.
+- `RtsInput`: selection, control groups, the smart right-click, attack-move, rally, and a placement ghost that
+  mirrors the server's placement rules.
+- `RtsHudScreen`: resources and supply, the selection panel (construction, queue with cancel, cargo, vein), the
+  command card with hotkeys and costs, alerts, chat and menu.
+- Buildings under construction sink into the ground; workers swing while working and carry visible cargo; enemy
+  buildings out of sight stay as last-seen ghosts.
+- Entry points: Strategy page (Practice vs AI), the Practice dialog, the Strategy queue with a faction pick, and
+  custom lobbies with per-slot factions.
+
 ### Art and audio: PARTIAL
 
 | Asset | Status |
@@ -182,7 +192,7 @@ lobby → hero select → loading → match → post-game.
 
 1. **RTS mode (milestone 8), in order** (details in TODO.md T-030 to T-034):
    - R2: the Crimson Court and Wild Covenant factions, altars that recruit MOBA heroes, and research.
-   - R5: the Unity RTS interface and dedicated models.
+   - R5 follow-ups: dedicated models and unit icons (T-033, T-034).
 2. **Art (T-001 remainder):** Blender props and trees.
 3. **Hero-specific bot behaviour** (T-022) and last-hitting (T-016). The Nyxara bot is the weakest in bot matches.
 4. On a machine with Unity 6000.0.40f1:

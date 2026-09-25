@@ -248,22 +248,31 @@ namespace Bloodfall.Client.UI.Screens
         {
             var p = El.Div("panel", "col", "grow");
             p.Add(El.Text("War of the Ancients", "t-display"));
-            p.Add(El.Text("STRATEGY MODE · IN DEVELOPMENT", "t-subheading"));
+            p.Add(El.Text("STRATEGY MODE · EARLY ACCESS", "t-subheading"));
             p.Add(El.Div("divider"));
             p.Add(El.Text(
-                "The real-time strategy mode is not playable in this build. It will pit the four factions of Velmoragh against each " +
-                "other in base-building battles: gather blood-iron and lumber, raise structures, recruit armies and heroes, research " +
-                "upgrades and raze the enemy stronghold.", "t-body"));
-            p.Add(El.Text("READY ON THE SERVER", "t-subheading", "mt-l"));
+                "Base-building battles between the factions of Velmoragh: gather blood-iron and lumber, raise structures, train " +
+                "armies and raze the enemy stronghold. Play against the RTS AI on this computer, or 1v1 through the Strategy queue " +
+                "and custom games.", "t-body"));
+            var actions = El.Div("row", "mt-m");
+            actions.Add(El.Btn("Practice vs AI", () => App.Flow.StartOfflineMatch(new OfflineMatchOptions { ModeId = "rts_1v1", TeamSize = 1, PlayerName = App.Backend.Session.Account?.DisplayName ?? "Player" }), "btn--primary"));
+            actions.Add(El.Btn("More options…", PracticeDialog.Open, "btn--ghost"));
+            p.Add(actions);
+            p.Add(El.Text("WHAT IS IN THIS BUILD", "t-subheading", "mt-l"));
             p.Add(El.Text(
                 "• Workers mining blood-iron veins and cutting lumber on the Ashfields map\n• Construction, supply, training queues and rally points\n" +
                 "• The Dawnguard and the Ashen Legion\n• RTS bots at four difficulties\n" +
                 "• 1v1 lobbies and a Strategy queue on dedicated servers (tested end to end)", "t-body"));
+            p.Add(El.Text("CONTROLS", "t-subheading", "mt-l"));
+            p.Add(El.Text(
+                "Left-click or drag to select · double-click selects all of a kind · Ctrl+1–9 saves a group, 1–9 recalls it\n" +
+                "Right-click: move, attack, harvest a vein or trees, help build, return cargo; with a building selected, set its rally point\n" +
+                "Command card hotkeys: A attack, S stop, H hold, B build, R return cargo; training and building hotkeys are shown on the buttons", "t-body"));
             p.Add(El.Text("STILL TO COME", "t-subheading", "mt-l"));
             p.Add(El.Text(
-                "• This client's RTS controls: box selection, control groups, the command card and building placement\n" +
                 "• The Crimson Court and the Wild Covenant, hero altars and research\n" +
-                "Until the controls ship, the Strategy queue stays disabled in this client. Progress is tracked in PROJECT_STATUS.md.", "t-body"));
+                "• Dedicated unit and building models (the current ones are borrowed from Blood War)\n" +
+                "The RTS controls and HUD are new and have not yet been play-tested inside Unity; please report anything that misbehaves.", "t-body"));
             var crests = El.Div("row", "center", "mt-l");
             foreach (var c in new[] { "crimson_court", "ashen_legion", "wild_covenant", "dawnguard" }) crests.Add(El.Img("Textures/UI/Crests/crest_" + c, 140, 160));
             p.Add(crests);
@@ -526,7 +535,7 @@ namespace Bloodfall.Client.UI.Screens
             {
                 var row = El.Div("list-row");
                 row.Add(El.Text(m.Won ? "WIN" : m.Abandoned ? "ABANDON" : "LOSS", m.Won ? "status-online" : "status-offline").Width(80));
-                string heroName = app.Data.Heroes.TryGetValue(m.HeroId ?? "", out var hd) ? hd.Name : El.Pretty(m.HeroId);
+                string heroName = GameText.PlayedAs(app.Data, m.HeroId, m.RtsFaction);
                 row.Add(El.Text(heroName).Width(120));
                 row.Add(El.Text($"{m.Kills}/{m.Deaths}/{m.Assists}").Width(80));
                 row.Add(El.Text($"{m.LastHits} LH · {m.Gpm:0} GPM").Width(140));
@@ -664,7 +673,7 @@ namespace Bloodfall.Client.UI.Screens
                 {
                     var row = El.Div("list-row");
                     row.Add(El.Text(p.Name + (p.IsBot ? " (bot)" : "") + (p.Abandoned ? " ✖" : "")).Width(220));
-                    row.Add(El.Text(app.Data.Heroes.TryGetValue(p.HeroId ?? "", out var hd) ? hd.Name : El.Pretty(p.HeroId)).Width(130));
+                    row.Add(El.Text(GameText.PlayedAs(app.Data, p.HeroId, p.RtsFaction)).Width(130));
                     row.Add(El.Text(p.Level.ToString()).Width(50));
                     row.Add(El.Text($"{p.Kills}/{p.Deaths}/{p.Assists}").Width(90));
                     row.Add(El.Text($"{p.LastHits}/{p.Denies}").Width(80));

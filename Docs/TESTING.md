@@ -102,6 +102,16 @@ These need a Unity 6000.0.40f1 editor. See the manual checklist below and BUGS.m
   - Custom game create/join in the browser; lobby slots, bots, ready and start; both clients reach the match.
   - Disconnect a client (kill it) and relaunch: the **Reconnect** prompt appears and rejoins the running match.
   - Concede (`-ff` after 15:00, or `--dev-concede-anytime`) → post-game shows rating/XP.
+- [ ] War of the Ancients (Strategy page ▸ Practice vs AI, and a 1v1 through the Strategy queue):
+  - The camera starts over the hall, which is selected; the resource bar shows 500 / 150 and supply 5/10.
+  - Selection: click, drag box, double-click, Shift add/remove, Ctrl+1–9 then 1–9 (double tap centres the camera).
+  - Right-click a vein or trees with workers: they harvest, carry cargo and deliver (floating +10).
+  - Build menu (B): the ghost turns red on trees, buildings and near veins; placing pays on arrival; Dawnguard
+    buildings rise with a builder and Legion buildings on their own; the construction sink animates.
+  - Train from the hall and barracks (hotkeys on the card); click a queue slot to cancel; set a rally (Y or
+    right-click).
+  - A-click and Stop/Hold; enemy buildings stay as faded ghosts once out of sight; "Base under attack" alerts;
+    Victory/Defeat banner and post-game list the factions.
 - [ ] Settings persist (graphics, audio, key binds) across restarts.
 - [ ] Performance: 1080p High ≥ 60 FPS in a 10-bot team fight on a mid-range GPU (record the GPU and FPS in
   PROJECT_STATUS).

@@ -384,5 +384,8 @@ namespace Bloodfall.Client.Core
         public bool Cheats = true;
         public bool DisableVharoth;
         public ulong Seed;
+        /// <summary>War of the Ancients practice (ModeId "rts_1v1"): factions, null = random.</summary>
+        public string RtsFaction;
+        public string EnemyRtsFaction;
     }
 }

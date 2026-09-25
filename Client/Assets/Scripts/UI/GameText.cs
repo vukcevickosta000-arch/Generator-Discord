@@ -9,6 +9,14 @@ namespace Bloodfall.Client.UI
     /// <summary>Human-readable text for game data (stats, costs, abilities) used by tooltips and database pages.</summary>
     public static class GameText
     {
+        /// <summary>What a player played: the hero's name, or the RTS faction's name in War of the Ancients.</summary>
+        public static string PlayedAs(Bloodfall.Data.GameData data, string heroId, string rtsFaction)
+        {
+            if (!string.IsNullOrEmpty(heroId) && data.Heroes.TryGetValue(heroId, out var h)) return h.Name;
+            if (!string.IsNullOrEmpty(rtsFaction) && data.RtsFactions.TryGetValue(rtsFaction, out var f)) return f.Name;
+            return El.Pretty(heroId);
+        }
+
         private static readonly HashSet<StatType> Percent = new HashSet<StatType>
         {
             StatType.BonusDamagePct, StatType.MoveSpeedPct, StatType.Lifesteal, StatType.SpellVamp, StatType.Evasion, StatType.CritChance,

@@ -22,7 +22,11 @@ namespace Bloodfall.Client.Match
         public MobaCamera Camera { get; private set; }
         public VfxSystem Vfx { get; private set; }
         public FogOfWar Fog { get; private set; }
+        /// <summary>MOBA controls (null in RTS matches).</summary>
         public MatchInput Input { get; private set; }
+        /// <summary>RTS controls (null in MOBA matches).</summary>
+        public RtsInput Rts { get; private set; }
+        public bool IsRts { get; private set; }
         public NavGrid Grid { get; private set; }
         public bool IsNight { get; private set; }
         public float MatchTime { get; private set; }
@@ -62,6 +66,7 @@ namespace Bloodfall.Client.Match
         public IEnumerator<float> Load()
         {
             var mapId = Controller.Client.Welcome?.MapId ?? "map_velmoragh";
+            IsRts = Data.Modes.TryGetValue(Controller.Client.Welcome?.ModeId ?? "", out var modeDef) && modeDef.Kind == GameModeKind.Rts;
             if (!Data.Maps.TryGetValue(mapId, out var mapDef)) mapDef = Data.Maps.Values.First();
             Root = new GameObject("MatchWorld").transform;
             var cells = string.IsNullOrEmpty(mapDef.Grid) ? null : NavGrid.DecodeRle(mapDef.Grid, mapDef.GridWidth * mapDef.GridHeight);
@@ -79,12 +84,16 @@ namespace Bloodfall.Client.Match
             Vfx = new VfxSystem(this, Root);
             Fog = new FogOfWar(Grid, Data);
             if (Controller.Client.IsSpectator) Fog.Reveal();
-            Input = new MatchInput(this, settings);
+            if (IsRts) Rts = new RtsInput(this, settings);
+            else Input = new MatchInput(this, settings);
             BuildWeather();
-            // Start the camera over our base.
+            // Start the camera over our base (the fountain, or the RTS start location).
             var team = LocalTeam == Team.None ? Team.Dawn : LocalTeam;
             var baseDef = mapDef.Bases.FirstOrDefault(b => b.Team == team);
-            var start = baseDef != null ? (System.Numerics.Vector2)baseDef.Fountain : new System.Numerics.Vector2(mapDef.Width * 0.2f, mapDef.Height * 0.2f);
+            var rtsStart = mapDef.StartLocations.FirstOrDefault(s => s.Team == team);
+            var start = baseDef != null ? (System.Numerics.Vector2)baseDef.Fountain
+                      : rtsStart != null ? (System.Numerics.Vector2)rtsStart.Position
+                      : new System.Numerics.Vector2(mapDef.Width * 0.2f, mapDef.Height * 0.2f);
             Camera.JumpTo(Map.World(start), true);
             yield return 0.95f;
             // Warm up shaders/pools by creating one hidden instance of common effects.
@@ -203,6 +212,7 @@ namespace Bloodfall.Client.Match
                     _viewList.Add(v);
                 }
                 v.Present = true;
+                v.Remembered = false;
                 if (!v.Model.Root.activeSelf && !e.Has(EntityFlags.Dead)) { v.Model.Root.SetActive(true); v.FadeIn = 0f; v.Position = WorldPos(e); }
                 if (v.Dying && !e.Has(EntityFlags.Dead)) { /* respawned hero */ ResetDeath(v, e); }
                 var from = prevByid.TryGetValue(e.Id, out var pe) ? pe : e;
@@ -223,6 +233,13 @@ namespace Bloodfall.Client.Match
                 var v = _viewList[i];
                 if (_seen.Contains(v.Id)) continue;
                 v.Present = false;
+                if (IsRts && v.Kind == UnitKind.Building && IsEnemy(v.Team) && !v.Dying)
+                {
+                    // RTS fog: an enemy building stays where it was last seen until its ground is scouted again.
+                    if (!v.Remembered && v.Model.Root.activeSelf) v.Remembered = true;
+                    else if (v.Remembered && Fog.IsVisible(v.Position)) { v.Remembered = false; v.Model.Root.SetActive(false); }
+                    continue;
+                }
                 if (!v.Dying && v.Model.Root.activeSelf)
                 {
                     bool removed = v.State != null && (v.Kind == UnitKind.Creep || v.Kind == UnitKind.Neutral || v.Kind == UnitKind.Summon || v.Kind == UnitKind.Ward) && v.State.Hp <= 0.5f;
@@ -233,7 +250,7 @@ namespace Bloodfall.Client.Match
 
             foreach (var v in _viewList)
             {
-                v.Model.Root.transform.SetPositionAndRotation(v.Position, Quaternion.Euler(0, v.FacingDeg, 0));
+                v.Model.Root.transform.SetPositionAndRotation(v.Position - Vector3.up * v.ConstructionSink, Quaternion.Euler(0, v.FacingDeg, 0));
                 v.Tick(dt, this);
             }
             for (int i = _viewList.Count - 1; i >= 0; i--)
@@ -267,6 +284,18 @@ namespace Bloodfall.Client.Match
                 _centeredOnSpawn = true;
                 Camera.JumpTo(hv.Position, true);
             }
+            if (!_centeredOnSpawn && IsRts)
+            {
+                // RTS: centre on our hall and select it, so the first thing on screen is a working base.
+                foreach (var v in _viewList)
+                {
+                    if (v.Kind != UnitKind.Building || v.State?.OwnerPlayer != LocalPlayerId || v.Unit == null || !v.Unit.DropOffGold) continue;
+                    _centeredOnSpawn = true;
+                    Camera.JumpTo(v.Position, true);
+                    Rts?.Select(new[] { v.Id });
+                    break;
+                }
+            }
         }
 
         private void ResetDeath(EntityView v, EntityState e)
@@ -284,10 +313,15 @@ namespace Bloodfall.Client.Match
             var ui = GameApp.Instance.UI;
             bool overUi = ui.PointerOverUI();
             var hero = HeroWorldPosition();
-            bool centerHeld = Input != null && !Input.KeyboardCaptured && Bloodfall.Client.Input.InputBridge.GetKey(KeyBinds.Get(GameApp.Instance.Settings, KeyBinds.CenterHero));
-            bool inputEnabled = Input == null || !Input.KeyboardCaptured;
+            bool typing = (Input != null && Input.KeyboardCaptured) || (Rts != null && Rts.KeyboardCaptured);
+            bool centerHeld = Input != null && !typing && Bloodfall.Client.Input.InputBridge.GetKey(KeyBinds.Get(GameApp.Instance.Settings, KeyBinds.CenterHero));
+            bool inputEnabled = !typing;
             Camera.Update(dt, inputEnabled, hero, centerHeld);
-            if (EndResult == null && Controller.Phase != MatchPhase.PostGame) Input?.Update(dt, overUi);
+            if (EndResult == null && Controller.Phase != MatchPhase.PostGame)
+            {
+                Input?.Update(dt, overUi);
+                Rts?.Update(dt, overUi);
+            }
         }
 
         private Vector3 WorldPos(EntityState e) => Map.World(e.Position, e.Height);
@@ -538,6 +572,21 @@ namespace Bloodfall.Client.Match
                 case SimEventType.Announcer:
                     audio.Announce(e.Key);
                     break;
+                // RTS
+                case SimEventType.ConstructionComplete:
+                {
+                    var p = Map.World(e.Point);
+                    Vfx.Play("level_up", p);
+                    if (_views.TryGetValue(e.UnitId, out var built) && built.State?.OwnerPlayer == LocalPlayerId) audio.Play2D("Sfx", "level_up", 0.7f);
+                    break;
+                }
+                case SimEventType.UnitTrained:
+                    audio.Play2D("UI", "notify", 0.6f, Audio.AudioBus.Ui);
+                    break;
+                case SimEventType.MineDepleted:
+                    Vfx.Play("structure_collapse", Map.World(e.Point, 1f));
+                    audio.PlaySfx("death_stone", Map.World(e.Point), 1f, 0.02f);
+                    break;
                 case SimEventType.MatchPhase:
                     if (e.Key == null && (MatchPhase)(int)e.Value == MatchPhase.Playing) audio.Play2D("Sfx", "horn", 1f);
                     break;
@@ -593,6 +642,7 @@ namespace Bloodfall.Client.Match
         {
             Vfx?.Clear();
             Input?.Dispose();
+            Rts?.Dispose();
             Fog?.Dispose();
             foreach (var v in _viewList) v.Destroy();
             _viewList.Clear();

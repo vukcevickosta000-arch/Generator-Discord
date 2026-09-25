@@ -249,14 +249,17 @@ namespace Bloodfall.Client.Match
 
         // ------------------------------------------------------------------ picking
 
-        private EntityView Pick(Vector2 mouse)
+        private EntityView Pick(Vector2 mouse) => PickEntity(_world, mouse);
+
+        /// <summary>The entity under the mouse (screen-space distance to its projected body), shared with RtsInput.</summary>
+        public static EntityView PickEntity(MatchWorld world, Vector2 mouse)
         {
             EntityView best = null;
             float bestScore = float.MaxValue;
-            var cam = _world.Camera.Cam;
-            foreach (var v in _world.Views)
+            var cam = world.Camera.Cam;
+            foreach (var v in world.Views)
             {
-                if (!v.Present || v.Dying || !v.Model.Root.activeSelf) continue;
+                if ((!v.Present && !v.Remembered) || v.Dying || !v.Model.Root.activeSelf) continue;
                 if (v.State != null && v.State.Has(EntityFlags.Dead)) continue;
                 var sp = cam.WorldToScreenPoint(v.Point(0.45f));
                 if (sp.z < 0) continue;

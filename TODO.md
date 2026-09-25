@@ -30,11 +30,16 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
     - E2E section 5 plays an RTS match over UDP.
 
     The Unity client still keeps the strategy queue disabled until T-033.
-  - **T-033 (R5) Unity RTS interface.**
-    - Box select, control groups, command card (build/train/rally/cancel), placement ghost using
-      `Match.CanPlaceBuilding`, resource and supply bar.
-    - Construction scaffolding and progress bars; worker Working animation.
-    - Ashfields camera bounds.
+  - **T-033 (R5) Unity RTS interface.** *Implemented, not yet run in Unity* (`Match/RtsInput.cs`,
+    `UI/Hud/RtsHudScreen.cs`):
+    - selection, control groups, smart right-click, placement ghost, command card, resource and supply bar;
+    - construction sink, work swing, cargo marker and last-seen ghosts;
+    - Strategy queue with faction pick, lobby factions, practice vs the RTS AI.
+
+    Verify with the TESTING.md §4 RTS checklist (part of T-002). Still missing:
+    - unit icons (the card shows text);
+    - a proper construction scaffold;
+    - ghosts on the minimap.
   - **T-034 RTS art.** Dedicated worker, building and siege models per faction; the RTS units currently borrow the
     MOBA creep and structure models.
 - **T-001 Blender model pipeline.** *Done for every unit and structure key (57 models,
