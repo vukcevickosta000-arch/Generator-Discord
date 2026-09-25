@@ -71,7 +71,8 @@ namespace Bloodfall.Client.UI.Hud
         {
             _mc = mc;
             _cats.Clear();
-            foreach (var c in new[] { "Recommended" }.Concat(App.Data.ShopCategories))
+            // Categories with nothing for sale (e.g. Relics, which only drop from Vharoth) get no tab.
+            foreach (var c in new[] { "Recommended" }.Concat(App.Data.ShopCategories.Where(cat => App.Data.Items.Values.Any(i => i.Purchasable && i.Category == cat))))
             {
                 var cc = c;
                 var b = El.Btn(c, () => { _category = cc; _search.value = ""; Render(); }, "btn--small");

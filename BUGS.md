@@ -40,3 +40,5 @@ Everything here is real and reproducible (or a verified limitation). Fixed bugs 
 | F-012 | Bots with a blink tagged `escape` always fled, even when engaging. | Abilities tagged `escape,engage` jump onto the target when engaging. |
 | F-013 | The same aura from two copies of a hero (possible when the roster is smaller than the lobby) stacked. | Auras are keyed by ability definition. Test: `Ardyn_SameAuraFromTwoArdyns_DoesNotStack`. |
 | F-014 | Summons ignored the level of the ability that raised them: their abilities always ran at level 1. | Summon abilities take the caster's ability level; stats recompute on spawn. |
+| F-015 | Every channel except the waystone showed Ilyra's blood beam. | Channel effects are chosen per ability (seal, grove, generic). |
+| F-016 | A shop tab would appear for a category with nothing for sale (Relics). | Tabs are only created for categories with purchasable items. |

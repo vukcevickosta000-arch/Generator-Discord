@@ -35,6 +35,8 @@ namespace Bloodfall.Client.Match
         private readonly Dictionary<(int, string), object> _statusHandles = new Dictionary<(int, string), object>();
         private Light _sun;
         private float _nightBlend;
+        private float _bloodMoonBlend;
+        private bool _vharothCorpse;
         private GameObject _post;
         private bool _centeredOnSpawn;
         private readonly Dictionary<int, object> _channelFx = new Dictionary<int, object>();
@@ -106,7 +108,7 @@ namespace Bloodfall.Client.Match
             ApplyDayNight(0f);
         }
 
-        private void ApplyDayNight(float night)
+        private void ApplyDayNight(float night, float bloodMoon = 0f)
         {
             // Day: overcast, pale gold light through ash clouds. Night: cold blue moonlight with a crimson edge.
             var dayLight = new Color(1f, 0.9f, 0.76f);
@@ -120,6 +122,16 @@ namespace Bloodfall.Client.Match
             RenderSettings.fogColor = Color.Lerp(new Color(0.2f, 0.18f, 0.2f), new Color(0.05f, 0.05f, 0.1f), night);
             RenderSettings.fogStartDistance = Mathf.Lerp(34f, 26f, night);
             RenderSettings.fogEndDistance = Mathf.Lerp(90f, 70f, night);
+            if (bloodMoon > 0f)
+            {
+                // The Blood Moon: crimson moonlight, red haze, and the fog closes in.
+                _sun.color = Color.Lerp(_sun.color, new Color(1f, 0.28f, 0.25f), bloodMoon);
+                _sun.intensity = Mathf.Lerp(_sun.intensity, 0.85f, bloodMoon);
+                RenderSettings.ambientSkyColor = Color.Lerp(RenderSettings.ambientSkyColor, new Color(0.3f, 0.08f, 0.1f), bloodMoon);
+                RenderSettings.fogColor = Color.Lerp(RenderSettings.fogColor, new Color(0.16f, 0.02f, 0.04f), bloodMoon);
+                RenderSettings.fogStartDistance = Mathf.Lerp(RenderSettings.fogStartDistance, 20f, bloodMoon);
+                RenderSettings.fogEndDistance = Mathf.Lerp(RenderSettings.fogEndDistance, 58f, bloodMoon);
+            }
             if (Camera != null) Camera.Cam.backgroundColor = RenderSettings.fogColor;
         }
 
@@ -240,7 +252,9 @@ namespace Bloodfall.Client.Match
             // Day / night transition.
             if (latest.IsNight != IsNight) IsNight = latest.IsNight;
             _nightBlend = Mathf.MoveTowards(_nightBlend, IsNight ? 1f : 0f, dt / 6f);
-            ApplyDayNight(_nightBlend);
+            _bloodMoonBlend = Mathf.MoveTowards(_bloodMoonBlend, latest.VharothPhase == (byte)VharothPhase.BloodMoon ? 1f : 0f, dt / 6f);
+            ApplyDayNight(_nightBlend, _bloodMoonBlend);
+            if (!_vharothCorpse && latest.VharothPhase == (byte)VharothPhase.Slain) PlaceVharothCorpse();
 
             if (EndResult == null) Fog.Update(dt, latest, LocalTeam, IsNight);
             Vfx.Tick(dt);
@@ -402,7 +416,7 @@ namespace Bloodfall.Client.Match
                 case SimEventType.ChannelStart:
                     if (_views.TryGetValue(e.UnitId, out var chv))
                     {
-                        string key = e.Key != null && e.Key.Contains("exsanguinate") ? "exsanguinate_beam" : e.Key != null && e.Key.Contains("waystone") ? "teleport_channel" : "exsanguinate_beam";
+                        string key = ChannelVfx(e.Key);
                         var h = Vfx.Play(key, chv.Point(0.6f), chv, 0f, 999f);
                         if (h != null) _channelFx[e.UnitId] = h;
                     }
@@ -498,6 +512,30 @@ namespace Bloodfall.Client.Match
                 case SimEventType.DayNight:
                     IsNight = e.Value > 0.5f;
                     break;
+                case SimEventType.VharothEvent:
+                {
+                    var pit = Map.World(Map.Map.BossPit, 0.1f);
+                    switch (e.Key)
+                    {
+                        case "tremors":
+                            Vfx.Play("vharoth_tremor", pit);
+                            audio.PlaySfx("vharoth_tremor", pit, 1f, 0f);
+                            break;
+                        case "seal_broken":
+                            audio.PlaySfx("seal_break", Map.World(e.Point), 1f, 0f);
+                            break;
+                        case "awakened":
+                            Vfx.Play("vharoth_rise", pit);
+                            Camera.Shake(1.2f, pit);
+                            audio.PlaySfx("vharoth_awaken", pit, 1f, 0f);
+                            break;
+                        case "slain":
+                            Vfx.Play("vharoth_fall", pit);
+                            Camera.Shake(1f, pit);
+                            break;
+                    }
+                    break;
+                }
                 case SimEventType.Announcer:
                     audio.Announce(e.Key);
                     break;
@@ -505,6 +543,31 @@ namespace Bloodfall.Client.Match
                     if (e.Key == null && (MatchPhase)(int)e.Value == MatchPhase.Playing) audio.Play2D("Sfx", "horn", 1f);
                     break;
             }
+        }
+
+        /// <summary>Looping effect shown while a unit channels the given ability.</summary>
+        private static string ChannelVfx(string abilityId)
+        {
+            string k = abilityId ?? "";
+            if (k.Contains("exsanguinate")) return "exsanguinate_beam";
+            if (k.Contains("waystone")) return "teleport_channel";
+            if (k.Contains("break_seal")) return "seal_channel";
+            if (k.Contains("grove")) return "grove_channel";
+            return "channel_generic";
+        }
+
+        /// <summary>Vharoth's remains stay in the pit for the rest of the match (also after a reconnect).</summary>
+        private void PlaceVharothCorpse()
+        {
+            _vharothCorpse = true;
+            var pit = Map.Map.BossPit;
+            var go = ProceduralModels.Prop("vharoth_corpse", Root, out _, out _);
+            if (go == null) return;
+            var prefab = Resources.Load<GameObject>("Models/Props/vharoth_corpse");
+            if (prefab != null) { UnityEngine.Object.Destroy(go); go = UnityEngine.Object.Instantiate(prefab, Root, false); }
+            go.transform.position = Map.World(pit, -0.1f);
+            go.transform.rotation = Quaternion.Euler(0f, 35f, 0f);
+            Decals.Create(Root, Map, new Vector2(pit.X, pit.Y), 9f, "blood_sheet", new Color(0.35f, 0f, 0.03f, 0.85f), false, 35f);
         }
 
         public void OnMatchEnded(MatchResult result)

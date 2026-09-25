@@ -73,10 +73,12 @@ namespace Bloodfall.Client.Match
             {
                 _timer = 0.1f;
                 _sources.Clear();
+                // The Blood Moon shrinks every unit's vision (structures keep theirs), matching the server.
+                float scale = frame.VharothPhase == (byte)Bloodfall.Simulation.VharothPhase.BloodMoon ? _data.Rules.VharothBloodMoonVision : 1f;
                 foreach (var e in frame.Entities)
                 {
                     if (e.Team != team || e.Has(EntityFlags.Dead)) continue;
-                    float r = VisionRadius(e, isNight);
+                    float r = VisionRadius(e, isNight) * (e.Has(EntityFlags.Structure) ? 1f : scale);
                     if (r <= 0f) continue;
                     bool flying = e.Has(EntityFlags.Airborne) || IsFlying(e);
                     _sources.Add((e.Position, r, flying));

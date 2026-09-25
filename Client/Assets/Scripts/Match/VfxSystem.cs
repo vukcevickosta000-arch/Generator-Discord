@@ -109,6 +109,8 @@ namespace Bloodfall.Client.Match
                 Duration = 0.2f, MaxParticles = Mathf.Max(8, count * 2), WorldSpace = true, SizeOverLifeEnd = 0.4f,
             };
 
+        private static ParticleSpec Debris() => Burst("dot", new Color(0.45f, 0.4f, 0.36f), new Color(0.3f, 0.26f, 0.22f), 30, 3f, 8f, 0.08f, 0.2f, 1.2f, false, 9f);
+
         private static ParticleSpec Flash(Color c, float size, float life = 0.25f) => new ParticleSpec
         {
             Texture = "soft_glow", Additive = true, Burst = 1, LifetimeMin = life, LifetimeMax = life, SizeMin = size, SizeMax = size, ColorA = c,
@@ -305,6 +307,27 @@ namespace Bloodfall.Client.Match
             var grove = R("grove_step"); grove.Add(Rising("dot", leaf, new Color(0.6f, 0.5f, 0.2f), 40, 1f, 2.5f, 0.07f, 1f, false)).Add(Flash(new Color(0.55f, 1f, 0.45f), 2f, 0.3f)); grove.Duration = 1.3f;
             R("leaf_burst").Add(Burst("dot", leaf, new Color(0.7f, 0.55f, 0.2f), 30, 2f, 6f, 0.06f, 0.12f, 1f, false, 1f)).Add(GroundRing("shockwave", leaf, 3f, 0.5f, 1.5f)).Duration = 1.1f;
             var forestWrath = R("old_forest_wrath"); forestWrath.Add(Rising("dot", leaf, new Color(0.35f, 0.25f, 0.15f), 40, 7f, 1.2f, 0.08f, 1f, false), default, true).Add(GroundRing("ground_crack", new Color(0.35f, 0.5f, 0.25f), 7f, 999f, 0f), default, true); forestWrath.Duration = 999f; forestWrath.HeightFraction = 0f;
+
+            // --- Vharoth
+            var titanRed = new Color(1f, 0.12f, 0.1f);
+            var tremor = R("vharoth_tremor"); tremor.Add(Smoke(dust, 16, 4f, 3f, 2f)).Add(GroundRing("ground_crack", titanRed, 10f, 3f, 1.05f)).Add(Rising("ember", titanRed, bloodDark, 60, 6f, 2f, 0.12f, 1.5f)); tremor.Shake = 0.5f; tremor.Duration = 3.5f; tremor.HeightFraction = 0f;
+            var rise = R("vharoth_rise"); rise.Add(Smoke(new Color(0.3f, 0.03f, 0.05f, 0.9f), 30, 6f, 3f, 4f)).Add(BloodSpray(80, 14f)).Add(GroundRing("shockwave", titanRed, 12f, 1.2f, 1.6f)).Add(Flash(titanRed, 14f, 0.6f)); rise.Shake = 1.2f; rise.Duration = 4f; rise.LightColor = titanRed; rise.LightIntensity = 10f; rise.LightRange = 30f;
+            var fall = R("vharoth_fall"); fall.Add(Smoke(dust, 30, 6f, 3.5f, 3f)).Add(Burst("dot", new Color(0.85f, 0.8f, 0.7f), new Color(0.5f, 0.1f, 0.1f), 60, 4f, 12f, 0.1f, 0.3f, 1.8f, false, 8f)).Add(Flash(Color.white, 16f, 0.6f)); fall.Shake = 1f; fall.Duration = 4f; fall.LightColor = titanRed; fall.LightIntensity = 8f; fall.LightRange = 30f;
+            R("seal_break").Add(Burst("spark", titanRed, Color.white, 40, 4f, 10f, 0.08f, 0.2f, 0.8f)).Add(GroundRing("shockwave", titanRed, 4f, 0.6f, 2f)).Add(Flash(titanRed, 5f, 0.4f)).Duration = 1.2f;
+            var sealCh = R("seal_channel"); sealCh.Add(Rising("soft_glow", titanRed, bloodDark, 20, 0.6f, 2.5f, 0.35f, 0.8f)).Add(GroundRing("rune_circle", titanRed, 2.2f, 999f, 0f)); sealCh.FollowTarget = true; sealCh.HeightFraction = 0f; sealCh.Duration = 999f;
+            var crush = R("vharoth_crush"); crush.Add(GroundRing("ground_crack", titanRed, 7f, 1.5f, 1.1f), default, true).Add(GroundRing("shockwave", new Color(1f, 0.4f, 0.3f), 3.5f, 0.5f, 2.2f), default, true).Add(Smoke(dust, 10, 2.5f, 1.2f, 2.5f)).Add(Debris()); crush.Shake = 0.7f; crush.Duration = 1.6f;
+            var rainTele = R("blood_rain_telegraph"); rainTele.Add(Rising("ember", titanRed, bloodDark, 10, 2f, 3f, 0.1f, 0.5f), default, true); rainTele.Duration = 999f;
+            var rainHit = R("blood_rain_impact"); rainHit.Add(BloodSpray(40, 8f), default, true).Add(GroundRing("shockwave", titanRed, 2.2f, 0.4f, 1.6f), default, true); rainHit.Duration = 1f;
+            var rainPool = R("blood_rain_pool"); rainPool.Add(Rising("ember", titanRed, bloodDark, 18, 2.2f, 0.6f, 0.12f, 1.2f), default, true).Add(GroundRing("rune_circle", bloodDark, 2.2f, 999f, 0f), default, true); rainPool.Duration = 999f; rainPool.HeightFraction = 0f; rainPool.Decal = "blood_sheet"; rainPool.DecalColor = new Color(0.4f, 0f, 0.03f, 0.8f); rainPool.DecalSize = 4.4f; rainPool.DecalLife = 6f; rainPool.DecalAdditive = false;
+            var pulse = R("titan_wrath_pulse"); pulse.Add(GroundRing("shockwave", titanRed, 8f, 0.6f, 2f), default, true).Add(Flash(titanRed, 8f, 0.35f)).Add(BloodSpray(30, 10f)); pulse.Shake = 0.6f; pulse.Duration = 1.2f;
+            var enrage = R("vharoth_enrage"); enrage.Add(Rising("ember", titanRed, new Color(1f, 0.5f, 0.2f), 30, 1.5f, 3f, 0.2f, 0.8f)); enrage.FollowTarget = true; enrage.HeightFraction = 0.4f; enrage.Duration = 999f;
+            var revive = R("heart_revive"); revive.Add(Rising("soft_glow", titanRed, new Color(1f, 0.5f, 0.5f), 40, 0.8f, 2.5f, 0.4f, 1f)).Add(GroundRing("rune_circle", titanRed, 2.5f, 4f, 1.1f)); revive.Duration = 4.2f; revive.HeightFraction = 0f; revive.LightColor = titanRed; revive.LightIntensity = 4f;
+            R("heart_granted").Add(Rising("soft_glow", titanRed, gold, 40, 0.8f, 3f, 0.4f, 1f)).Add(Flash(titanRed, 3f, 0.3f)).Duration = 1.4f;
+            R("heart_bloodthirst_burst").Add(GroundRing("shockwave", titanRed, 9f, 0.7f, 1.4f), default, true).Add(BloodSpray(30, 6f)).Add(Flash(titanRed, 4f, 0.3f)).Duration = 1.1f;
+            var thirst = R("bloodthirst_aura"); thirst.Add(Rising("ember", titanRed, bloodDark, 8, 0.4f, 1f, 0.1f, 0.7f)); thirst.FollowTarget = true; thirst.HeightFraction = 0.3f; thirst.Duration = 999f;
+
+            var groveCh = R("grove_channel"); groveCh.Add(Rising("dot", new Color(0.45f, 0.75f, 0.25f), new Color(0.6f, 0.5f, 0.2f), 25, 1f, 1.5f, 0.07f, 1f, false)).Add(GroundRing("rune_circle", new Color(0.55f, 1f, 0.45f), 2.4f, 999f, 0f)); groveCh.FollowTarget = true; groveCh.HeightFraction = 0f; groveCh.Duration = 999f;
+            var chGen = R("channel_generic"); chGen.Add(Rising("soft_glow", new Color(0.8f, 0.6f, 1f), holy, 14, 0.5f, 1.5f, 0.3f, 0.8f)); chGen.FollowTarget = true; chGen.HeightFraction = 0.1f; chGen.Duration = 999f;
 
             // --- statuses & items
             var stars = R("stun_stars"); stars.Add(new ParticleSpec { Texture = "flare", Additive = true, Rate = 6, LifetimeMin = 0.6f, LifetimeMax = 0.8f, SpeedMin = 0f, SpeedMax = 0.1f, SizeMin = 0.18f, SizeMax = 0.28f, ColorA = new Color(1f, 0.9f, 0.5f), Shape = ParticleSystemShapeType.Circle, ShapeRadius = 0.35f, Loop = true, Duration = 1, MaxParticles = 8, WorldSpace = false, RotationSpeed = 180 }); stars.FollowTarget = true; stars.HeightFraction = 1.08f; stars.Duration = 999f;

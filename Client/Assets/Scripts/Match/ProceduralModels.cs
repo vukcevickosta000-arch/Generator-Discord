@@ -150,6 +150,40 @@ namespace Bloodfall.Client.Match
                 case "summon_cauldron":
                     BuildCauldron(mi, key, new Color(0.14f, 0.13f, 0.13f), new Color(0.55f, 1f, 0.3f));
                     return;
+
+                // ---------------------------------------------------------------- Vharoth
+                case "boss_vharoth":
+                {
+                    // Built at hero scale, then tripled: limbs keep believable proportions at 6.6 m.
+                    BuildBiped(mi, key, new Biped
+                    {
+                        H = 2.2f, Bulk = 1.7f, Skin = new Color(0.34f, 0.1f, 0.11f), Armor = new Color(0.13f, 0.1f, 0.12f),
+                        Cloth = new Color(0.38f, 0.03f, 0.06f), Accent = new Color(0.82f, 0.76f, 0.64f), Glow = new Color(1f, 0.16f, 0.12f),
+                        Helmet = false, Horns = true, Crown = true, Collar = true, Mane = true, Hunched = true, Weapon = Weapon.Claws,
+                    });
+                    mi.Pivot.localScale = Vector3.one * 3f;
+                    mi.Height *= 3f;
+                    return;
+                }
+                case "vharoth_seal_active":
+                {
+                    // A blood crystal hovering over the seal's pedestal (the pedestal itself is map dressing).
+                    var red = new Color(1f, 0.15f, 0.2f);
+                    var mesh = CachedBuild(key, mb =>
+                    {
+                        mb.Sub(2).Crystal(new Vector3(0, 2.4f, 0), 0.32f, 1.1f, 6, red);
+                        for (int i = 0; i < 3; i++)
+                        {
+                            float a = i * Mathf.PI * 2f / 3f;
+                            mb.Crystal(new Vector3(Mathf.Cos(a) * 0.75f, 2.6f + (i % 2) * 0.25f, Mathf.Sin(a) * 0.75f), 0.1f, 0.35f, 4, red * 0.9f);
+                        }
+                        mb.Sub(0);
+                    });
+                    ModelFactory.Part(mi.Pivot, "seal_crystal", mesh, ModelFactory.StandardSet(red, 3), Vector3.zero);
+                    mi.Height = 3.6f;
+                    mi.Rig = new RigParts { Kind = RigKind.Static, Height = 3.6f };
+                    return;
+                }
             }
 
             if (key.StartsWith("creep_"))
@@ -1213,6 +1247,34 @@ namespace Bloodfall.Client.Match
                             mb.With(new Vector3(0, 3.5f, 0), Quaternion.Euler(35, 0, 0), Vector3.one, () => mb.Box(new Vector3(0, 0, 0.8f), new Vector3(0.15f, 0.15f, 4.5f), wood * 0.9f));
                         }
                         else mb.Sub(2).Sphere(new Vector3(0, 1.1f, 0.3f), new Vector3(0.6f, 0.3f, 1f), 6, 4, fire);
+                    });
+                    break;
+                case "vharoth_corpse":
+                    // The fallen Titan: a ribcage still wet with blood and crystals of hardened blood.
+                    emitsLight = true;
+                    glowC = new Color(1f, 0.12f, 0.1f);
+                    lightColor = glowC;
+                    mesh = CachedBuild("prop_vharoth_corpse", mb =>
+                    {
+                        var flesh = new Color(0.32f, 0.08f, 0.09f);
+                        mb.Cylinder(new Vector3(0, 0.6f, -4.5f), new Vector3(0, 0.9f, 4.5f), 0.6f, 0.5f, 8, bone * 0.9f);
+                        for (int i = 0; i < 9; i++)
+                        {
+                            float z = -3.5f + i * 0.85f;
+                            mb.Cylinder(new Vector3(0, 0.9f, z), new Vector3(-2.6f, 3.6f - i * 0.18f, z + 0.4f), 0.22f, 0.07f, 6, i % 3 == 0 ? flesh : bone * 0.9f);
+                            mb.Cylinder(new Vector3(0, 0.9f, z), new Vector3(2.6f, 3.6f - i * 0.18f, z + 0.4f), 0.22f, 0.07f, 6, i % 3 == 1 ? flesh : bone * 0.9f);
+                        }
+                        mb.Sphere(new Vector3(0.4f, 1.3f, -5.8f), new Vector3(1.3f, 1.1f, 1.6f), 10, 7, bone);
+                        mb.Cylinder(new Vector3(-0.5f, 2f, -6.1f), new Vector3(-2.4f, 4.2f, -5.2f), 0.26f, 0.02f, 6, bone * 1.05f);
+                        mb.Cylinder(new Vector3(1.2f, 2f, -6.1f), new Vector3(3.1f, 4.4f, -5.4f), 0.26f, 0.02f, 6, bone * 1.05f);
+                        mb.Cylinder(new Vector3(-1.5f, 0.6f, 1.5f), new Vector3(-5.5f, 0.4f, 3.5f), 0.4f, 0.3f, 7, flesh);
+                        mb.Sub(2);
+                        for (int i = 0; i < 7; i++)
+                        {
+                            float a = i * 2.1f;
+                            mb.Crystal(new Vector3(Mathf.Cos(a) * 2.8f, 0f, Mathf.Sin(a) * 3.6f), 0.18f, 0.5f + (i % 3) * 0.25f, 5, glowC);
+                        }
+                        mb.Sub(0);
                     });
                     break;
                 case "titan_skeleton":

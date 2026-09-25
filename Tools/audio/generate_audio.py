@@ -447,6 +447,14 @@ def sfx():
     W("cauldron_break", mix(metal_hit(420, 0.9, 1.0), bubbles[: int(0.6 * SR)] * 0.6))
     W("treant_slam", mix(whoosh(0.4, 150, 1200, 0.6), at(thud(55, 0.6, 1.3), 0.3, int(1.0 * SR))))
     W("treant_death", reverb(mix(thud(70, 1.0, 1.2), bp(noise(1.4), 200, 1200) * exp_env(int(1.4 * SR), 0.4) * 0.8, debris(1.2, 0.6, 30)), 0.6, 0.3))
+    # Vharoth event
+    W("seal_channel", reverb(mix(choir([note("D3"), note("Ab3")], 3.0, "oo", 0.5), lp(noise(3.0), 400) * env(int(3.0 * SR), 0.5, 0.3, 0.7, 1.5, 0.7) * 0.4), 0.8, 0.4))
+    W("seal_break", reverb(mix(metal_hit(520, 1.2, 1.0), debris(1.2, 0.8, 40), bell(note("D4"), 1.5, 0.8) * 0.4, thud(70, 0.6, 0.8)), 0.8, 0.4))
+    W("vharoth_tremor", reverb(mix(rumble(3.5, 1.2, 110), debris(3.0, 0.5, 50), growl(2.0, 40, 0.4, "oh")), 0.9, 0.4))
+    W("vharoth_awaken", reverb(mix(growl(3.0, 45, 1.2, "ah"), rumble(3.5, 1.0, 140), at(mix(thud(35, 1.5, 1.5), debris(2.0, 0.9, 80)), 0.4, int(4.0 * SR))), 0.95, 0.45))
+    W("vharoth_slam", reverb(mix(whoosh(0.5, 120, 900, 0.8), at(mix(thud(40, 0.9, 1.4), debris(0.8, 0.6, 25)), 0.4, int(1.4 * SR))), 0.6, 0.3))
+    W("vharoth_death", reverb(mix(growl(3.5, 38, 1.2, "oh") * sweep(1, 0.5, 3.5, "lin"), at(mix(thud(30, 2.0, 1.6), rumble(2.5, 1.0, 120), debris(2.5, 0.8, 90)), 2.2, int(5.0 * SR))), 0.95, 0.45))
+    W("heart_use", reverb(mix(thud(55, 0.4, 0.9), at(thud(55, 0.4, 0.8), 0.35, int(0.9 * SR)), choir([note("D3"), note("A3")], 1.2, "ah", 0.4)), 0.7, 0.35))
     # deaths
     W("death_human", reverb(mix(growl(0.6, 140, 0.6, "ah") * sweep(1, 0.6, 0.6, "lin"), flesh_hit(0.3, 0.6), at(thud(90, 0.4, 0.8), 0.35, int(1.0 * SR))), 0.4, 0.2))
     W("death_bone", mix(debris(0.8, 1.0, 30), thud(120, 0.3, 0.4)))

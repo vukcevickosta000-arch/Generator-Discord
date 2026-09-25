@@ -24,7 +24,7 @@ backend.
    - Ticket format: `base64url(json payload) + "." + base64url(HMAC-SHA256(payload, ticketKey))`.
    - Payload: `matchId`, `accountId`, `displayName`, `team`, `slot`, `spectator`, `exp` (unix s), `nonce`.
 3. **The client connects over UDP** (connection key `bloodfall`) and sends `Hello` with:
-   - protocol version (currently **3**)
+   - protocol version (currently **4**; v4 added the Vharoth phase and seal count to the snapshot header)
    - game data content hash
    - client version
    - the ticket

@@ -85,7 +85,13 @@ namespace Bloodfall.Client.Match
             if (InputBridge.GetMouseButtonDown(1))
             {
                 if (Targeting) { CancelTargeting(); return; }
-                if (Hover != null && !Hover.Dying && Hover.Id != MyHero.Id)
+                if (Hover != null && !Hover.Dying && Hover.Id != MyHero.Id && Hover.DefId == Bloodfall.Simulation.Match.SealUnitId)
+                {
+                    // Right-clicking a Blood Seal walks over and channels to break it.
+                    int seal = AbilityIndexById("vharoth_break_seal");
+                    if (seal >= 0) Send(Order.CastUnitOrder(MyHero.Id, seal, Hover.Id, queue));
+                }
+                else if (Hover != null && !Hover.Dying && Hover.Id != MyHero.Id)
                 {
                     if (_world.IsEnemy(Hover.Team) || (Hover.State != null && Hover.State.Hp < Hover.State.MaxHp * 0.5f && Hover.Kind == UnitKind.Creep))
                         Send(Order.Attack(MyHero.Id, Hover.Id, queue));
@@ -126,6 +132,15 @@ namespace Bloodfall.Client.Match
             if (InputBridge.GetKeyDown(KeyBinds.Get(_settings, KeyBinds.SelectHero))) { SelectedId = hero.Id; _world.Camera.JumpTo(_world.HeroWorldPosition() ?? _world.Camera.Focus); }
             if (InputBridge.GetKeyDown(KeyBinds.Get(_settings, KeyBinds.Buyback))) Send(new Order { Type = OrderType.Buyback, UnitId = hero.Id });
             if (InputBridge.GetKeyDown(KeyCode.Escape) && Targeting) CancelTargeting();
+        }
+
+        /// <summary>Index of an ability in the hero's list by id (hidden common abilities such as the seal channel).</summary>
+        public int AbilityIndexById(string id)
+        {
+            var me = Me;
+            if (me?.Abilities == null) return -1;
+            for (int i = 0; i < me.Abilities.Length; i++) if (me.Abilities[i].Id == id) return i;
+            return -1;
         }
 
         public int AbilityIndex(AbilitySlot slot)

@@ -108,22 +108,49 @@ and only after 15:00.
 Current catalogue: 38 items (consumables, wards, components, boots, weapons, armor, magic, support). The target is
 150–200. See [ITEM_DATABASE.md](ITEM_DATABASE.md).
 
-## 8. Vharoth, the Blood Titan (designed, not yet implemented)
+## 8. Vharoth, the Blood Titan
 
-The ruins' central event, available after 25:00 (`vharothMinTime` = 1500 s).
+The ruins' central event. The simulation is in `Shared/Runtime/Simulation/Match.Vharoth.cs`, the data in
+`GameData/units/vharoth.json`, and the numbers in `rules.json`. Tests: `VharothTests.cs`.
 
-1. **Tremors (Phase 1).**
-   - The pit shakes (announcer: *The earth trembles*) and 4 seals glow.
-   - Channelling a seal for 3 s breaks it and grants the team gold.
-   - Breaking seals is contested: damage interrupts the channel.
-2. **Awakening (Phase 2).** When all seals break, Vharoth rises in the pit. The boss has three combat phases:
-   - *Crush* (melee cleave and knock-up).
-   - *Blood Rain* (random AoE telegraphs across the pit; standing in pools drains HP to heal Vharoth).
-   - *Titan's Wrath* (below 30%: enrage and periodic pulses).
-3. **Blood Moon (Phase 3).** While Vharoth lives past 3 minutes, night falls permanently and vision shrinks for both
-   teams.
-4. **Reward.** The team landing the killing blow receives the **Heart of Vharoth**, a consumable relic granting a
-   revive and a temporary lifesteal aura. Vharoth's corpse remains in the pit for the rest of the match.
+1. **Tremors (Phase 1), at 25:00** (`vharothMinTime` = 1500 s).
+   - The pit shakes (announcer: *The earth trembles*) and four **Blood Seals** appear on their pedestals.
+   - Seals are invulnerable objectives and cannot be attacked.
+   - Any hero can right-click a seal to channel **Break Seal** for 3 s. The channeller is revealed, and damage from
+     an enemy interrupts the channel.
+   - Each broken seal gives every hero of the breaking team 100 gold (`vharothSealGold`).
+2. **Awakening (Phase 2).** When all four seals break, Vharoth rises in the pit.
+   - 14 000 HP, 10 armor, 35% magic resistance, 160–190 damage; he shrugs off half of every disable and slow.
+   - He fights whoever enters his pit (either team), prefers heroes, and never follows past 12 m
+     (`vharothLeash`).
+   - Left alone for 5 s he walks home and regenerates 4% of his health per second.
+   - Three combat phases by health:
+     - **Crush** (always): every third blow deals 220 physical damage within 3.5 m and knocks up (stuns) for 1 s.
+     - **Blood Rain** (below 70%): every 7 s in combat, five telegraphed spots (1.3 s warning) deal 140 magical
+       damage. They leave pools for 5 s that drain 60 HP/s and heal Vharoth for twice that.
+     - **Titan's Wrath** (below 30%): enraged (+80 attack speed, +30% damage, +15% movement speed); every 4 s a pulse
+       deals 140 magical damage within 8 m and knocks enemies back.
+3. **Blood Moon (Phase 3).** If Vharoth still lives 3 minutes after awakening, night falls and every unit's vision
+   shrinks to 70% (structures excepted) until he dies. The client tints the light crimson and closes the fog in.
+4. **Reward.**
+   - The killing team: 250 gold per hero, 1500 XP shared, and 300 gold for the hero landing the blow.
+   - The **Heart of Vharoth** goes to the killer (or the first teammate with a free slot).
+     - Passive: +12 all attributes.
+     - Reincarnation: if its bearer dies, the Heart is consumed and brings them back where they fell after 4 s.
+     - Active: allied heroes within 9 m gain Bloodthirst (25% lifesteal, 15% spell vamp) for 30 s. This consumes
+       the Heart.
+   - Vharoth's corpse (ribcage, crystals of blood, a blood pool) stays in the pit for the rest of the match.
+
+The snapshot header carries the event phase and the seal count, so the HUD and a reconnecting client always show the
+right state. The HUD shows a countdown in the last 5 minutes before the tremors, the seal count, the phase, and a boss
+health bar while Vharoth is visible.
+
+**Bots.**
+
+- The lowest-slot living bot of each team goes to break seals when no enemy hero is near.
+- Once Vharoth is awake, a team with four or more living heroes (average level 12 or higher, healthy) rallies outside
+  the leash, then attacks together.
+- In 45-minute bot matches Vharoth fell at about 32 minutes on each of three seeds.
 
 ## 9. Game modes
 

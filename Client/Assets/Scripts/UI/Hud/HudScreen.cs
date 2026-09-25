@@ -26,6 +26,8 @@ namespace Bloodfall.Client.UI.Screens
         private Scoreboard _scoreboard;
         private VisualElement _plate, _abilityRow, _inventory, _backpack, _stash, _buffs, _topDawn, _topDusk, _killfeed, _chatLog, _deathOverlay, _menu, _targetFrame;
         private VisualElement _portrait, _hpFill, _manaFill, _xpFill;
+        private Label _vharoth, _bossText;
+        private VisualElement _bossBar, _bossFill;
         private Label _hpText, _manaText, _hpRegen, _manaRegen, _level, _heroName, _gold, _clock, _dawnKills, _duskKills, _dayNight, _stats, _error, _announce, _announceSub, _pregame, _deathText, _targetName, _targetHp, _paused, _endBanner;
         private Button _buyback, _shopBtn;
         private TextField _chatInput;
@@ -123,9 +125,26 @@ namespace Bloodfall.Client.UI.Screens
             center.Add(score);
             _dayNight = El.Text("", "t-small", "t-center");
             center.Add(_dayNight);
+            _vharoth = El.Text("", "t-small", "t-center", "t-red");
+            center.Add(_vharoth);
             _topDusk = El.Div("row").Width(360);
             bar.Add(_topDawn); bar.Add(center); bar.Add(_topDusk);
             root.Add(bar);
+
+            // Vharoth's health bar while he is awake and visible.
+            _bossBar = El.Div("col", "center");
+            _bossBar.style.position = Position.Absolute;
+            _bossBar.style.top = 96;
+            _bossBar.style.left = Length.Percent(50);
+            _bossBar.style.width = 420;
+            _bossBar.style.marginLeft = -210;
+            _bossBar.pickingMode = PickingMode.Ignore;
+            _bossBar.Add(El.Text("VHAROTH, THE BLOOD TITAN", "t-small", "t-center", "t-red"));
+            var (bossBarEl, bossFill, bossText) = El.Bar("bar-fill--hp", 14);
+            _bossFill = bossFill; _bossText = bossText;
+            _bossBar.Add(bossBarEl);
+            _bossBar.style.display = DisplayStyle.None;
+            root.Add(_bossBar);
 
             _pregame = El.Text("", "announcer-sub");
             _pregame.style.position = Position.Absolute;
@@ -662,12 +681,37 @@ namespace Bloodfall.Client.UI.Screens
             UpdateTargetFrame();
         }
 
+        private void UpdateVharoth(SnapshotFrame frame)
+        {
+            int seals = App.Data.Maps.Values.FirstOrDefault()?.VharothSeals?.Count ?? 4;
+            switch ((VharothPhase)frame.VharothPhase)
+            {
+                case VharothPhase.Dormant:
+                    float wait = App.Data.Rules.VharothMinTime - frame.Time;
+                    _vharoth.text = wait > 0 && wait < 300 ? "Vharoth stirs in " + El.FormatTime(wait) : "";
+                    break;
+                case VharothPhase.Tremors: _vharoth.text = $"Blood Seals broken {frame.VharothSeals}/{seals}"; break;
+                case VharothPhase.Awakened: _vharoth.text = "Vharoth has awakened"; break;
+                case VharothPhase.BloodMoon: _vharoth.text = "Blood Moon"; break;
+                default: _vharoth.text = ""; break;
+            }
+            EntityState boss = null;
+            foreach (var e in frame.Entities) if (e.DefId == Bloodfall.Simulation.Match.VharothUnitId && !e.Has(EntityFlags.Dead)) { boss = e; break; }
+            _bossBar.style.display = boss != null ? DisplayStyle.Flex : DisplayStyle.None;
+            if (boss != null)
+            {
+                El.SetFill(_bossFill, boss.MaxHp > 0 ? boss.Hp / (float)boss.MaxHp : 0f);
+                _bossText.text = $"{boss.Hp:0} / {boss.MaxHp:0}";
+            }
+        }
+
         private void UpdateTopBar(SnapshotFrame frame)
         {
             _dawnKills.text = frame.TeamKills[0].ToString();
             _duskKills.text = frame.TeamKills[1].ToString();
             _clock.text = El.FormatTime(frame.Time);
             _dayNight.text = (frame.IsNight ? "☾ Night" : "☀ Day") + " · " + El.FormatTime(frame.DayNightRemaining);
+            UpdateVharoth(frame);
             _pregame.text = frame.Time < 0 ? "The battle begins in " + Mathf.CeilToInt(-frame.Time) : "";
             _slowTick -= Time.unscaledDeltaTime;
             if (_slowTick > 0) return;

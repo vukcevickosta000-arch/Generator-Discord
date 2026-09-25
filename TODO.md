@@ -10,6 +10,7 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
     `hero_fenrax` plus the `hero_fenrax_moonfang` transform, `hero_morwen`, `hero_thael`), creeps and neutrals.
   - Summons and forms: `summon_skeleton_legionnaire`, `summon_pale_revenant`, `summon_spirit_wolf`,
     `summon_treant`, `summon_cauldron`, `hex_bat`, `hex_toad`.
+  - Vharoth: `boss_vharoth` (about 6.6 m tall), `vharoth_seal_active`, and the `vharoth_corpse` prop.
   - Structures: towers T1–T4 per team, barracks, cores, fountains, wards.
   - Props: every dressing prop type in `Maps/Velmoragh/dressing.json`, and trees.
   - Characters get an armature and the clips `Idle, Run, Attack1, Attack2, Cast1, Cast2, Cast3, CastUlt, Channel,
@@ -43,14 +44,11 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
   | Announcer | every key in `AnnouncerKeys` |
 
   In addition, Sfx needs the attack, death and cast clips named in the data.
-- **T-005 Vharoth event (milestone 7)** in `Shared/Runtime/Simulation/Match.Vharoth.cs`:
-  - Phase 1 tremors after `vharothMinTime`.
-  - 4 seals on `MapDef.VharothSeals`, broken by channeling.
-  - Phase 2 awakening: the boss unit in `BossPit` with 3 combat phases.
-  - Phase 3 Blood Moon.
-  - Reward: the Heart of Vharoth item/buff for the killing team.
-  - The corpse persists as a dressing prop.
-  - Announcer keys already exist. Add tests.
+- **T-005 Vharoth event (milestone 7).** *Done in simulation, tests and bots (GAME_DESIGN.md §8). The Unity
+  presentation is implemented but unverified (B-001).* Remaining polish:
+  - a Blender model and animations for `boss_vharoth` (currently a scaled stand-in biped)
+  - a boss-fight music layer
+  - Titan's Tooth and Moon-Blood Vial relics (ITEM_DATABASE.md)
 
 ## Soon
 

@@ -16,7 +16,7 @@ This file is the honest source of truth for what works. Status labels:
 | Check | Result | How to reproduce |
 |---|---|---|
 | Server solution build (`Server/Bloodfall.sln`) | ✅ builds, 0 warnings-as-errors | `dotnet build Server/Bloodfall.sln` |
-| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 59 / 59 pass | `dotnet test Server/tests/Bloodfall.Tests` |
+| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 72 / 72 pass | `dotnet test Server/tests/Bloodfall.Tests` |
 | End-to-end online test (real backend + game server over UDP) | ✅ **E2E PASSED** | `Tools/dev/run-e2e.sh` |
 | 20-minute 5v5 bot simulation (all eight heroes) | ✅ runs, 0.28 ms/tick | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- 20 11` |
 | Unity client scripts compile check (UnityEngine 2021.3 reference assemblies) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck` |
@@ -36,7 +36,7 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
 | 4 | Multiplayer match | **WORKING** headless. Dedicated server, UDP, signed tickets, fog-filtered snapshots, reconnect and concede are all covered by E2E. |
 | 5 | Client / account / lobby / server flow | Backend **WORKING** (E2E). Unity screens IMPLEMENTED (unverified). |
 | 6 | Multiple heroes and items | PARTIAL: **8 of 96 heroes** playable (all eight concept heroes: Vorak, Ilyra, Nyxara, Malgrave, Ardyn, Fenrax, Morwen, Thael), each with kit tests and bot usage. 38 items. |
-| 7 | Vharoth event | PLANNED. Only the simulation hook exists (`Match.Vharoth.cs` is an empty stub). |
+| 7 | Vharoth event | **WORKING** in simulation: seals, awakening, three boss phases, Blood Moon, Heart of Vharoth with revive, bots that break seals and kill him. 13 tests. Unity presentation (models, effects, HUD boss bar, Blood Moon lighting, corpse): IMPLEMENTED (unverified). |
 | 8 | RTS match | PLANNED. Order types and unit kinds are reserved; the queue and lobbies refuse RTS with an explanation. |
 | 9 | Content expansion | PLANNED |
 | 10 | Polish | PLANNED |
@@ -61,12 +61,18 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
 - Bots: lane, retreat, fight, push and defend; ability usage by tags; item builds.
   - Known weakness: low last-hit counts (see BALANCE_NOTES.md).
 - Day/night cycle and announcer events.
+- **Vharoth event** (GAME_DESIGN.md §8):
+  - Blood Seals broken by a contested channel, then the Blood Titan with leash and reset.
+  - Crush, Blood Rain and Titan's Wrath phases.
+  - A Blood Moon that forces night and shrinks vision.
+  - The Heart of Vharoth relic (revive on the spot, Bloodthirst).
+  - The event state is in every snapshot header (protocol v4).
 - Practice cheats (`-gold`, `-lvlup`, `-refresh`, `-respawn`, `-startgame`). Honoured only when the match config sets
   `AllowCheats` (offline practice). Online matches never set it.
 
 ### Networking (Shared/Runtime/Protocol + GameServer): WORKING
 
-- LiteNetLib UDP transport and binary protocol v3, with fragmentation for large snapshots.
+- LiteNetLib UDP transport and binary protocol v4, with fragmentation for large snapshots.
 - Content-hash and version handshake. Path separators are normalized, so Windows and Linux hash identically.
 - HMAC-signed match tickets.
 - Command rate limiting.
@@ -152,13 +158,13 @@ lobby → hero select → loading → match → post-game.
 
 ## Next step (exact)
 
-1. **Vharoth event (milestone 7)** in `Match.Vharoth.cs`, with tests (T-005). This is next.
-2. **Art pipeline (T-001):**
+1. **Art pipeline (T-001), next:**
    - Blender (bpy) generators for the hero, summon and creep models with rigs and the standard clips (Idle, Run,
      Attack1/2, Cast1/2/3, CastUlt, Channel, Stun, Death).
    - Structures and props.
    - Exported as FBX to `Client/Assets/Resources/Models/<modelKey>.fbx`, where the model factory picks them up
      automatically.
+2. **RTS mode (milestone 8).** The order types and unit kinds are reserved; see GAME_DESIGN.md §9.
 3. **Hero-specific bot behaviour** (T-022) and last-hitting (T-016). The Nyxara bot is the weakest in bot matches.
 4. On a machine with Unity 6000.0.40f1:
    - Open `Client/`, run **Bloodfall ▸ Setup Project**, press Play.

@@ -67,6 +67,22 @@ Creeps upgrade every 7.5 min (+HP, +damage, +gold).
   not stalk from the veil to set up Velvet Dark and Midnight Sentence. This is bot behaviour (T-022), not her numbers.
 - **Kill pace is unchanged** (32 vs 33). The new crowd control did not produce stun-lock deaths in bot play.
 
+### Measured: Vharoth (SimRunner, 45 min, seeds 11/12/13, all heroes, 2026-09-25)
+
+| Seed | Seals broken by | Awakened | Blood Moon | Slain | By |
+|---|---|---|---|---|---|
+| 11 | Dusk (4/4, 25:18–25:39) | 25.6 min | 28.7 min | 33.3 min | Dawn |
+| 12 | — | 25.9 min | 29.0 min | 32.3 min | Dawn |
+| 13 | — | 26.0 min | 29.1 min | 33.3 min | Dusk |
+
+**Tuning history:**
+
+- The first version (16 000 HP, 12 armor, Wrath pulse every 3 s for 160, reset heal 8%/s) was never killed by bots.
+  They reached 25–30% and were then driven off by Titan's Wrath while he healed back.
+- The current version (14 000 / 10 armor / 4 s / 140 / 4%/s) dies to a coordinated bot team 7–8 minutes after
+  awakening, always after the Blood Moon rises.
+- Human teams farm about twice the bot GPM, so expect faster kills. Revisit once there is player data.
+
 ## 3. Hero notes
 
 | Hero | Intent | Watch |

@@ -80,7 +80,7 @@ Purchases made away from the base go to the 6-slot stash, which delivers periodi
 | Defense | 3 | 25 | Gargoyle Hide, Warden's Bulwark, Veil of Thorns (reflect), … |
 | Magic | 3 | 25 | Sceptre of Covenants (ultimate upgrade), Eclipse Lens, Blood Pact Grimoire, … |
 | Support | 1 | 20 | Chalice of Mercy, Banner of the Dawn, Lamplighter's Crook, … |
-| Relics (Vharoth) | 0 | 3 | Heart of Vharoth (event reward), Titan's Tooth, Moon-Blood Vial |
+| Relics (Vharoth) | 1 | 3 | **Heart of Vharoth** (implemented: event reward, not sold), Titan's Tooth, Moon-Blood Vial |
 
 **Design rules:**
 

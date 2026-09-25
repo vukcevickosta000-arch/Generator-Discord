@@ -107,8 +107,7 @@
       ],
       "icon": "ability_break_seal",
       "castAnimation": "Channel",
-      "castSfx": "seal_channel",
-      "castVfx": "seal_channel"
+      "castSfx": "seal_channel"
     },
     {
       "id": "vharoth_titan_hide",

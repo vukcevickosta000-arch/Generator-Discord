@@ -4,7 +4,7 @@
 
 | Suite | Command | What it covers |
 |---|---|---|
-| Unit and simulation tests (59) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
+| Unit and simulation tests (72) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
 | End-to-end online | `Tools/dev/run-e2e.sh` | Real backend (fresh SQLite database) and a real game server over UDP; see §3 |
 | Bot soak | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- <minutes> <seed> [--deaths] [--trace N] [--mirror \| --heroes id1,id2]` | Full 5v5 bot matches (every playable hero by default): stability, performance, balance numbers |
 | Unity client compile | `dotnet build Tools/UnityCompileCheck` | Every client script plus Shared, against UnityEngine 2021.3 reference assemblies |
@@ -20,6 +20,14 @@ What the unit and simulation tests cover:
   engine features they rely on. These include execute thresholds, summons scaling with level, ring walls, curse kill
   credit, echoed casts, forced night, tree counting and non-stacking auras. A 12-minute 10-bot match checks that every
   hero's bot casts at least two different abilities.
+- **Vharoth** (`VharothTests.cs`):
+  - seal timing and channel interrupts
+  - awakening, leash and reset
+  - health-gated boss phases
+  - the Blood Moon
+  - rewards, Heart revive and use
+  - the snapshot header
+  - bots breaking seals
 
 ## 2. What the compile checks do *not* cover
 

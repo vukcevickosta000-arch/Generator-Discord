@@ -585,6 +585,9 @@ GLYPHS = {
     "howl": howl, "unleashed": moonfang, "moonfang": moonfang, "pact": scroll, "toad": toad, "cauldron": cauldron,
     "brew": potion, "fumes": bubble, "curse": curse, "witching": hourglass, "barkskin": tree, "bark": tree,
     "treant": tree, "grove": leaf, "thael_wrath": forest,
+    # Vharoth
+    "break_seal": rune_stone, "vharoth_hide": horned_helm, "crush": hand, "vharoth_rain": drop,
+    "vharoth_wrath": skull, "titan_wrath": skull, "bloodthirst": fangs,
 }
 
 
@@ -859,6 +862,8 @@ def main():
             continue
         fac = ability_faction.get(a["id"])
         theme = {"CrimsonCourt": "blood", "AshenLegion": "bone", "WildCovenant": "nature", "Dawnguard": "holy"}.get(fac, "arcane")
+        if a["id"].startswith("vharoth_"):
+            theme = "blood"
         if a.get("isUltimate"):
             theme = "fire" if theme == "blood" else theme
         save(compose(glyph_for(icon), 128, 128, theme, 100 + i), "Abilities", icon + ".png")
