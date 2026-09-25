@@ -38,8 +38,22 @@
   - Nav grid: 0.5 m cells. Cell bits: walkable, 2-bit height level, tree, structure, vision blocker, water, special.
   - Vision grid: 1 m cells.
 - **Abilities** are data: `AbilityDef` → `EffectDef` graph (Damage, Heal, ApplyStatus, Area, Projectile,
-  Dash/Leap/Blink/Teleport, Knockback/Pull, Delayed, Zone, SpawnUnit, Chance, Execute, Swap, ModifyCooldowns, …).
-  Passives are `TriggerDef`s (OnAttackLanded, OnDamaged, OnKill, …); auras apply statuses in a radius.
+  Dash/Leap/Blink/Teleport, Knockback/Pull, Delayed, Zone, CreateWall, SpawnUnit, ConsumeCorpse, Chance, Sequence,
+  Execute, Swap, Transform, ModifyCooldowns, EchoCast, ForceNight, …).
+  - **Passives** are `TriggerDef`s: AttackLanded, Attacked, DamageTaken, DamageDealt, Kill, Death, NearbyDeath,
+    AbilityCast, SpellHit, LowHealth and Interval (every `internalCooldown` seconds).
+  - **Auras** apply statuses in a radius. They are keyed by ability definition, so the same aura never stacks with
+    itself.
+  - **Conditions.** Any effect can carry a `condition` gate: `targetHasStatus:`, `targetLacksStatus:`,
+    `casterHasStatus:`, `casterLacksStatus:`, `night`, `day`, `targetIsHero`, `targetNotHero`, `targetHpBelow:`,
+    `casterHpBelow:`, `casterUnseen`, `casterStacksAtLeast:<status>:<n>`, `casterNearTrees:<count>:<radius>`.
+  - **Effect targets:** Target, Caster, Point, TriggerSource and StatusSource (whoever applied the running status).
+  - **Kill credit.** `creditStatusSource` credits curse and DoT damage to the status' source.
+  - **Veils.** Statuses with `breakOnAction` end when the bearer attacks or casts; abilities marked `keepsStealth`
+    are the exception.
+  - **Summons** run their abilities at the level of the ability that raised them. Their `tags` choose the AI:
+    `stationary` or `guard`.
+  - **Trees.** `Match.CountTreesNear` indexes the map's tree records.
 - **Randomness:** only through the match RNG (seeded). PRD for procs and crits.
 - **Events:** `SimEvent` is the only output channel besides state. Each has a `PlayerId` (−1 = broadcast), and the
   server filters them per team.

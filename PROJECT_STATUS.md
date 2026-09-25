@@ -16,9 +16,9 @@ This file is the honest source of truth for what works. Status labels:
 | Check | Result | How to reproduce |
 |---|---|---|
 | Server solution build (`Server/Bloodfall.sln`) | ✅ builds, 0 warnings-as-errors | `dotnet build Server/Bloodfall.sln` |
-| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 28 / 28 pass | `dotnet test Server/tests/Bloodfall.Tests` |
+| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 59 / 59 pass | `dotnet test Server/tests/Bloodfall.Tests` |
 | End-to-end online test (real backend + game server over UDP) | ✅ **E2E PASSED** | `Tools/dev/run-e2e.sh` |
-| 20-minute 5v5 bot simulation | ✅ runs, 0.21 ms/tick | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- 20 11` |
+| 20-minute 5v5 bot simulation (all eight heroes) | ✅ runs, 0.28 ms/tick | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- 20 11` |
 | Unity client scripts compile check (UnityEngine 2021.3 reference assemblies) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck` |
 | Unity editor scripts compile check (Unity3D.SDK 2021.1) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck/Editor` |
 | Unity 6 editor import / Play mode / Windows player build | ⛔ **not run** (no Unity editor available) | see BUILD_INSTRUCTIONS.md |
@@ -35,7 +35,7 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
 | 3 | Offline match with bots | **WORKING** headless (10-bot matches). Unity offline practice: IMPLEMENTED (unverified). |
 | 4 | Multiplayer match | **WORKING** headless. Dedicated server, UDP, signed tickets, fog-filtered snapshots, reconnect and concede are all covered by E2E. |
 | 5 | Client / account / lobby / server flow | Backend **WORKING** (E2E). Unity screens IMPLEMENTED (unverified). |
-| 6 | Multiple heroes and items | PARTIAL: 2 of 96 heroes (Vorak, Ilyra) and 38 items are playable. |
+| 6 | Multiple heroes and items | PARTIAL: **8 of 96 heroes** playable (all eight concept heroes: Vorak, Ilyra, Nyxara, Malgrave, Ardyn, Fenrax, Morwen, Thael), each with kit tests and bot usage. 38 items. |
 | 7 | Vharoth event | PLANNED. Only the simulation hook exists (`Match.Vharoth.cs` is an empty stub). |
 | 8 | RTS match | PLANNED. Order types and unit kinds are reserved; the queue and lobbies refuse RTS with an explanation. |
 | 9 | Content expansion | PLANNED |
@@ -47,8 +47,11 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
 
 - 30 Hz fixed tick with deterministic RNG, attack point/backswing, animation cancel, armor and magic resistance, evasion,
   crits (PRD) and lifesteal.
-- Data-driven abilities: 30+ effect types, trigger passives, auras, statuses (4 stacking modes), dispels, shields,
-  channels, charges, toggles.
+- Data-driven abilities: 35+ effect types, trigger passives (including periodic ones), auras, statuses (4 stacking
+  modes), dispels, shields, channels, charges, toggles, transforms, walls and summons that scale with level.
+  - Effects can be gated by conditions: statuses, day/night, HP thresholds, unseen, stacks, nearby trees.
+  - Curse damage credits its caster, veils break on action, and casts can be echoed.
+  - The full list is in TECHNICAL_ARCHITECTURE.md §2.
 - Creep waves, towers (targeting priority, backdoor protection, protection chains), barracks, super and mega creeps,
   neutral camps (spawn, stack, leash), denies.
 - XP and gold economy: bounties, streaks, first blood, assists, passive gold, death gold loss, buyback, respawn timers.
@@ -140,24 +143,25 @@ lobby → hero select → loading → match → post-game.
 | Menu backdrop (sky, blood moon, castle, ruins, fog + live particles/lightning) | Done (procedural) |
 | Terrain layer textures (8), VFX sprites (24), Velmoragh heightfield/splat/dressing | Done (procedural) |
 | OFL fonts | Done |
-| Hero/creep/structure/prop 3D models | **Procedural stand-ins only** (clearly stand-ins; Blender pipeline next) |
-| Ability/item/status icons (73) | Done (procedural embossed emblems, `Tools/art/generate_icons.py`) |
-| Hero portraits | Placeholder silhouettes; to be replaced by renders of the Blender models (T-001) |
-| UI sounds, combat/spell/death SFX, ambience, music loops and stingers (61 clips) | Placeholder quality, procedurally synthesised (`Tools/audio/generate_audio.py`) |
+| Hero/creep/summon/structure/prop 3D models | **Procedural stand-ins only** (clearly stand-ins; Blender pipeline next). Each hero has distinct dressing (crowns, antlers, hats, collars, halo, werewolf form); summons and the toad hex have their own shapes. Not yet viewed in Unity. |
+| Ability/item/status icons (123) | Done (procedural embossed emblems, `Tools/art/generate_icons.py`) |
+| Hero portraits (8) | Placeholder silhouettes with per-hero headgear; to be replaced by renders of the Blender models (T-001) |
+| UI sounds, combat/spell/death SFX, ambience, music loops and stingers (97 clips) | Placeholder quality, procedurally synthesised (`Tools/audio/generate_audio.py`) |
 | Announcer (35 lines) | Placeholder: espeak-ng speech processed into a deep, reverberant voice. Original streak names. |
 | Hero voice lines | **Missing** (no content references any yet) |
 
 ## Next step (exact)
 
-1. **Art pipeline (in progress next):**
-   - Blender (bpy) generators for the hero and creep models with rigs and the standard clips (Idle, Run, Attack1/2,
-     Cast1/2/3, CastUlt, Channel, Stun, Death).
+1. **Vharoth event (milestone 7)** in `Match.Vharoth.cs`, with tests (T-005). This is next.
+2. **Art pipeline (T-001):**
+   - Blender (bpy) generators for the hero, summon and creep models with rigs and the standard clips (Idle, Run,
+     Attack1/2, Cast1/2/3, CastUlt, Channel, Stun, Death).
    - Structures and props.
    - Exported as FBX to `Client/Assets/Resources/Models/<modelKey>.fbx`, where the model factory picks them up
      automatically.
-2. New concept heroes in data (Nyxara, Malgrave, Ardyn, Fenrax, Morwen, Thael), with bots and tests.
-3. Vharoth event (milestone 7) in `Match.Vharoth.cs`, with tests.
+3. **Hero-specific bot behaviour** (T-022) and last-hitting (T-016). The Nyxara bot is the weakest in bot matches.
 4. On a machine with Unity 6000.0.40f1:
    - Open `Client/`, run **Bloodfall ▸ Setup Project**, press Play.
    - Fix anything in the URP/Input System branches and shaders that the headless checks cannot see.
+   - Review the new stand-in models and effects (T-002).
    - Record the results here.

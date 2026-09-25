@@ -6,7 +6,10 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
 
 - **T-001 Blender model pipeline.** Write `Blender/scripts/*.py` (run with the `bpy` module or `blender -b -P`) that
   builds the models for every `model` key in the game data:
-  - Characters: `hero_vorak`, `hero_ilyra`, creeps, neutrals.
+  - Characters: all eight heroes (`hero_vorak`, `hero_ilyra`, `hero_nyxara`, `hero_malgrave`, `hero_ardyn`,
+    `hero_fenrax` plus the `hero_fenrax_moonfang` transform, `hero_morwen`, `hero_thael`), creeps and neutrals.
+  - Summons and forms: `summon_skeleton_legionnaire`, `summon_pale_revenant`, `summon_spirit_wolf`,
+    `summon_treant`, `summon_cauldron`, `hex_bat`, `hex_toad`.
   - Structures: towers T1–T4 per team, barracks, cores, fountains, wards.
   - Props: every dressing prop type in `Maps/Velmoragh/dressing.json`, and trees.
   - Characters get an armature and the clips `Idle, Run, Attack1, Attack2, Cast1, Cast2, Cast3, CastUlt, Channel,
@@ -27,7 +30,7 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
     - `Textures/Icons/Portraits/portrait_<hero>`
   - Filenames must match the `icon`/`portrait` keys in the data.
   - `Bloodfall ▸ Validate Game Data` reports coverage.
-- **T-004 Audio.** *Done at placeholder level (`Tools/audio/generate_audio.py`, 96 clips).* Replace with final audio
+- **T-004 Audio.** *Done at placeholder level (`Tools/audio/generate_audio.py`, 132 clips).* Replace with final audio
   under the same keys: SFX, music and announcer clips under `Resources/Audio/{UI,Sfx,Music,Ambience,Announcer,Voice}`.
   The keys used by the code are listed in the tables below; missing clips are logged once.
 
@@ -58,12 +61,23 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
 - **T-012** Client-side prediction for the local hero's movement (server reconciliation). Online play is currently
   purely interpolated, so there is about 100 ms of added latency on your own hero.
 - **T-013** Replays: record the order stream plus seed from `MatchHost` and play it back through the same simulation.
-- **T-014** Hero roster expansion toward 96. Next are the six remaining concept heroes (Nyxara, Malgrave, Ardyn,
-  Fenrax, Morwen, Thael) — see Docs/HERO_ROSTER.md.
+- **T-014** Hero roster expansion toward 96 (8 playable). All eight concept heroes are done. Next, per faction, are the
+  ⚪ planned heroes in Docs/HERO_ROSTER.md. The data format and the kit tests in `HeroKitTests.cs` are the template.
+  Engine gaps that would unlock planned kits:
+  - arc/line walls (the engine only builds ring walls)
+  - corpses from heroes
+  - "on shield break" triggers
+  - targeting trees (treants from trees, teleport to trees)
 - **T-015** Item catalogue expansion toward 150–200 (currently 38). The ITEM_DATABASE.md plan lists planned items by
   category.
 - **T-016** Bot last-hitting. Bots currently average about 25 last hits per 20 minutes. Add creep-HP prediction using
   the attack point and projectile travel time.
+- **T-022** Hero-specific bot behaviour. Bot ability use is tag-driven (`botUsage`), which is enough for nukes,
+  disables and buffs but not for setup plays:
+  - Nyxara: stalk from the veil, then Velvet Dark and Midnight Sentence on a marked target
+  - Thael: Grove Call to reach fights
+  - Ardyn: Aegis on the ally being focused
+  - Malgrave: cage a fleeing target
 - **T-017** Email delivery for verification and reset: an SMTP or provider adapter behind an `IEmailSender`
   interface. Development keeps logging.
 - **T-018** Illusions and resurrection effect types, which are currently no-ops with a comment.

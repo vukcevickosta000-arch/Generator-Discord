@@ -256,6 +256,16 @@ namespace Bloodfall.Tests
         }
 
         [Fact]
+        public void Ardyn_SameAuraFromTwoArdyns_DoesNotStack()
+        {
+            var m = Duel("hero_ardyn", "hero_ilyra", out var a, out _, distance: 30f, dawn: 2);
+            var b = m.Players[1].Hero;
+            TestUtil.Teleport(m, b, a.Position + new Vector2(2, 0));
+            TestUtil.Run(m, 1f);
+            Assert.Single(a.Statuses, s => s.Def.Id == "ardyn_oathkeeper");
+        }
+
+        [Fact]
         public void Ardyn_AegisOfDawn_AbsorbsDamage_ThenBursts()
         {
             var m = Duel("hero_ardyn", "hero_ilyra", out var ardyn, out var ilyra, distance: 3f);

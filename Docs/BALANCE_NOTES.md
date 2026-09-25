@@ -46,12 +46,39 @@ Creeps upgrade every 7.5 min (+HP, +damage, +gold).
 - **Towers no longer kill bots.** The tower-threat avoidance works; before that fix, bots dove towers.
 - **Kill pace is in range** (33 at 20:00).
 
+### Measured: all eight heroes (SimRunner, 20 min, seed 11, default roster rotation, 2026-09-25)
+
+| Metric | Value |
+|---|---|
+| Kills | Dawn 15 – Dusk 17 (32 total) |
+| Towers destroyed | Dawn 5, Dusk 4 |
+| Winner at 20:00 | none |
+| Hero levels | 8–10 |
+| GPM | 156–247 |
+| Last hits per hero | 7–41 |
+| Hero deaths by source | heroes 22, creeps 8, towers 2 |
+| Performance | 0.28 ms per simulation tick (Release) |
+
+**Reading:**
+
+- **Summoners farm best:** Malgrave had 41 last hits and the highest GPM. His legionnaires and Grave Chill clear waves,
+  so the bot's weak last-hit timing matters less for him.
+- **The Nyxara bot is the weakest** (7 last hits, 6 deaths). Bots use her Kiss and her blink as an engage, but they do
+  not stalk from the veil to set up Velvet Dark and Midnight Sentence. This is bot behaviour (T-022), not her numbers.
+- **Kill pace is unchanged** (32 vs 33). The new crowd control did not produce stun-lock deaths in bot play.
+
 ## 3. Hero notes
 
 | Hero | Intent | Watch |
 |---|---|---|
 | Vorak | Frontline initiator that snowballs through fights (feast heal) | Crimson Charge + Bloodfall chain stun length (1.6 s + 1.8 s = 3.4 s combined at max levels); Sovereign's Wrath bash frequency with attack speed items |
 | Ilyra | High-risk nuker paying health for damage | Health-cost spells + lifesteal items can loop; Exsanguinate channel break range = 1.5 × cast range + 2 m |
+| Nyxara | Assassin: marks a target, waits unseen, then executes | Execute thresholds 22/28/34% after 150–350 pure damage; the Crimson Mark heal (12–30 per enemy-hero attack) scales with how many allies focus the target |
+| Malgrave | Summoner and pusher; wins through board presence | Summons are worth 14–32 gold each, so trading them feeds the enemy. The Bone Cage can trap allies too. The shard bonus only helps instant spells (it is consumed as the cast resolves) |
+| Ardyn | Bodyguard with light initiation | Two Ardyns do not stack Oathkeeper. The Crusade's 60% status resistance roughly halves the enemy's counter-stuns |
+| Fenrax | Night carry | The forced night (8 s) also helps enemy night heroes and cuts everyone's vision. Moonfang +50% HP at level 3 with Heart of the Colossus is the tankiest carry state in the game |
+| Morwen | Disabler and support | Echoes double her burst during the ultimate: Crooked Curse deals about 1.6× (the echo lands after the curse's -15% magic resistance). A second cauldron does not stack its auras (same source definition) |
+| Thael | Forest initiator | Barkskin is binary (3+ trees within 5 m). Grove Call is a 60 m teleport on a 25 s cooldown at level 4: watch map pressure |
 
 ## 4. Items
 

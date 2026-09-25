@@ -28,27 +28,33 @@ SS = 4  # supersample
 
 
 class G:
-    def __init__(self, size):
+    def __init__(self, size, sc=1.0, dy=0.0):
         self.S = size
         self.img = Image.new("L", (size, size), 0)
         self.d = ImageDraw.Draw(self.img)
+        # Optional uniform scale and vertical offset of the drawing space (portraits shrink the bust to fit headgear).
+        self.sc, self.dy = sc, dy
 
     def P(self, x, y):
-        return ((x + 1) * 0.5 * self.S, (y + 1) * 0.5 * self.S)
+        return ((x * self.sc + 1) * 0.5 * self.S, ((y + self.dy) * self.sc + 1) * 0.5 * self.S)
+
+    def U(self, r):
+        """Length in normalised units -> pixels."""
+        return r * self.sc * 0.5 * self.S
 
     def poly(self, pts, v=255):
         self.d.polygon([self.P(x, y) for x, y in pts], fill=v)
 
     def circle(self, x, y, r, v=255):
-        (cx, cy), rr = self.P(x, y), r * 0.5 * self.S
+        (cx, cy), rr = self.P(x, y), self.U(r)
         self.d.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], fill=v)
 
     def ring(self, x, y, r, w, v=255):
-        (cx, cy), rr, ww = self.P(x, y), r * 0.5 * self.S, w * 0.5 * self.S
+        (cx, cy), rr, ww = self.P(x, y), self.U(r), self.U(w)
         self.d.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], outline=v, width=max(1, int(ww)))
 
     def line(self, pts, w, v=255):
-        self.d.line([self.P(x, y) for x, y in pts], fill=v, width=max(1, int(w * 0.5 * self.S)), joint="curve")
+        self.d.line([self.P(x, y) for x, y in pts], fill=v, width=max(1, int(self.U(w))), joint="curve")
         for x, y in (pts[0], pts[-1]):
             self.circle(x, y, w / 2, v)
 
@@ -58,11 +64,11 @@ class G:
 
     def rrect(self, x0, y0, x1, y1, r, v=255):
         a, b = self.P(x0, y0), self.P(x1, y1)
-        self.d.rounded_rectangle([a[0], a[1], b[0], b[1]], radius=r * 0.5 * self.S, fill=v)
+        self.d.rounded_rectangle([a[0], a[1], b[0], b[1]], radius=self.U(r), fill=v)
 
     def arc(self, x, y, r, a0, a1, w, v=255):
-        (cx, cy), rr = self.P(x, y), r * 0.5 * self.S
-        self.d.arc([cx - rr, cy - rr, cx + rr, cy + rr], a0, a1, fill=v, width=max(1, int(w * 0.5 * self.S)))
+        (cx, cy), rr = self.P(x, y), self.U(r)
+        self.d.arc([cx - rr, cy - rr, cx + rr, cy + rr], a0, a1, fill=v, width=max(1, int(self.U(w))))
 
     def cut(self, fn):
         """Run fn drawing with value 0 (carve)."""
@@ -168,8 +174,8 @@ def lightning(g):
 
 
 def moon(g):
-    g.circle(0, 0, 1.4)
-    g.circle(0.38, -0.22, 1.2, 0)
+    g.circle(0, 0, 0.85)
+    g.circle(0.36, -0.22, 0.72, 0)
 
 
 def sun(g):
@@ -393,6 +399,165 @@ def chainmail(g):
             g.circle(x, y, 0.1, 0)
 
 
+
+# --- concept heroes (Nyxara, Malgrave, Ardyn, Fenrax, Morwen, Thael)
+
+def bat(g):
+    g.circle(0, 0.05, 0.24)
+    g.poly([(-0.16, -0.08), (-0.2, -0.42), (-0.04, -0.16)])
+    g.poly([(0.16, -0.08), (0.2, -0.42), (0.04, -0.16)])
+    for side in (-1, 1):
+        g.poly([(0, -0.05), (side * 0.3, -0.5), (side * 0.95, -0.62), (side * 0.9, 0.12), (side * 0.7, -0.02),
+                (side * 0.58, 0.38), (side * 0.38, 0.16), (side * 0.18, 0.42), (0, 0.2)])
+
+
+def rose(g):
+    g.line([(0, 0.2), (0.05, 0.95)], 0.1)
+    g.poly([(0.05, 0.55), (0.45, 0.35), (0.3, 0.6)])
+    g.poly([(0.02, 0.75), (-0.35, 0.6), (-0.15, 0.8)])
+    g.circle(0, -0.3, 0.55)
+    g.arc(0, -0.3, 0.38, 200, 520, 0.08, 0)
+    g.arc(0.03, -0.32, 0.18, 0, 300, 0.07, 0)
+    for x, y in ((0.12, 0.35), (-0.06, 0.62)):
+        g.poly([(x - 0.04, y), (x + 0.12, y - 0.06), (x - 0.02, y + 0.06)])
+
+
+def midnight(g):
+    g.circle(-0.1, -0.1, 0.8)
+    g.circle(0.28, -0.3, 0.68, 0)
+    g.poly(rot([(-0.05, -0.95), (0.05, -0.95), (0.08, 0.45), (-0.08, 0.45)], 0.6))
+    g.poly(rot([(-0.28, 0.45), (0.28, 0.45), (0.28, 0.55), (-0.28, 0.55)], 0.6))
+
+
+def bones(g):
+    for a in (0.785, -0.785):
+        pts = rot([(-0.8, -0.07), (0.8, -0.07), (0.8, 0.07), (-0.8, 0.07)], a)
+        g.poly(pts)
+        for ex, ey in rot([(-0.82, -0.12), (-0.82, 0.12), (0.82, -0.12), (0.82, 0.12)], a):
+            g.circle(ex, ey, 0.26)
+
+
+def ribcage(g):
+    g.rect(-0.07, -0.85, 0.07, 0.8)
+    for i in range(5):
+        y = -0.6 + i * 0.3
+        w = 0.8 - abs(i - 1.5) * 0.12
+        g.arc(-0.02, y + 0.35, w * 1.6, 190, 260, 0.12)
+        g.arc(0.02, y + 0.35, w * 1.6, 280, 350, 0.12)
+
+
+def snowflake(g):
+    for i in range(6):
+        a = i * math.pi / 3
+        g.line(rot([(0, 0), (0, -0.9)], a), 0.11)
+        g.line(rot([(0, -0.5), (0.22, -0.72)], a), 0.08)
+        g.line(rot([(0, -0.5), (-0.22, -0.72)], a), 0.08)
+
+
+def tombstone(g):
+    g.rrect(-0.55, -0.6, 0.55, 0.8, 0.5)
+    g.rect(-0.8, 0.68, 0.8, 0.9)
+    g.rect(-0.06, -0.35, 0.06, 0.35, 0)
+    g.rect(-0.25, -0.18, 0.25, -0.06, 0)
+
+
+def aegis(g):
+    g.poly([(-0.6, -0.55), (0.6, -0.55), (0.6, 0.05), (0, 0.85), (-0.6, 0.05)])
+    g.circle(0, -0.1, 0.55, 0)
+    g.circle(0, -0.1, 0.35)
+    for i in range(8):
+        a = i * math.pi / 4
+        g.poly(rot([(-0.05, -0.38), (0.05, -0.38), (0, -0.62)], a, 0, 0), 255)
+
+
+def banner(g):
+    g.rect(-0.62, -0.95, -0.5, 0.95)
+    g.circle(-0.56, -0.95, 0.16)
+    g.poly([(-0.5, -0.8), (0.75, -0.8), (0.55, -0.35), (0.75, 0.1), (-0.5, 0.1)])
+    g.circle(0.08, -0.35, 0.35, 0)
+    g.circle(0.08, -0.35, 0.18)
+
+
+def wolf_head(g, s=1.0, dx=0.0, dy=0.0):
+    T = lambda pts: [(x * s + dx, y * s + dy) for x, y in pts]
+    g.poly(T([(-0.55, -0.2), (-0.7, -0.9), (-0.25, -0.5), (0.25, -0.5), (0.7, -0.9), (0.55, -0.2), (0.45, 0.25),
+              (0.12, 0.85), (-0.12, 0.85), (-0.45, 0.25)]))
+    g.poly(T([(-0.35, -0.15), (-0.12, -0.02), (-0.32, 0.02)]), 0)
+    g.poly(T([(0.35, -0.15), (0.12, -0.02), (0.32, 0.02)]), 0)
+    g.circle(dx, 0.72 * s + dy, 0.09 * s, 0)
+
+
+def howl(g):
+    wolf_head(g, 0.78, -0.18, 0.15)
+    for r in (0.3, 0.52, 0.74):
+        g.arc(0.3, -0.45, r, 280, 350, 0.08)
+
+
+def moonfang(g):
+    g.circle(0.1, -0.1, 0.9)
+    g.circle(0.45, -0.35, 0.78, 0)
+    wolf_head(g, 0.72, -0.05, 0.22)
+
+
+def cauldron(g):
+    g.circle(0, 0.22, 0.62)
+    g.rrect(-0.72, -0.34, 0.72, -0.16, 0.06)
+    g.line([(-0.4, 0.72), (-0.55, 0.95)], 0.12)
+    g.line([(0.4, 0.72), (0.55, 0.95)], 0.12)
+    g.arc(0, 0.25, 0.45, 20, 160, 0.06, 0)
+    for x, y, r in ((-0.22, -0.52, 0.13), (0.12, -0.68, 0.1), (0.32, -0.48, 0.08)):
+        g.ring(x, y, r, 0.06)
+
+
+def veil(g):
+    g.poly([(-0.75, 0.9), (-0.6, -0.3), (-0.3, -0.75), (0, -0.85), (0.3, -0.75), (0.6, -0.3), (0.75, 0.9),
+            (0.4, 0.7), (0, 0.9), (-0.4, 0.7)])
+    g.circle(0, -0.15, 0.3, 0)
+    for i in range(-3, 4):
+        g.line([(i * 0.2 - 0.3, 0.9), (i * 0.2 + 0.3, -0.6)], 0.035, 0)
+
+
+def curse(g):
+    g.poly([(-0.9, 0), (-0.45, -0.4), (0.45, -0.4), (0.9, 0), (0.45, 0.4), (-0.45, 0.4)])
+    g.circle(0, 0, 0.62, 0)
+    g.ring(0, 0, 0.5, 0.08)
+    g.circle(0, 0, 0.16)
+    g.line([(-0.1, 0.55), (0.1, 0.8), (-0.1, 0.95)], 0.07)
+
+
+def hourglass(g):
+    g.rect(-0.62, -0.9, 0.62, -0.75)
+    g.rect(-0.62, 0.75, 0.62, 0.9)
+    g.poly([(-0.5, -0.75), (0.5, -0.75), (0.06, 0), (0.5, 0.75), (-0.5, 0.75), (-0.06, 0)])
+    g.poly([(-0.36, -0.62), (0.36, -0.62), (0.05, -0.12), (-0.05, -0.12)], 0)
+    g.poly([(-0.05, 0.25), (0.05, 0.25), (0.3, 0.62), (-0.3, 0.62)], 0)
+
+
+def tree(g):
+    g.poly([(-0.14, 0.9), (-0.1, -0.1), (0.1, -0.1), (0.14, 0.9)])
+    g.line([(0, 0.2), (-0.45, -0.2)], 0.09)
+    g.line([(0, 0.05), (0.42, -0.3)], 0.09)
+    for x, y, r in ((0, -0.45, 0.85), (-0.45, -0.25, 0.6), (0.45, -0.3, 0.62), (0, -0.8, 0.55)):
+        g.circle(x, y, r)
+    g.rect(-0.4, 0.82, 0.4, 0.92)
+
+
+def leaf(g):
+    g.poly(rot([(0, -0.9), (0.45, -0.35), (0.4, 0.3), (0, 0.75), (-0.4, 0.3), (-0.45, -0.35)], 0.5))
+    g.line(rot([(0, -0.7), (0, 0.95)], 0.5), 0.07, 0)
+    for t in (-0.35, 0.0, 0.35):
+        g.line(rot([(0, t), (0.28, t - 0.25)], 0.5), 0.05, 0)
+        g.line(rot([(0, t), (-0.28, t - 0.25)], 0.5), 0.05, 0)
+
+
+def forest(g):
+    for x, s in ((-0.5, 0.7), (0.5, 0.7), (0, 1.0)):
+        g.poly([(x, -0.9 * s), (x + 0.4 * s, -0.1 * s), (x + 0.25 * s, -0.1 * s), (x + 0.5 * s, 0.5 * s),
+                (x - 0.5 * s, 0.5 * s), (x - 0.25 * s, -0.1 * s), (x - 0.4 * s, -0.1 * s)])
+        g.rect(x - 0.06 * s, 0.5 * s, x + 0.06 * s, 0.8)
+    roots_y = 0.8
+    g.rect(-0.9, roots_y, 0.9, roots_y + 0.1)
+
 GLYPHS = {
     # abilities (by keyword)
     "feast": chalice, "charge": horned_helm, "rend": claw, "wrath": hammer, "bloodfall": comet, "fang": fangs,
@@ -411,6 +576,15 @@ GLYPHS = {
     "stun": lambda g: star_burst(g, 5), "bleed": drop, "slow": snail, "silence": mouth_x, "root": roots, "fear": skull,
     "hex": toad, "immune": shield, "invuln": sun, "reveal": eye, "barrier": bubble, "surge": drop, "tithe": coin,
     "bloodbound": chain, "disarm": broken_sword,
+    # concept heroes
+    "velvet": mask, "batwing": bat, "kiss": rose, "crimson_mark": rose, "veil": veil, "claws": claw,
+    "restoring_brew": potion, "sentence": midnight,
+    "ossuary": skull, "bone_shard": bones, "raise": hand, "cage": ribcage, "chill": snowflake, "legion": tombstone,
+    "oathkeeper": shield, "fervor": flame, "aegis": aegis, "consecrate": sun, "judgment": hammer, "crusade": banner,
+    "dazzled": lambda g: star_burst(g, 4, 0.3, 0.95), "hunger": moon, "pounce": wolf_head, "rent_armor": claw,
+    "howl": howl, "unleashed": moonfang, "moonfang": moonfang, "pact": scroll, "toad": toad, "cauldron": cauldron,
+    "brew": potion, "fumes": bubble, "curse": curse, "witching": hourglass, "barkskin": tree, "bark": tree,
+    "treant": tree, "grove": leaf, "thael_wrath": forest,
 }
 
 
@@ -527,7 +701,7 @@ def portrait(hero, faction, w=256, h=320, seed=0):
     bg += light * rays[..., None]
 
     S = W
-    g = G(S)
+    g = G(S, sc=0.78, dy=0.4)
     # bust: shoulders + neck + head in normalised coords (portrait is taller: map y to 0..H)
     sy = H / W
 
@@ -554,6 +728,51 @@ def portrait(hero, faction, w=256, h=320, seed=0):
         g.poly([(0.3, 0.2), (0.55, -0.15), (0.25, 0.05)])
         g.line([(-0.78, 1.2), (-0.66, -0.55)], 0.06)
         g.circle(-0.66, -0.66, 0.22)
+    elif "nyxara" in hid:
+        # tiara, tall fan collar, rapier held upright
+        for i, x in enumerate((-0.3, -0.15, 0, 0.15, 0.3)):
+            g.poly([(x - 0.06, head_y - 0.5), (x, head_y - (0.95 if i == 2 else 0.75)), (x + 0.06, head_y - 0.5)])
+        g.poly([(-0.2, 0.35), (-0.85, -0.55), (-0.55, 0.45)])
+        g.poly([(0.2, 0.35), (0.85, -0.55), (0.55, 0.45)])
+        g.line([(0.78, 1.2), (0.7, -0.9)], 0.035)
+        g.circle(0.77, 0.95, 0.2)
+    elif "malgrave" in hid:
+        # bone crown, high collar, scythe over the shoulder
+        for x in (-0.36, -0.18, 0, 0.18, 0.36):
+            g.line([(x, head_y - 0.45), (x * 1.2, head_y - 0.85)], 0.07)
+        g.poly([(-0.25, 0.3), (-0.7, -0.45), (-0.5, 0.4)])
+        g.poly([(0.25, 0.3), (0.7, -0.45), (0.5, 0.4)])
+        g.line([(-0.8, 1.2), (-0.62, -0.9)], 0.06)
+        g.poly([(-0.62, -0.9), (0.1, -0.75), (-0.55, -0.72)])
+    elif "ardyn" in hid:
+        # crested helm, sunburst behind the head, mace
+        g.rect(-0.05, head_y - 0.95, 0.05, head_y - 0.3)
+        g.poly([(-0.36, head_y - 0.05), (0, head_y - 0.62), (0.36, head_y - 0.05)])
+        g.ring(0, head_y, 0.72, 0.05)
+        g.poly([(-1.0, 0.8), (-0.75, 0.3), (-0.45, 0.55)])
+        g.poly([(1.0, 0.8), (0.75, 0.3), (0.45, 0.55)])
+        g.line([(0.8, 1.2), (0.72, -0.35)], 0.06)
+        g.circle(0.72, -0.45, 0.28)
+    elif "fenrax" in hid:
+        # wolf-pelt hood with ears and a shaggy mantle
+        g.poly([(-0.42, head_y - 0.2), (-0.5, head_y - 0.85), (-0.15, head_y - 0.45)])
+        g.poly([(0.42, head_y - 0.2), (0.5, head_y - 0.85), (0.15, head_y - 0.45)])
+        for i in range(9):
+            x = -0.9 + i * 0.225
+            g.poly([(x - 0.12, 0.5), (x, 0.2 - (i % 2) * 0.12), (x + 0.12, 0.5)])
+    elif "morwen" in hid:
+        # crooked wide-brimmed witch's hat and a gnarled staff
+        g.poly([(-0.95, head_y - 0.3), (0.95, head_y - 0.3), (0.85, head_y - 0.18), (-0.85, head_y - 0.18)])
+        g.poly([(-0.42, head_y - 0.3), (0.4, head_y - 0.3), (0.15, head_y - 0.9), (0.45, head_y - 1.2), (0.05, head_y - 1.0)])
+        g.line([(-0.8, 1.2), (-0.7, 0.2), (-0.8, -0.3), (-0.66, -0.6)], 0.06)
+        g.circle(-0.66, -0.68, 0.18)
+    elif "thael" in hid:
+        # branching antlers and a bark mantle
+        for side in (-1, 1):
+            g.line([(side * 0.25, head_y - 0.4), (side * 0.6, head_y - 0.95), (side * 0.9, head_y - 1.25)], 0.07)
+            g.line([(side * 0.45, head_y - 0.7), (side * 0.35, head_y - 1.15)], 0.05)
+            g.line([(side * 0.72, head_y - 1.05), (side * 0.95, head_y - 0.95)], 0.05)
+        g.poly([(-1.0, 0.8), (-0.85, 0.3), (-0.6, 0.5), (-0.5, 0.25), (0.5, 0.25), (0.6, 0.5), (0.85, 0.3), (1.0, 0.8)])
     else:
         g.poly([(0, head_y - 0.55), (0.35, head_y - 0.2), (-0.35, head_y - 0.2)])
     BW = int(W * 0.78)
@@ -571,7 +790,7 @@ def portrait(hero, faction, w=256, h=320, seed=0):
     out = bg * (1 - m[..., None]) + body * m[..., None]
     # eyes glow for vampire/undead factions
     if faction in ("CrimsonCourt", "AshenLegion"):
-        e = G(W)
+        e = G(W, sc=0.78, dy=0.4)
         e.circle(-0.12, head_y + 0.02, 0.07)
         e.circle(0.12, head_y + 0.02, 0.07)
         em = Image.new("L", (W, H), 0)

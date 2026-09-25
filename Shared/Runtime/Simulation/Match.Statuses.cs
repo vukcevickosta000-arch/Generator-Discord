@@ -250,7 +250,8 @@ namespace Bloodfall.Simulation
                 foreach (var ab in u.Abilities)
                 {
                     if (ab.Def.Aura == null || ab.Level <= 0 || u.HasFlag(StatusFlags.BreakPassives)) continue;
-                    PulseAura(u, ab.Def.Aura, ab.Level, ab);
+                    // Origin is the ability definition: the same aura from two copies of a hero does not stack.
+                    PulseAura(u, ab.Def.Aura, ab.Level, ab.Def);
                 }
                 if (u.Inventory != null)
                     foreach (var it in u.Inventory)

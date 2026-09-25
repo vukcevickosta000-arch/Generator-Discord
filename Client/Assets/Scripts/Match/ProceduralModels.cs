@@ -14,7 +14,7 @@ namespace Bloodfall.Client.Match
     {
         private static readonly Dictionary<string, Mesh> MeshCache = new Dictionary<string, Mesh>();
 
-        private enum Weapon { None, Greatsword, Sword, Bow, Crossbow, Staff, Claws, Shovel, Hammer }
+        private enum Weapon { None, Greatsword, Sword, Bow, Crossbow, Staff, Claws, Shovel, Hammer, Rapier, Club, Scythe }
 
         private sealed class Biped
         {
@@ -26,6 +26,8 @@ namespace Bloodfall.Client.Match
             public Color Accent = Color.gray;
             public Color Glow = Color.red;
             public bool Robe, Bone, Helmet = true, Horns, Cape, Shield, Hunched, Hood;
+            /// <summary>Head/torso dressing used to tell heroes apart at a glance.</summary>
+            public bool Crown, Antlers, Hat, Ears, Muzzle, Mane, Halo, Collar;
             public Weapon Weapon = Weapon.Sword;
         }
 
@@ -54,8 +56,99 @@ namespace Bloodfall.Client.Match
                         Robe = true, Helmet = false, Hood = true, Cape = false, Weapon = Weapon.Staff,
                     });
                     return;
+                case "hero_nyxara":
+                    BuildBiped(mi, key + team, new Biped
+                    {
+                        H = 1.85f, Bulk = 0.82f, Skin = new Color(0.9f, 0.84f, 0.86f), Armor = new Color(0.1f, 0.06f, 0.1f),
+                        Cloth = new Color(0.36f, 0.02f, 0.1f), Accent = new Color(0.82f, 0.62f, 0.66f), Glow = new Color(1f, 0.15f, 0.35f),
+                        Helmet = false, Cape = true, Collar = true, Crown = true, Weapon = Weapon.Rapier,
+                    });
+                    return;
+                case "hero_malgrave":
+                    BuildBiped(mi, key + team, new Biped
+                    {
+                        H = 1.95f, Bulk = 0.95f, Skin = new Color(0.84f, 0.8f, 0.7f), Armor = new Color(0.22f, 0.24f, 0.2f),
+                        Cloth = new Color(0.2f, 0.22f, 0.18f), Accent = new Color(0.32f, 0.52f, 0.42f), Glow = new Color(0.5f, 1f, 0.4f),
+                        Robe = true, Helmet = false, Crown = true, Collar = true, Weapon = Weapon.Scythe,
+                    });
+                    return;
+                case "hero_ardyn":
+                    BuildBiped(mi, key + team, new Biped
+                    {
+                        H = 2.0f, Bulk = 1.25f, Skin = new Color(0.8f, 0.66f, 0.55f), Armor = new Color(0.84f, 0.8f, 0.72f),
+                        Cloth = new Color(0.88f, 0.84f, 0.7f), Accent = new Color(0.95f, 0.75f, 0.35f), Glow = new Color(1f, 0.86f, 0.45f),
+                        Helmet = true, Cape = true, Shield = true, Halo = true, Weapon = Weapon.Hammer,
+                    });
+                    return;
+                case "hero_fenrax":
+                    BuildBiped(mi, key + team, new Biped
+                    {
+                        H = 1.9f, Bulk = 1.05f, Skin = new Color(0.7f, 0.58f, 0.48f), Armor = new Color(0.3f, 0.24f, 0.18f),
+                        Cloth = new Color(0.42f, 0.4f, 0.38f), Accent = new Color(0.75f, 0.78f, 0.85f), Glow = new Color(0.6f, 0.8f, 1f),
+                        Helmet = false, Mane = true, Weapon = Weapon.Claws,
+                    });
+                    return;
+                case "hero_fenrax_moonfang":
+                    BuildBiped(mi, key + team, new Biped
+                    {
+                        H = 2.45f, Bulk = 1.55f, Skin = new Color(0.24f, 0.23f, 0.25f), Armor = new Color(0.27f, 0.26f, 0.28f),
+                        Cloth = new Color(0.34f, 0.34f, 0.36f), Accent = new Color(0.75f, 0.78f, 0.85f), Glow = new Color(0.6f, 0.85f, 1f),
+                        Helmet = false, Hunched = true, Muzzle = true, Ears = true, Mane = true, Weapon = Weapon.Claws,
+                    });
+                    return;
+                case "hero_morwen":
+                    BuildBiped(mi, key + team, new Biped
+                    {
+                        H = 1.72f, Bulk = 0.85f, Skin = new Color(0.78f, 0.7f, 0.6f), Armor = new Color(0.2f, 0.15f, 0.1f),
+                        Cloth = new Color(0.18f, 0.25f, 0.14f), Accent = new Color(0.6f, 0.5f, 0.3f), Glow = new Color(0.6f, 1f, 0.3f),
+                        Robe = true, Helmet = false, Hat = true, Weapon = Weapon.Staff,
+                    });
+                    return;
+                case "hero_thael":
+                    BuildBiped(mi, key + team, new Biped
+                    {
+                        H = 2.2f, Bulk = 1.45f, Skin = new Color(0.36f, 0.27f, 0.19f), Armor = new Color(0.28f, 0.2f, 0.14f),
+                        Cloth = new Color(0.2f, 0.32f, 0.16f), Accent = new Color(0.45f, 0.35f, 0.22f), Glow = new Color(0.55f, 1f, 0.45f),
+                        Helmet = false, Antlers = true, Mane = true, Weapon = Weapon.Club,
+                    });
+                    return;
                 case "hex_bat":
                     BuildWinged(mi, key, new Color(0.15f, 0.1f, 0.12f), new Color(1f, 0.2f, 0.2f), 0.6f, false);
+                    return;
+                case "hex_toad":
+                    BuildToad(mi, key, new Color(0.3f, 0.42f, 0.18f), new Color(0.9f, 0.85f, 0.3f));
+                    return;
+
+                // ---------------------------------------------------------------- hero summons
+                case "summon_skeleton_legionnaire":
+                    BuildBiped(mi, key, new Biped
+                    {
+                        H = 1.75f, Bulk = 0.95f, Skin = new Color(0.82f, 0.78f, 0.68f), Armor = new Color(0.36f, 0.31f, 0.25f),
+                        Cloth = new Color(0.2f, 0.2f, 0.18f), Accent = new Color(0.3f, 0.5f, 0.4f), Glow = new Color(0.5f, 1f, 0.4f),
+                        Bone = true, Helmet = true, Shield = true, Weapon = Weapon.Sword,
+                    });
+                    return;
+                case "summon_pale_revenant":
+                    BuildBiped(mi, key, new Biped
+                    {
+                        H = 2.1f, Bulk = 1.3f, Skin = new Color(0.6f, 0.7f, 0.72f), Armor = new Color(0.7f, 0.75f, 0.78f),
+                        Cloth = new Color(0.25f, 0.3f, 0.32f), Accent = new Color(0.5f, 0.6f, 0.62f), Glow = new Color(0.6f, 1f, 0.95f),
+                        Helmet = true, Cape = true, Weapon = Weapon.Greatsword,
+                    });
+                    return;
+                case "summon_spirit_wolf":
+                    BuildQuadruped(mi, key, new Color(0.55f, 0.7f, 0.85f), new Color(0.75f, 0.92f, 1f), 1.0f, false);
+                    return;
+                case "summon_treant":
+                    BuildBiped(mi, key, new Biped
+                    {
+                        H = 2.8f, Bulk = 1.7f, Skin = new Color(0.34f, 0.25f, 0.17f), Armor = new Color(0.3f, 0.22f, 0.15f),
+                        Cloth = new Color(0.22f, 0.36f, 0.16f), Accent = new Color(0.4f, 0.3f, 0.2f), Glow = new Color(0.55f, 1f, 0.45f),
+                        Helmet = false, Hunched = true, Antlers = true, Weapon = Weapon.Claws,
+                    });
+                    return;
+                case "summon_cauldron":
+                    BuildCauldron(mi, key, new Color(0.14f, 0.13f, 0.13f), new Color(0.55f, 1f, 0.3f));
                     return;
             }
 
@@ -187,6 +280,44 @@ namespace Bloodfall.Client.Match
                     mb.With(new Vector3(0, top, chestD * 0.55f), Quaternion.Euler(-8, 0, 0), Vector3.one, () =>
                         mb.Box(new Vector3(0, -H * 0.36f, 0), new Vector3(chestW * 1.1f, H * 0.72f, 0.03f), b.Cloth * 0.9f));
                 }
+                if (b.Mane)
+                {
+                    // Fur mantle over the shoulders and upper back.
+                    mb.Sphere(new Vector3(0, top * 0.95f, chestD * 0.15f), new Vector3(chestW * 0.85f, top * 0.32f, chestD * 1.0f), 10, 6, b.Cloth, b.Cloth * 1.25f);
+                    for (int i = 0; i < 7; i++)
+                    {
+                        float a = (i - 3) * 0.32f;
+                        mb.Cylinder(new Vector3(Mathf.Sin(a) * chestW * 0.7f, top * 1.05f, chestD * 0.35f),
+                            new Vector3(Mathf.Sin(a) * chestW * 0.95f, top * 0.55f, chestD * 0.9f), 0.05f * k, 0.005f, 4, b.Cloth * 0.85f);
+                    }
+                }
+                if (b.Collar)
+                {
+                    // High standing collar framing the head from behind.
+                    mb.Sub(1);
+                    for (int i = 0; i < 5; i++)
+                    {
+                        float a = (i - 2) * 0.45f;
+                        mb.Cylinder(new Vector3(Mathf.Sin(a) * chestW * 0.3f, top * 0.98f, chestD * 0.3f + Mathf.Cos(a) * 0.03f),
+                            new Vector3(Mathf.Sin(a) * chestW * 0.62f, top * 1.4f, chestD * 0.55f), 0.03f, 0.004f, 4, b.Accent);
+                    }
+                    mb.Sub(0);
+                }
+                if (b.Halo)
+                {
+                    // A sunburst disc behind the shoulders (Dawnguard).
+                    mb.Sub(2);
+                    for (int i = 0; i < 12; i++)
+                    {
+                        float a = i * Mathf.PI * 2f / 12f;
+                        var c = new Vector3(0, top * 1.12f, chestD * 0.75f);
+                        mb.Cylinder(c + new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0) * 0.22f, c + new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0) * (i % 2 == 0 ? 0.46f : 0.36f), 0.025f, 0.004f, 4, b.Glow);
+                    }
+                    mb.Sub(1);
+                    mb.With(new Vector3(0, top * 1.12f, chestD * 0.78f), Quaternion.Euler(90, 0, 0), Vector3.one, () =>
+                        mb.Cylinder(new Vector3(0, -0.015f, 0), new Vector3(0, 0.015f, 0), 0.22f, 0.22f, 14, b.Accent, true, true));
+                    mb.Sub(0);
+                }
                 if (b.Robe)
                     mb.Cylinder(new Vector3(0, 0.02f, 0), new Vector3(0, -hipY * 0.92f, 0), chestW * 0.55f, chestW * 0.95f, 10, b.Cloth, false, true, b.Cloth * 0.7f);
                 if (b.Horns && !b.Helmet)
@@ -224,6 +355,61 @@ namespace Bloodfall.Client.Match
                 if (b.Hood)
                 {
                     mb.Cylinder(new Vector3(0, 0.08f, 0.02f), new Vector3(0, 0.1f + hr * 2.6f, 0.08f), hr * 1.35f, 0.01f, 10, b.Cloth * 0.85f, false);
+                }
+                float crownY = 0.1f + hr * 1.95f;
+                if (b.Muzzle)
+                {
+                    // Wolf snout and jaw pointing forward (-Z).
+                    mb.Cylinder(new Vector3(0, 0.1f + hr * 0.8f, -hr * 0.5f), new Vector3(0, 0.1f + hr * 0.6f, -hr * 2.1f), hr * 0.55f, hr * 0.3f, 8, b.Skin * 1.1f);
+                    mb.Cylinder(new Vector3(0, 0.1f + hr * 0.35f, -hr * 0.4f), new Vector3(0, 0.1f + hr * 0.25f, -hr * 1.8f), hr * 0.35f, hr * 0.2f, 6, b.Skin * 0.9f);
+                    mb.Sub(2);
+                    mb.Sphere(new Vector3(0, 0.1f + hr * 0.62f, -hr * 2.15f), Vector3.one * hr * 0.18f, 5, 3, b.Skin * 0.3f);
+                    mb.Sub(0);
+                }
+                if (b.Ears)
+                {
+                    mb.Cylinder(new Vector3(-hr * 0.55f, crownY - hr * 0.3f, 0.02f), new Vector3(-hr * 0.8f, crownY + hr * 0.9f, 0.06f), hr * 0.32f, 0.01f, 4, b.Skin);
+                    mb.Cylinder(new Vector3(hr * 0.55f, crownY - hr * 0.3f, 0.02f), new Vector3(hr * 0.8f, crownY + hr * 0.9f, 0.06f), hr * 0.32f, 0.01f, 4, b.Skin);
+                }
+                if (b.Crown)
+                {
+                    mb.Sub(1);
+                    for (int i = 0; i < 7; i++)
+                    {
+                        float a = i * Mathf.PI * 2f / 7f;
+                        var basePt = new Vector3(Mathf.Cos(a) * hr * 0.78f, crownY - hr * 0.35f, Mathf.Sin(a) * hr * 0.78f);
+                        mb.Cylinder(basePt, basePt + new Vector3(Mathf.Cos(a) * 0.02f, i % 2 == 0 ? hr * 0.9f : hr * 0.55f, Mathf.Sin(a) * 0.02f), 0.018f, 0.003f, 4, b.Accent);
+                    }
+                    mb.Sub(2);
+                    mb.Sphere(new Vector3(0, crownY - hr * 0.1f, -hr * 0.8f), Vector3.one * 0.022f, 5, 3, b.Glow);
+                    mb.Sub(0);
+                }
+                if (b.Antlers)
+                {
+                    var bark = b.Skin * 0.8f;
+                    foreach (int side in new[] { -1, 1 })
+                    {
+                        var r0 = new Vector3(side * hr * 0.6f, crownY - hr * 0.4f, 0.02f);
+                        var r1 = r0 + new Vector3(side * hr * 1.4f, hr * 1.8f, 0.1f);
+                        var r2 = r1 + new Vector3(side * hr * 0.9f, hr * 1.6f, 0.05f);
+                        mb.Cylinder(r0, r1, 0.035f, 0.025f, 5, bark);
+                        mb.Cylinder(r1, r2, 0.025f, 0.006f, 5, bark);
+                        mb.Cylinder(r1, r1 + new Vector3(side * hr * 0.2f, hr * 1.2f, -hr * 0.4f), 0.02f, 0.004f, 4, bark);
+                        mb.Cylinder(Vector3.Lerp(r0, r1, 0.5f), Vector3.Lerp(r0, r1, 0.5f) + new Vector3(-side * hr * 0.1f, hr * 0.9f, -hr * 0.3f), 0.018f, 0.004f, 4, bark);
+                        mb.Sub(2);
+                        mb.Sphere(r2, Vector3.one * 0.03f, 5, 3, b.Glow);
+                        mb.Sub(0);
+                    }
+                }
+                if (b.Hat)
+                {
+                    // Wide-brimmed, crooked witch's hat.
+                    mb.With(new Vector3(0, crownY - hr * 0.2f, 0.01f), Quaternion.identity, Vector3.one, () =>
+                        mb.Cylinder(Vector3.zero, new Vector3(0, 0.02f, 0), hr * 2.6f, hr * 2.4f, 14, b.Cloth * 0.7f, true, true));
+                    mb.Cylinder(new Vector3(0, crownY - hr * 0.2f, 0.01f), new Vector3(0, crownY + hr * 1.8f, 0.12f), hr * 1.05f, hr * 0.5f, 10, b.Cloth * 0.75f, false);
+                    mb.Cylinder(new Vector3(0, crownY + hr * 1.8f, 0.12f), new Vector3(0.04f, crownY + hr * 2.8f, 0.34f), hr * 0.5f, 0.005f, 8, b.Cloth * 0.75f);
+                    mb.Sub(1).Cylinder(new Vector3(0, crownY - hr * 0.12f, 0.01f), new Vector3(0, crownY + hr * 0.08f, 0.02f), hr * 1.08f, hr * 1.02f, 12, b.Accent, false);
+                    mb.Sub(0);
                 }
             });
             ModelFactory.Part(head, "head_mesh", headMesh, mats, Vector3.zero);
@@ -265,7 +451,7 @@ namespace Bloodfall.Client.Match
                 ModelFactory.Part(rig.Weapon, "weapon_mesh", wMesh, mats, Vector3.zero);
                 var origin = new GameObject("projectile_origin").transform;
                 origin.SetParent(rig.Weapon, false);
-                origin.localPosition = b.Weapon == Weapon.Staff ? new Vector3(0, 0.9f, 0) : new Vector3(0, 0, -0.5f);
+                origin.localPosition = b.Weapon == Weapon.Staff || b.Weapon == Weapon.Scythe ? new Vector3(0, 0.9f, 0) : new Vector3(0, 0, -0.5f);
                 mi.ProjectileOrigin = origin;
             }
             if (b.Shield)
@@ -281,7 +467,7 @@ namespace Bloodfall.Client.Match
                 ModelFactory.Part(sh, "shield_mesh", sMesh, mats, Vector3.zero);
             }
             mi.Rig = rig;
-            mi.Height = H + (b.Horns ? 0.25f : 0.05f);
+            mi.Height = H + (b.Horns ? 0.25f : b.Antlers ? 0.45f : b.Hat ? 0.35f : 0.05f);
         }
 
         private static void BuildWeapon(MeshBuilder mb, Biped b)
@@ -333,6 +519,36 @@ namespace Bloodfall.Client.Match
                     mb.Sub(0);
                     for (int i = -1; i <= 1; i++)
                         mb.Cylinder(new Vector3(i * 0.03f, 0, 0), new Vector3(i * 0.05f, -0.12f, -0.18f), 0.018f, 0.002f, 4, new Color(0.85f, 0.82f, 0.72f));
+                    break;
+                case Weapon.Rapier:
+                    // Slim duelling blade with a basket guard.
+                    mb.Sub(0).Cylinder(new Vector3(0, 0, 0.1f), new Vector3(0, 0, -0.03f), 0.02f, 0.02f, 6, new Color(0.15f, 0.08f, 0.1f));
+                    mb.Sub(1).Sphere(new Vector3(0, 0, -0.05f), new Vector3(0.07f, 0.07f, 0.04f), 8, 5, b.Accent);
+                    mb.Cylinder(new Vector3(0, 0, -0.06f), new Vector3(0, 0, -0.95f), 0.012f, 0.004f, 5, steel);
+                    mb.Sub(2).Cylinder(new Vector3(0, 0.006f, -0.1f), new Vector3(0, 0.006f, -0.8f), 0.004f, 0.002f, 4, b.Glow);
+                    break;
+                case Weapon.Club:
+                    // A torn-off branch, knotted at the head, still sprouting.
+                    mb.Sub(0).Cylinder(new Vector3(0, 0, 0.25f), new Vector3(0, 0.05f, -0.9f), 0.045f, 0.1f, 7, new Color(0.3f, 0.22f, 0.14f));
+                    mb.Sphere(new Vector3(0, 0.06f, -0.95f), new Vector3(0.16f, 0.15f, 0.2f), 8, 5, new Color(0.26f, 0.19f, 0.12f));
+                    mb.Cylinder(new Vector3(0.06f, 0.1f, -0.7f), new Vector3(0.22f, 0.3f, -0.8f), 0.02f, 0.004f, 4, new Color(0.3f, 0.22f, 0.14f));
+                    mb.Sub(2).Sphere(new Vector3(0.22f, 0.32f, -0.8f), Vector3.one * 0.05f, 5, 3, b.Glow);
+                    break;
+                case Weapon.Scythe:
+                    // Upright bone-hafted scythe with a skull at the joint.
+                    mb.Sub(0).Cylinder(new Vector3(0, -0.8f, 0), new Vector3(0, 0.95f, 0), 0.025f, 0.022f, 6, new Color(0.7f, 0.66f, 0.56f));
+                    mb.Sphere(new Vector3(0, 0.95f, 0), new Vector3(0.09f, 0.1f, 0.09f), 8, 6, new Color(0.85f, 0.8f, 0.7f));
+                    mb.Sub(1);
+                    for (int i = 0; i < 6; i++)
+                    {
+                        float t0 = i / 6f, t1 = (i + 1) / 6f;
+                        var p0 = new Vector3(0, 0.95f - Mathf.Sin(t0 * 1.4f) * 0.25f, -0.05f - t0 * 0.7f);
+                        var p1 = new Vector3(0, 0.95f - Mathf.Sin(t1 * 1.4f) * 0.25f, -0.05f - t1 * 0.7f);
+                        mb.Cylinder(p0, p1, 0.05f * (1f - t0 * 0.8f), 0.05f * (1f - t1 * 0.8f), 4, steel * 0.8f, false);
+                    }
+                    mb.Sub(2);
+                    mb.Sphere(new Vector3(-0.03f, 0.97f, -0.07f), Vector3.one * 0.02f, 4, 3, b.Glow);
+                    mb.Sphere(new Vector3(0.03f, 0.97f, -0.07f), Vector3.one * 0.02f, 4, 3, b.Glow);
                     break;
                 case Weapon.Shovel:
                     mb.Sub(0).Cylinder(new Vector3(0, 0, 0.3f), new Vector3(0, 0, -0.9f), 0.03f, 0.03f, 6, new Color(0.3f, 0.22f, 0.15f));
@@ -478,6 +694,74 @@ namespace Bloodfall.Client.Match
             foreach (var l in new[] { rig.LegL, rig.LegR, rig.LegBL, rig.LegBR }) ModelFactory.Part(l, "leg_mesh", legMesh, mats, Vector3.zero);
             mi.Rig = rig;
             mi.Height = size * 1.8f;
+        }
+
+        // ================================================================== small shapes
+
+        /// <summary>Toad Hex: a squat toad with a quadruped rig (short legs, big eyes).</summary>
+        private static void BuildToad(ModelInstance mi, string key, Color body, Color eye)
+        {
+            var mats = ModelFactory.StandardSet(eye, 3);
+            var rig = new RigParts { Kind = RigKind.Quadruped, Height = 0.5f };
+            var hips = ModelFactory.Pivot(mi.Pivot, "body", new Vector3(0, 0.2f, 0));
+            rig.Hips = hips; rig.Torso = hips;
+            var bodyMesh = CachedBuild(key + "_body", mb =>
+            {
+                mb.Sphere(Vector3.zero, new Vector3(0.3f, 0.2f, 0.34f), 10, 7, body, body * 1.35f);
+                for (int i = 0; i < 9; i++)
+                {
+                    float a = i * 2.4f;
+                    mb.Sphere(new Vector3(Mathf.Cos(a) * 0.18f, 0.12f + (i % 3) * 0.02f, Mathf.Sin(a) * 0.2f), Vector3.one * 0.035f, 5, 3, body * 0.7f);
+                }
+            });
+            ModelFactory.Part(hips, "body_mesh", bodyMesh, mats, Vector3.zero);
+            rig.Head = ModelFactory.Pivot(hips, "head", new Vector3(0, 0.08f, -0.26f));
+            var headMesh = CachedBuild(key + "_head", mb =>
+            {
+                mb.Sphere(new Vector3(0, 0, -0.05f), new Vector3(0.24f, 0.12f, 0.16f), 10, 6, body);
+                mb.Sphere(new Vector3(-0.12f, 0.1f, -0.02f), Vector3.one * 0.07f, 8, 5, body * 1.2f);
+                mb.Sphere(new Vector3(0.12f, 0.1f, -0.02f), Vector3.one * 0.07f, 8, 5, body * 1.2f);
+                mb.Sub(2);
+                mb.Sphere(new Vector3(-0.12f, 0.12f, -0.07f), Vector3.one * 0.04f, 6, 4, eye);
+                mb.Sphere(new Vector3(0.12f, 0.12f, -0.07f), Vector3.one * 0.04f, 6, 4, eye);
+                mb.Sub(0);
+            });
+            ModelFactory.Part(rig.Head, "head_mesh", headMesh, mats, Vector3.zero);
+            var legMesh = CachedBuild(key + "_leg", mb => mb.Cylinder(Vector3.zero, new Vector3(0, -0.2f, 0.02f), 0.05f, 0.035f, 6, body * 0.85f));
+            rig.LegL = ModelFactory.Pivot(hips, "leg_fl", new Vector3(-0.18f, 0, -0.15f));
+            rig.LegR = ModelFactory.Pivot(hips, "leg_fr", new Vector3(0.18f, 0, -0.15f));
+            rig.LegBL = ModelFactory.Pivot(hips, "leg_bl", new Vector3(-0.22f, 0, 0.18f));
+            rig.LegBR = ModelFactory.Pivot(hips, "leg_br", new Vector3(0.22f, 0, 0.18f));
+            foreach (var l in new[] { rig.LegL, rig.LegR, rig.LegBL, rig.LegBR }) ModelFactory.Part(l, "leg_mesh", legMesh, mats, Vector3.zero);
+            mi.Rig = rig;
+            mi.Height = 0.55f;
+        }
+
+        /// <summary>Morwen's cauldron: an iron pot on three legs over embers, brimming with glowing brew.</summary>
+        private static void BuildCauldron(ModelInstance mi, string key, Color iron, Color brew)
+        {
+            var mats = ModelFactory.StandardSet(brew, 3);
+            var mesh = CachedBuild(key, mb =>
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    float a = i * Mathf.PI * 2f / 3f;
+                    mb.Cylinder(new Vector3(Mathf.Cos(a) * 0.38f, 0.45f, Mathf.Sin(a) * 0.38f), new Vector3(Mathf.Cos(a) * 0.5f, 0f, Mathf.Sin(a) * 0.5f), 0.04f, 0.03f, 5, iron);
+                }
+                mb.Sphere(new Vector3(0, 0.62f, 0), new Vector3(0.55f, 0.42f, 0.55f), 14, 8, iron, iron * 1.6f);
+                mb.Sub(1).Cylinder(new Vector3(0, 0.88f, 0), new Vector3(0, 0.98f, 0), 0.46f, 0.5f, 16, new Color(0.35f, 0.3f, 0.22f), false);
+                mb.Sub(2).Disc(new Vector3(0, 0.95f, 0), Vector3.up, 0.44f, 16, brew);
+                for (int i = 0; i < 5; i++)
+                {
+                    float a = i * 1.3f;
+                    mb.Sphere(new Vector3(Mathf.Cos(a) * 0.22f, 0.98f, Mathf.Sin(a) * 0.2f), Vector3.one * (0.05f + (i % 2) * 0.03f), 6, 4, brew * 1.2f);
+                }
+                mb.Sphere(new Vector3(0, 0.06f, 0), new Vector3(0.35f, 0.06f, 0.35f), 8, 3, new Color(1f, 0.45f, 0.15f));
+                mb.Sub(0);
+            });
+            ModelFactory.Part(mi.Pivot, "cauldron", mesh, mats, Vector3.zero);
+            mi.Height = 1.2f;
+            mi.Rig = new RigParts { Kind = RigKind.Static, Height = 1.2f };
         }
 
         // ================================================================== siege

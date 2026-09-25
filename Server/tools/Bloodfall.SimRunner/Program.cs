@@ -4,7 +4,9 @@ using System.Linq;
 using Bloodfall.Data;
 using Bloodfall.Simulation;
 
-// Headless balance / AI analysis tool:  dotnet run -- [minutes] [seed] [--deaths] [--trace <playerIndex>]
+// Headless balance / AI analysis tool:
+//   dotnet run -- [minutes] [seed] [--deaths] [--trace <playerIndex>] [--mirror | --heroes id1,id2,...]
+// By default the ten bots cycle through every playable hero (Dawn from the start of the roster, Dusk from the middle).
 namespace Bloodfall.SimRunner
 {
     public static class Program
@@ -17,15 +19,21 @@ namespace Bloodfall.SimRunner
             int trace = -1;
             int ti = Array.IndexOf(args, "--trace");
             if (ti >= 0 && ti + 1 < args.Length) trace = int.Parse(args[ti + 1]);
-            string[] heroes = args.Contains("--mirror") ? new[] { "hero_vorak" } : new[] { "hero_vorak", "hero_ilyra" };
-
             var root = GameDataLoader.FindDefaultRoot(AppContext.BaseDirectory) ?? GameDataLoader.FindDefaultRoot(Environment.CurrentDirectory);
             var data = GameDataLoader.FromDirectory(root);
             if (data.Errors.Count > 0) { foreach (var e in data.Errors) Console.WriteLine("DATA ERROR: " + e); return 1; }
 
+            string[] heroes = data.PlayableHeroes().Select(h => h.Id).ToArray();
+            if (args.Contains("--mirror")) heroes = new[] { "hero_vorak" };
+            int hi = Array.IndexOf(args, "--heroes");
+            if (hi >= 0 && hi + 1 < args.Length) heroes = args[hi + 1].Split(',', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var h in heroes)
+                if (!data.Heroes.ContainsKey(h)) { Console.WriteLine("Unknown hero: " + h); return 1; }
+            int duskOffset = heroes.Length > 1 ? heroes.Length / 2 : 0;
+
             var cfg = new MatchConfig { Seed = seed, SkipHeroSelect = true, PreGameTimeOverride = 30f, SameHeroAllowed = true };
             for (int i = 0; i < 5; i++) cfg.Players.Add(new PlayerSetup { Name = $"Dawn{i}", Team = Team.Dawn, Slot = i, HeroId = heroes[i % heroes.Length], IsBot = true });
-            for (int i = 0; i < 5; i++) cfg.Players.Add(new PlayerSetup { Name = $"Dusk{i}", Team = Team.Dusk, Slot = i, HeroId = heroes[i % heroes.Length], IsBot = true });
+            for (int i = 0; i < 5; i++) cfg.Players.Add(new PlayerSetup { Name = $"Dusk{i}", Team = Team.Dusk, Slot = i, HeroId = heroes[(i + duskOffset) % heroes.Length], IsBot = true });
             var m = new Match(data, cfg);
             var sw = System.Diagnostics.Stopwatch.StartNew();
             var killers = new Dictionary<string, int>();

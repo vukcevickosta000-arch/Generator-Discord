@@ -12,7 +12,7 @@ Four factions with 24 heroes each. All names, lore and kits are original.
 
 The eight *concept heroes* named in the original brief are Vorak, Nyxara, Malgrave, Ardyn, Fenrax, Morwen, Thael and
 Ilyra. Where the brief gave only a name, the kits below are this project's design, aligned with each faction's
-identity.
+identity. All eight are implemented, used by bots, and covered by `Server/tests/Bloodfall.Tests/HeroKitTests.cs`.
 
 ---
 
@@ -33,52 +33,89 @@ identity.
 - **Sanguine Offering** (E): sacrifices HP to shield and heal an ally.
 - **Exsanguinate** (R): a channelled drain on one target; ends in a burst and stun.
 
-### 🟡 Nyxara, the Night Countess — Crimson Court · AGI · M · Assassin / Escape
-- **Velvet Dark** (innate): out of vision of enemy heroes for 3 s, her next attack crits for 180%.
-- **Batwing Step** (Q): blinks up to 9 m as a swarm of bats; breaks target lock on her.
-- **Kiss of Thorns** (W): strikes one target, applying *Crimson Mark* (5 s). Attacks on marked targets heal her.
-- **Countess's Veil** (E): 2.5 s of invisibility; 20% faster while invisible.
-- **Midnight Sentence** (R): teleports behind a marked enemy hero and executes them if below 22/28/34% HP. Otherwise
-  deals pure damage.
+### ✅ Nyxara, the Night Countess — Crimson Court · AGI · M · Assassin / Escape
+- **Velvet Dark** (innate): after 3 s unseen by the enemy team (invisible or outside their vision), her next attack
+  within 4 s is a guaranteed 180% critical strike.
+- **Batwing Step** (Q): blinks up to 9 m as a swarm of bats. Tracking projectiles aimed at her miss if she moves more
+  than 6 m.
+- **Kiss of Thorns** (W): 60–180 physical damage and *Crimson Mark* for 5 s. The mark removes 2–5 armor, and every
+  attack an enemy hero lands on the marked target heals Nyxara for 12–30.
+- **Countess's Veil** (E): 2.5–4 s of invisibility and 20–35% movement speed. Attacking or casting ends it.
+- **Midnight Sentence** (R): steps behind an enemy hero and strikes for 150/250/350 pure damage. A target with Crimson
+  Mark that is left below 22/28/34% health is executed.
 
-### 🟡 Malgrave, the Bone Tyrant — Ashen Legion · INT · R · Summoner / Pusher
-- **Ossuary** (innate): nearby corpses become *bone shards*; each shard empowers his next spell by 4%.
-- **Raise the Fallen** (Q): consumes up to 3 corpses to raise skeletal legionnaires for 30 s.
-- **Bone Wall** (W): a curved wall 8 m long for 5 s. Enemies touching it are slowed.
-- **Grave Chill** (E): a cone that slows and deals magic damage; kills leave corpses even from heroes.
-- **Legion of the Pale** (R): opens a crypt for 8 s, spawning 6 armoured revenants that march toward the target
-  point.
+### ✅ Malgrave, the Bone Tyrant — Ashen Legion · INT · R · Summoner / Pusher
+- **Ossuary** (innate): every unit that dies within 9 m gives a *Bone Shard* (+4% spell amplification each, up to 6,
+  for 40 s). His next ability consumes all shards.
+- **Raise the Fallen** (Q): raises two skeletal legionnaires, plus one per corpse within 7 m (up to two more), for 30 s.
+  They grow tougher with the ability's level.
+- **Bone Cage** (W): a ring of ribs (3.2 m radius) for 3–4.5 s that blocks movement in and out. Enemies inside are
+  slowed by 20% and take 20–50 magical damage per second.
+- **Grave Chill** (E): a 60° cone, 7 m long, dealing 75–225 magical damage. Chilled for 3 s: 20–35% slower movement
+  and 20–50 slower attacks.
+- **Legion of the Pale** (R): opens a crypt at a point. Enemies within 4 m take 100–200 magical damage and are feared
+  for 1–1.5 s. Six armoured revenants rise over 4 s and guard that ground for about 20 s.
 
-### 🟡 Ardyn, the Dawnbringer — Dawnguard · STR · M · Durable / Support
-- **Oathkeeper** (innate): allied heroes within 9 m gain +2 armor. The bonus doubles while Ardyn is below 40% HP.
-- **Aegis of Dawn** (Q): absorbs 120–360 damage on an ally for 6 s; explodes for holy damage when it expires or breaks.
-- **Consecrate** (W): blesses the ground (6 m) for 5 s, healing allies and burning undead/Dusk summons.
-- **Judgment Strike** (E): next attack mini-stuns and deals bonus damage equal to 8% of the target's missing health.
-- **Radiant Crusade** (R): Ardyn and nearby allies become unstoppable for 2 s. Ardyn also charges to a point, knocking
-  enemies aside and blinding them.
+### ✅ Ardyn, the Dawnbringer — Dawnguard · STR · M · Durable / Support
+- **Oathkeeper** (innate): allied heroes within 9 m, Ardyn included, gain 2 armor. The bonus doubles while Ardyn is
+  below 40% health. The same aura from two Ardyns does not stack.
+- **Aegis of Dawn** (Q): shields an ally for 120–360 damage for 6 s. When it expires it bursts for 60–180 magical
+  damage within 3.5 m.
+- **Consecrate** (W): blesses the ground around Ardyn (4.5 m) for 5 s. Allies in it heal 20–50 health per second.
+  Enemies in it take 20–50 magical damage per second, doubled against non-hero units.
+- **Judgment Strike** (E): his next attack within 6 s deals 20–80 bonus physical damage plus 5–8% of the target's
+  missing health, and stuns for 0.4 s.
+- **Radiant Crusade** (R): Ardyn and allied heroes within 6 m are cleansed of basic debuffs and gain 60% status
+  resistance and 20% movement speed for 3–4 s. Then Ardyn charges 10–12 m. Every enemy he passes takes 100–200
+  magical damage, is knocked aside and is dazzled for 2–3 s (half its attacks miss).
 
-### 🟡 Fenrax, the Moonfang — Wild Covenant · AGI · M · Carry / Jungler
-- **Lunar Hunger** (innate): at night +10% move speed and +20 attack speed.
-- **Pounce** (Q): leaps onto an enemy, rooting for 1 s.
-- **Rending Claws** (W): attacks shred 2 armor per hit (stacks 6).
-- **Howl of the Pack** (E): summons two spirit wolves for 20 s; allies nearby gain attack damage.
-- **Night Unleashed** (R): transforms for 18 s into a werewolf (+40% HP, cleaves). Forces night for everyone for
-  8 s. Cannot be dispelled.
+### ✅ Fenrax, the Moonfang — Wild Covenant · AGI · M · Carry / Jungler
+- **Lunar Hunger** (innate): at night he gains 10% movement speed and 20 attack speed.
+- **Pounce** (Q): leaps onto an enemy 6–9 m away, dealing 70–190 physical damage and rooting it for 1–1.6 s.
+- **Rending Claws** (W): each attack removes 0.75–1.5 armor for 5 s, stacking up to 6 times.
+- **Howl of the Pack** (E): two spirit wolves join him for 20 s. Allied heroes and summons within 9 m gain 10–34
+  attack damage for 10 s.
+- **Night Unleashed** (R): becomes the Moonfang for 18 s: +30–50% maximum health, +20–50 attack damage, +10% movement
+  speed, and his attacks cleave 35–65% damage within 2.5 m. It is also night for everyone for 8 s. Cannot be
+  dispelled.
 
-### 🟡 Morwen, the Hedge Witch — Wild Covenant · INT · R · Disabler / Support
-- **Old Pact** (innate): hexed enemies take 15% more magic damage.
-- **Toad Hex** (Q): hexes a target (1.5–3 s).
-- **Bubbling Cauldron** (W): places a cauldron (12 s) that heals allies in range and slows enemies.
-- **Crooked Curse** (E): a curse whose damage is dealt again when the target casts a spell.
-- **Witching Hour** (R): for 6 s every ability she casts is echoed a second time at 50% power.
+### ✅ Morwen, the Hedge Witch — Wild Covenant · INT · R · Disabler / Support
+- **Old Pact** (innate): her hexes and curses strip 15% magic resistance. The effect lives on the Toad Hex and
+  Crooked Curse statuses.
+- **Toad Hex** (Q): turns an enemy into a toad for 1.5–3 s. It cannot attack, cast or use items, and moves 40%
+  slower.
+- **Bubbling Cauldron** (W): a destructible cauldron for 12 s. Allies within 5 m regenerate 8–26 health and 1–2.5
+  mana per second. Enemies within 5 m are slowed by 15–30%.
+- **Crooked Curse** (E): 60–150 magical damage and an 8 s curse. Every ability or item the target uses repeats that
+  damage, and Morwen gets the kill credit.
+- **Witching Hour** (R): for 6 s, every basic ability she casts happens a second time at 50/60/70% power. This covers
+  damage, healing and mana; durations are unchanged, and a second cauldron appears. Enemies within 5 m when she casts
+  it are hexed for 1 s.
 
-### 🟡 Thael, the Wildwood Warden — Wild Covenant · STR · M · Initiator / Durable
-- **Barkskin** (innate): +1 armor per 2 nearby trees (max +8).
-- **Grasping Roots** (Q): roots all enemies in a line after 0.6 s.
-- **Summon Treant** (W): turns a tree into a treant ally for 25 s.
-- **Grove Call** (E): teleports to any tree within 60 m after a 2 s channel.
-- **Wrath of the Old Forest** (R): the forest awakens in a 10 m radius. Trees lash nearby enemies every 0.5 s for 5 s.
-  Thael gains 30% damage reduction.
+### ✅ Thael, the Wildwood Warden — Wild Covenant · STR · M · Initiator / Durable
+- **Barkskin** (innate): with at least 3 trees within 5 m he gains 5 armor and 4 health regeneration.
+- **Grasping Roots** (Q): roots burrow along a 10 m line and erupt under every enemy they pass: 70–190 magical damage
+  and rooted for 1.2–2.1 s.
+- **Summon Treant** (W): wakes 1/1/2/2 treants at a point for 25 s. They are sturdy and deal extra damage to
+  structures.
+- **Grove Call** (E): after a 2 s channel he steps out of the ground up to 30–60 m away. Enemies within 3 m of where
+  he emerges are slowed by 50% for 1.5 s.
+- **Wrath of the Old Forest** (R): for 5 s, lashing roots strike enemies within 7–9 m of Thael (the area follows
+  him): 50–110 magical damage per second and a 20% slow. Thael takes 30% less damage while it lasts.
+
+**Differences from the first concepts.** Each change keeps the concept's role and is noted so design can revisit it:
+
+| Hero | Concept | Implemented |
+|---|---|---|
+| Nyxara | Midnight Sentence only on marked targets | Any enemy hero; only marked ones can be executed |
+| Malgrave | Curved 8 m bone wall | Ring cage (the engine builds ring walls) |
+| Malgrave | Grave Chill kills leave hero corpses | Not implemented: corpses come only from creeps and neutrals |
+| Ardyn | Aegis bursts when it expires *or breaks* | Bursts on expiry only |
+| Ardyn | "Unstoppable" | Basic dispel + 60% status resistance |
+| Thael | +1 armor per 2 trees (max +8) | Flat bonus with 3+ trees nearby |
+| Thael | Roots erupt after 0.6 s | A fast burrowing line |
+| Thael | Treant made from a tree; teleport only to trees | Summoned at a point; teleport to any point |
+| Morwen | Echo at 50% | 50/60/70% by level, plus a 1 s hex burst |
 
 ---
 
@@ -88,7 +125,7 @@ identity.
 |---|---|---|---|---|---|---|---|
 | 1 | Vorak | the Blood Tyrant | STR | M | Initiator, Durable | Charge, bleed, bash, stunning leap | ✅ |
 | 2 | Ilyra | the Blood Witch | INT | R | Nuker, Support | Health-cost spells, blood pool, drain | ✅ |
-| 3 | Nyxara | the Night Countess | AGI | M | Assassin, Escape | Bat blink, marks, execute | 🟡 |
+| 3 | Nyxara | the Night Countess | AGI | M | Assassin, Escape | Bat blink, marks, execute | ✅ |
 | 4 | Sereth Vane | the Crimson Duelist | AGI | M | Carry | Parry stance, riposte counters | ⚪ |
 | 5 | Isolde Marrow | the Chalice Queen | INT | R | Support | Chalice heals, charm | ⚪ |
 | 6 | Grimbane | the Gargoyle Sentinel | STR | M | Durable, Disabler | Stone form, dive from perch | ⚪ |
@@ -115,7 +152,7 @@ identity.
 
 | # | Hero | Title | Attr | Atk | Roles | Kit direction | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | Malgrave | the Bone Tyrant | INT | R | Summoner, Pusher | Raise dead, bone wall | 🟡 |
+| 1 | Malgrave | the Bone Tyrant | INT | R | Summoner, Pusher | Raise dead, bone wall | ✅ |
 | 2 | Morrowmaw | the Corpse Engine | STR | M | Durable, Pusher | Siege engine of corpses | ⚪ |
 | 3 | Sister Pallor | the Plague Mother | INT | R | Nuker | Contagious damage over time | ⚪ |
 | 4 | Kessrith | the Bone Archer King | AGI | R | Carry | Bone arrows, volley | ⚪ |
@@ -144,9 +181,9 @@ identity.
 
 | # | Hero | Title | Attr | Atk | Roles | Kit direction | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | Fenrax | the Moonfang | AGI | M | Carry, Jungler | Werewolf form, pounce | 🟡 |
-| 2 | Morwen | the Hedge Witch | INT | R | Disabler, Support | Hex, cauldron, echo | 🟡 |
-| 3 | Thael | the Wildwood Warden | STR | M | Initiator, Durable | Roots, treants, forest | 🟡 |
+| 1 | Fenrax | the Moonfang | AGI | M | Carry, Jungler | Werewolf form, pounce | ✅ |
+| 2 | Morwen | the Hedge Witch | INT | R | Disabler, Support | Hex, cauldron, echo | ✅ |
+| 3 | Thael | the Wildwood Warden | STR | M | Initiator, Durable | Roots, treants, forest | ✅ |
 | 4 | Ursolmar | the Barrow Bear | STR | M | Durable | Maul, hibernate | ⚪ |
 | 5 | Kithra | the Owl Seer | INT | R | Support | Owl scouts, vision | ⚪ |
 | 6 | Briarheart | — | STR | M | Durable | Thorn body | ⚪ |
@@ -173,7 +210,7 @@ identity.
 
 | # | Hero | Title | Attr | Atk | Roles | Kit direction | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | Ardyn | the Dawnbringer | STR | M | Durable, Support | Aegis, consecration, crusade | 🟡 |
+| 1 | Ardyn | the Dawnbringer | STR | M | Durable, Support | Aegis, consecration, crusade | ✅ |
 | 2 | Sister Cassia | the Flame Confessor | INT | R | Nuker | Purifying fire | ⚪ |
 | 3 | Brennock Vail | the Stake Hunter | AGI | R | Carry | Silver bolts, traps | ⚪ |
 | 4 | Oswin | the High Templar | STR | M | Durable | Aegis, taunt | ⚪ |
