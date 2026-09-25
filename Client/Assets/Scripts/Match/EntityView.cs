@@ -56,20 +56,18 @@ namespace Bloodfall.Client.Match
             DefId = s.DefId;
             _data = data;
             float scale = 1f, collision = 0.5f;
-            string modelKey = s.ModelKey;
+            string modelKey = ResolveModelKey(s, data);
             if (s.DefId != null && data.Heroes.TryGetValue(s.DefId, out var h))
             {
                 Hero = h;
                 scale = h.ModelScale;
                 collision = h.CollisionRadius;
-                if (string.IsNullOrEmpty(modelKey)) modelKey = h.Model;
             }
             else if (s.DefId != null && data.Units.TryGetValue(s.DefId, out var u))
             {
                 Unit = u;
                 scale = u.ModelScale;
                 collision = u.CollisionRadius;
-                if (string.IsNullOrEmpty(modelKey)) modelKey = u.Model;
             }
             CurrentModelKey = modelKey;
             Model = ModelFactory.Create(modelKey, s.Team, s.Kind, scale, collision, parent);
@@ -190,7 +188,16 @@ namespace Bloodfall.Client.Match
         }
 
         /// <summary>Switches the model (hex, polymorph statuses). Rare, so a full rebuild is fine.</summary>
-        public bool NeedsModelSwap(EntityState s) => !string.IsNullOrEmpty(s.ModelKey) && s.ModelKey != CurrentModelKey;
+        public bool NeedsModelSwap(EntityState s) => ResolveModelKey(s, _data) != CurrentModelKey;
+
+        /// <summary>The status override when present, else the hero/unit definition's model, else the definition id.</summary>
+        public static string ResolveModelKey(EntityState s, GameData data)
+        {
+            if (!string.IsNullOrEmpty(s.ModelKey)) return s.ModelKey;
+            if (s.DefId != null && data.Heroes.TryGetValue(s.DefId, out var h) && !string.IsNullOrEmpty(h.Model)) return h.Model;
+            if (s.DefId != null && data.Units.TryGetValue(s.DefId, out var u) && !string.IsNullOrEmpty(u.Model)) return u.Model;
+            return s.DefId;
+        }
 
         public void BeginDeath()
         {

@@ -1,0 +1,503 @@
+{
+  "hero": {
+    "id": "hero_fenrax",
+    "name": "Fenrax",
+    "title": "The Moonfang",
+    "faction": "WildCovenant",
+    "primaryAttribute": "Agility",
+    "roles": [
+      "Carry",
+      "Jungler",
+      "Bruiser"
+    ],
+    "difficulty": 2,
+    "resource": "Mana",
+    "attackType": "Melee",
+    "lore": "The Wild Covenant raised Fenrax from a cub found beside a dead she-wolf under the cracked moon. He grew up faster than any child should, and on his thirteenth winter he did not come home at dawn. The pack that returned with him that spring answered to him alone. The Covenant calls him their hunter; the villages along the Blackmere call him the reason nobody walks the roads after dusk.",
+    "personality": "Laconic, restless, loyal to his pack above any oath. Grows eager and cruel as night falls.",
+    "strengths": [
+      "Dominates night fights",
+      "Fast jungle clears with wolves",
+      "Very strong late transformation"
+    ],
+    "weaknesses": [
+      "Weaker during the day",
+      "Melee carry that needs farm",
+      "Kited before Pounce"
+    ],
+    "counters": [
+      "Roots and slows",
+      "Blinding effects",
+      "Early lane pressure"
+    ],
+    "synergies": [
+      "Nyxara and other heroes who thrive at night",
+      "Morwen's hexes before Pounce"
+    ],
+    "baseHp": 200,
+    "baseHpRegen": 1.0,
+    "baseMana": 75,
+    "baseManaRegen": 0.2,
+    "baseArmor": 0,
+    "magicResist": 0.25,
+    "damageMin": 27,
+    "damageMax": 31,
+    "attackRange": 1.6,
+    "attackPoint": 0.35,
+    "attackBackswing": 0.5,
+    "baseAttackTime": 1.7,
+    "moveSpeed": 3.85,
+    "turnRate": 15,
+    "collisionRadius": 0.36,
+    "visionDay": 20,
+    "visionNight": 14,
+    "str": 21,
+    "strGain": 2.4,
+    "agi": 22,
+    "agiGain": 2.8,
+    "int": 14,
+    "intGain": 1.4,
+    "abilities": [
+      "fenrax_lunar_hunger",
+      "fenrax_pounce",
+      "fenrax_rending_claws",
+      "fenrax_howl_of_the_pack",
+      "fenrax_night_unleashed"
+    ],
+    "recommendedItems": {
+      "start": [
+        "item_crimson_draught",
+        "item_nightrunner_slippers",
+        "item_gauntlets_might",
+        "item_rusted_blade"
+      ],
+      "early": [
+        "item_marchers_haste",
+        "item_vampiric_mask"
+      ],
+      "core": [
+        "item_quickblade_gloves",
+        "item_voidpiercer",
+        "item_nightfang_greatsword"
+      ],
+      "late": [
+        "item_heart_colossus",
+        "item_headsman_cleaver"
+      ]
+    },
+    "model": "hero_fenrax",
+    "portrait": "portrait_fenrax",
+    "modelScale": 1.0,
+    "attackSfx": "fenrax_claw",
+    "voiceSet": "fenrax",
+    "botProfile": "carry"
+  },
+  "abilities": [
+    {
+      "id": "fenrax_lunar_hunger",
+      "name": "Lunar Hunger",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 1,
+      "description": "At night Fenrax gains 10% movement speed and 20 attack speed.",
+      "triggers": [
+        {
+          "on": "Interval",
+          "internalCooldown": 0.5,
+          "effects": [
+            {
+              "type": "ApplyStatus",
+              "status": "fenrax_lunar_hunger",
+              "duration": 0.75,
+              "target": "Caster",
+              "condition": "night"
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "id": "fenrax_lunar_hunger",
+          "name": "Lunar Hunger",
+          "description": "Hunts faster at night.",
+          "isDebuff": false,
+          "dispel": "None",
+          "modifiers": [
+            {
+              "stat": "MoveSpeedPct",
+              "value": 0.1
+            },
+            {
+              "stat": "AttackSpeed",
+              "value": 20
+            }
+          ],
+          "icon": "status_lunar_hunger",
+          "vfx": "moon_glow"
+        }
+      ],
+      "icon": "ability_fenrax_hunger"
+    },
+    {
+      "id": "fenrax_pounce",
+      "name": "Pounce",
+      "slot": "Q",
+      "targeting": "Unit",
+      "targetTeam": "Enemy",
+      "targetTypes": "Hero, Creep, Neutral, Summon",
+      "description": "Fenrax leaps onto an enemy up to 6/7/8/9 m away, dealing 70/110/150/190 physical damage and rooting it for 1/1.2/1.4/1.6 s.",
+      "castRange": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "castPoint": 0.15,
+      "backswing": 0.25,
+      "cooldown": [
+        14,
+        13,
+        12,
+        11
+      ],
+      "manaCost": [
+        70,
+        75,
+        80,
+        85
+      ],
+      "onCast": [
+        {
+          "type": "Leap",
+          "maxDistance": [
+            6,
+            7,
+            8,
+            9
+          ],
+          "moveDuration": 0.4,
+          "height": 2,
+          "vfx": "pounce_leap",
+          "onArrive": [
+            {
+              "type": "Damage",
+              "amount": [
+                70,
+                110,
+                150,
+                190
+              ],
+              "damageType": "Physical",
+              "vfx": "claw_impact"
+            },
+            {
+              "type": "ApplyStatus",
+              "status": "root",
+              "duration": [
+                1,
+                1.2,
+                1.4,
+                1.6
+              ]
+            }
+          ]
+        }
+      ],
+      "icon": "ability_fenrax_pounce",
+      "castAnimation": "Cast1",
+      "castSfx": "fenrax_pounce",
+      "botUsage": "engage,stun"
+    },
+    {
+      "id": "fenrax_rending_claws",
+      "name": "Rending Claws",
+      "slot": "W",
+      "targeting": "Passive",
+      "description": "Each attack tears 0.75/1/1.25/1.5 armor from the target for 5 s, stacking up to 6 times.",
+      "triggers": [
+        {
+          "on": "AttackLanded",
+          "team": "Enemy",
+          "types": "Units",
+          "effects": [
+            {
+              "type": "ApplyStatus",
+              "status": "fenrax_rend",
+              "duration": 5
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "id": "fenrax_rend",
+          "name": "Rent Armor",
+          "description": "Armor torn away. Stacks.",
+          "isDebuff": true,
+          "dispel": "Basic",
+          "stacking": "Intensity",
+          "maxStacks": 6,
+          "modifiers": [
+            {
+              "stat": "Armor",
+              "value": [
+                -0.75,
+                -1,
+                -1.25,
+                -1.5
+              ],
+              "perStack": true
+            }
+          ],
+          "icon": "status_rent_armor",
+          "vfx": "claw_marks"
+        }
+      ],
+      "icon": "ability_fenrax_claws"
+    },
+    {
+      "id": "fenrax_howl_of_the_pack",
+      "name": "Howl of the Pack",
+      "slot": "E",
+      "targeting": "NoTarget",
+      "description": "Fenrax howls: two spirit wolves join him for 20 s, and allied heroes and summons within 9 m gain 10/18/26/34 attack damage for 10 s.",
+      "castPoint": 0.3,
+      "backswing": 0.4,
+      "ignoreFacing": true,
+      "cooldown": [
+        30,
+        28,
+        26,
+        24
+      ],
+      "manaCost": [
+        90,
+        100,
+        110,
+        120
+      ],
+      "aoeRadius": 9,
+      "onCast": [
+        {
+          "type": "SpawnUnit",
+          "unitId": "fenrax_spirit_wolf",
+          "count": 2,
+          "summonDuration": 20,
+          "vfx": "spirit_wolf_summon"
+        },
+        {
+          "type": "Area",
+          "radius": 9,
+          "center": "Caster",
+          "team": "AllyOrSelf",
+          "types": "Hero, Summon",
+          "vfx": "howl_wave",
+          "effects": [
+            {
+              "type": "ApplyStatus",
+              "status": "fenrax_howl",
+              "duration": 10
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "id": "fenrax_howl",
+          "name": "Howl of the Pack",
+          "description": "Bonus attack damage.",
+          "isDebuff": false,
+          "dispel": "Basic",
+          "modifiers": [
+            {
+              "stat": "BonusDamage",
+              "value": [
+                10,
+                18,
+                26,
+                34
+              ]
+            }
+          ],
+          "icon": "status_howl",
+          "vfx": "howl_fury"
+        }
+      ],
+      "icon": "ability_fenrax_howl",
+      "castAnimation": "Cast2",
+      "castSfx": "fenrax_howl",
+      "botUsage": "buff,farm"
+    },
+    {
+      "id": "fenrax_night_unleashed",
+      "name": "Night Unleashed",
+      "slot": "R",
+      "isUltimate": true,
+      "maxLevel": 3,
+      "targeting": "NoTarget",
+      "description": "Fenrax becomes the Moonfang for 18 s: +30/40/50% maximum health, +20/35/50 attack damage, +10% movement speed, and his attacks cleave 35/50/65% damage to enemies within 2.5 m of the target. The moon swallows the sun: it is night for everyone for 8 s. Cannot be dispelled.",
+      "castPoint": 0.4,
+      "backswing": 0.3,
+      "ignoreFacing": true,
+      "cooldown": [
+        100,
+        90,
+        80
+      ],
+      "manaCost": [
+        100,
+        150,
+        200
+      ],
+      "onCast": [
+        {
+          "type": "Transform",
+          "target": "Caster",
+          "status": "fenrax_moonfang",
+          "duration": 18,
+          "vfx": "werewolf_transform",
+          "shake": 0.3
+        },
+        {
+          "type": "ForceNight",
+          "duration": 8
+        }
+      ],
+      "statuses": [
+        {
+          "id": "fenrax_moonfang",
+          "name": "Moonfang",
+          "description": "Transformed: tougher, stronger, cleaves.",
+          "isDebuff": false,
+          "dispel": "None",
+          "modelOverride": "hero_fenrax_moonfang",
+          "modifiers": [
+            {
+              "stat": "MaxHpPct",
+              "value": [
+                0.3,
+                0.4,
+                0.5
+              ]
+            },
+            {
+              "stat": "BonusDamage",
+              "value": [
+                20,
+                35,
+                50
+              ]
+            },
+            {
+              "stat": "MoveSpeedPct",
+              "value": 0.1
+            }
+          ],
+          "triggers": [
+            {
+              "on": "AttackLanded",
+              "team": "Enemy",
+              "types": "Units",
+              "meleeOnly": true,
+              "effects": [
+                {
+                  "type": "Area",
+                  "radius": 2.5,
+                  "center": "Target",
+                  "team": "Enemy",
+                  "types": "Units",
+                  "excludePrimary": true,
+                  "vfx": "cleave_arc",
+                  "effects": [
+                    {
+                      "type": "Damage",
+                      "amount": [
+                        0.35,
+                        0.5,
+                        0.65
+                      ],
+                      "damageType": "Physical",
+                      "condition": "triggerAmount"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "icon": "status_moonfang",
+          "vfx": "moonfang_aura"
+        }
+      ],
+      "icon": "ability_fenrax_unleashed",
+      "castAnimation": "CastUlt",
+      "castSfx": "fenrax_transform",
+      "voiceLine": "fenrax_ult",
+      "botUsage": "ultimate,buff"
+    },
+    {
+      "id": "fenrax_wolf_spirit",
+      "name": "Spirit of the Pack",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 4,
+      "hidden": true,
+      "description": "Grows stronger with the level of the ability that raised this unit.",
+      "passiveModifiers": [
+        {
+          "stat": "MaxHp",
+          "value": [
+            0,
+            60,
+            120,
+            180
+          ]
+        },
+        {
+          "stat": "BaseDamage",
+          "value": [
+            0,
+            5,
+            10,
+            15
+          ]
+        }
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "fenrax_spirit_wolf",
+      "name": "Spirit Wolf",
+      "kind": "Summon",
+      "attackType": "Melee",
+      "maxHp": 280,
+      "armor": 1,
+      "magicResist": 0.1,
+      "damageMin": 16,
+      "damageMax": 20,
+      "attackRange": 1.2,
+      "attackPoint": 0.35,
+      "attackBackswing": 0.4,
+      "baseAttackTime": 1.1,
+      "moveSpeed": 4.2,
+      "turnRate": 14,
+      "collisionRadius": 0.3,
+      "visionDay": 10,
+      "visionNight": 10,
+      "acquisitionRange": 8,
+      "bountyGoldMin": 12,
+      "bountyGoldMax": 16,
+      "bountyXp": 18,
+      "abilities": [
+        "fenrax_wolf_spirit"
+      ],
+      "model": "summon_spirit_wolf",
+      "attackSfx": "wolf_bite",
+      "deathSfx": "wolf_death",
+      "tags": [
+        "beast",
+        "spirit"
+      ]
+    }
+  ]
+}

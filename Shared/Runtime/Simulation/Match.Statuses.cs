@@ -92,7 +92,7 @@ namespace Bloodfall.Simulation
             target.StatsDirty = true;
             RecomputeFlags(target);
 
-            if ((inst.Def.Flags & StatusFlags.HardDisable) != 0) InterruptUnit(target);
+            if ((inst.Def.Flags & (StatusFlags.HardDisable | StatusFlags.Hexed)) != 0) InterruptUnit(target);
             if ((inst.Def.Flags & StatusFlags.Silenced) != 0 && (target.Action == ActionState.CastWindup || target.Action == ActionState.Channeling)) InterruptUnit(target);
 
             if (!def.Hidden)
@@ -180,7 +180,7 @@ namespace Bloodfall.Simulation
                             ExecuteEffects(s.Def.OnInterval, new EffectContext
                             {
                                 Caster = s.Source ?? u, Target = u, Level = s.Level, Point = u.Position, StatusInstance = s,
-                                PiercesMagicImmunity = s.PiercesMagicImmunity, Stacks = s.Stacks,
+                                StatusSource = s.Source, PiercesMagicImmunity = s.PiercesMagicImmunity, Stacks = s.Stacks,
                             });
                             if (u.Dead) break;
                         }
@@ -190,6 +190,54 @@ namespace Bloodfall.Simulation
                     if (s.Remaining <= 0f && u.Statuses.Contains(s)) RemoveStatus(u, s, expired: true);
                 }
             }
+        }
+
+        /// <summary>
+        /// Periodic passives (<c>on: Interval</c>): fired every <c>internalCooldown</c> seconds (default 1 s) for learned
+        /// abilities and statuses of living units.
+        /// </summary>
+        private void UpdateIntervalTriggers()
+        {
+            for (int i = 0; i < Units.Count; i++)
+            {
+                var u = Units[i];
+                if (u.Removed || u.Dead) continue;
+                for (int a = 0; a < u.Abilities.Count; a++)
+                {
+                    var ab = u.Abilities[a];
+                    if (ab.Level <= 0 || ab.Def.Triggers == null) continue;
+                    foreach (var t in ab.Def.Triggers)
+                        if (t.On == TriggerType.Interval) FireIntervalTrigger(u, t, ab.Level, ab.Def, null);
+                }
+                for (int k = u.Statuses.Count - 1; k >= 0; k--)
+                {
+                    if (k >= u.Statuses.Count) continue;
+                    var s = u.Statuses[k];
+                    if (s.Def.Triggers == null) continue;
+                    foreach (var t in s.Def.Triggers)
+                        if (t.On == TriggerType.Interval) FireIntervalTrigger(u, t, s.Level, null, s);
+                }
+            }
+        }
+
+        private void FireIntervalTrigger(Unit u, TriggerDef t, int level, AbilityDef ability, StatusInstance status)
+        {
+            if (u.HasFlag(StatusFlags.BreakPassives) && ability != null) return;
+            var st = u.GetTriggerState(t);
+            if (st.CooldownUntil > Time) return;
+            st.CooldownUntil = Time + Math.Max(0.1f, t.InternalCooldown?.Get(level) ?? 1f);
+            ExecuteEffects(t.Effects, new EffectContext
+            {
+                Caster = u, Target = u, Level = level, Ability = ability, Point = u.Position,
+                StatusInstance = status, StatusSource = status?.Source,
+            });
+        }
+
+        /// <summary>Removes statuses that end when their bearer attacks or casts (e.g. invisibility veils).</summary>
+        public void BreakOnAction(Unit u)
+        {
+            for (int k = u.Statuses.Count - 1; k >= 0; k--)
+                if (k < u.Statuses.Count && u.Statuses[k].Def.BreakOnAction) RemoveStatus(u, u.Statuses[k], expired: false);
         }
 
         /// <summary>Refreshes aura statuses (every 0.5 s) from abilities and items to nearby units.</summary>
@@ -302,6 +350,7 @@ namespace Bloodfall.Simulation
                 Point = other?.Position ?? unit.Position,
                 IsAttack = isAttack,
                 StatusInstance = status,
+                StatusSource = status?.Source,
             });
         }
 

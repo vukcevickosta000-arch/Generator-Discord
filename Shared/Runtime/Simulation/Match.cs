@@ -59,7 +59,12 @@ namespace Bloodfall.Simulation
         public float Time;
         public MatchPhase Phase;
         public float PhaseTimer;
+        /// <summary>Effective night: the natural cycle or a forced night (Fenrax's Night Unleashed).</summary>
         public bool IsNight;
+        /// <summary>Night by the natural day/night cycle.</summary>
+        public bool NaturalNight;
+        /// <summary>Match time until which it is night regardless of the cycle.</summary>
+        public float ForcedNightUntil = float.MinValue;
         public float DayNightTimer;
         public Team Winner = Team.None;
         public float EndTime;
@@ -183,7 +188,7 @@ namespace Bloodfall.Simulation
             Phase = MatchPhase.PreGame;
             Time = -(Config.PreGameTimeOverride ?? Rules.PreGameTime);
             DayNightTimer = Rules.DayLength;
-            IsNight = false;
+            IsNight = NaturalNight = false;
             SpawnStructures();
             foreach (var p in Players) SpawnHero(p);
             Emit(new SimEvent { Type = SimEventType.MatchPhase, Value = (float)Phase, PlayerId = -1 });
@@ -379,6 +384,7 @@ namespace Bloodfall.Simulation
 
             UpdateStatuses(dt);
             if (Tick % 15 == 0) UpdateAuras();
+            if (Tick % 3 == 0) UpdateIntervalTriggers();
 
             for (int i = 0; i < Units.Count; i++)
             {
@@ -426,8 +432,13 @@ namespace Bloodfall.Simulation
             DayNightTimer -= dt;
             if (DayNightTimer <= 0)
             {
-                IsNight = !IsNight;
-                DayNightTimer = IsNight ? Rules.NightLength : Rules.DayLength;
+                NaturalNight = !NaturalNight;
+                DayNightTimer = NaturalNight ? Rules.NightLength : Rules.DayLength;
+            }
+            bool night = NaturalNight || Time < ForcedNightUntil;
+            if (night != IsNight)
+            {
+                IsNight = night;
                 Emit(new SimEvent { Type = SimEventType.DayNight, Value = IsNight ? 1 : 0, PlayerId = -1 });
                 Announce(IsNight ? AnnouncerKeys.Nightfall : AnnouncerKeys.Daybreak, Team.None);
             }

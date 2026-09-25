@@ -1,0 +1,644 @@
+{
+  "hero": {
+    "id": "hero_malgrave",
+    "name": "Malgrave",
+    "title": "The Bone Tyrant",
+    "faction": "AshenLegion",
+    "primaryAttribute": "Intelligence",
+    "roles": [
+      "Summoner",
+      "Pusher",
+      "Controller"
+    ],
+    "difficulty": 2,
+    "resource": "Mana",
+    "attackType": "Ranged",
+    "lore": "Malgrave was the quartermaster of the Ashen Legion, the man who counted the dead after every siege. When the Legion fell at the gates of Velmoragh he kept counting, and the dead began to answer. He rebuilt his army from the ossuaries under the city, one femur at a time, and now marches it back toward the living with ledgers of every debt the world owes his soldiers.",
+    "personality": "Dry, meticulous, bureaucratic about death. Speaks of battles as inventories.",
+    "strengths": [
+      "Pushes towers with summons",
+      "Controls chokes with the Bone Cage",
+      "Scales with fights"
+    ],
+    "weaknesses": [
+      "Slow and fragile",
+      "Summons give gold when killed",
+      "Few escapes"
+    ],
+    "counters": [
+      "Area damage that clears summons",
+      "Fast divers"
+    ],
+    "synergies": [
+      "Heroes that hold a lane while his legion pushes",
+      "Area disablers who fight inside the cage"
+    ],
+    "baseHp": 200,
+    "baseHpRegen": 0.5,
+    "baseMana": 75,
+    "baseManaRegen": 0.4,
+    "baseArmor": 0,
+    "magicResist": 0.25,
+    "damageMin": 21,
+    "damageMax": 27,
+    "attackRange": 6.5,
+    "attackPoint": 0.5,
+    "attackBackswing": 0.5,
+    "baseAttackTime": 1.7,
+    "projectileSpeed": 10,
+    "moveSpeed": 3.6,
+    "turnRate": 12,
+    "collisionRadius": 0.35,
+    "visionDay": 22,
+    "visionNight": 10,
+    "str": 19,
+    "strGain": 2.1,
+    "agi": 14,
+    "agiGain": 1.4,
+    "int": 23,
+    "intGain": 2.9,
+    "abilities": [
+      "malgrave_ossuary",
+      "malgrave_raise_the_fallen",
+      "malgrave_bone_cage",
+      "malgrave_grave_chill",
+      "malgrave_legion_of_the_pale"
+    ],
+    "recommendedItems": {
+      "start": [
+        "item_crimson_draught",
+        "item_mantle_lore",
+        "item_mantle_lore",
+        "item_iron_circlet"
+      ],
+      "early": [
+        "item_pilgrim_greaves",
+        "item_sapphire_band"
+      ],
+      "core": [
+        "item_stormcaller_rod",
+        "item_crown_of_mercy",
+        "item_sanguine_scepter"
+      ],
+      "late": [
+        "item_grave_ward_amulet",
+        "item_heart_colossus"
+      ]
+    },
+    "model": "hero_malgrave",
+    "portrait": "portrait_malgrave",
+    "modelScale": 1.0,
+    "projectileVisual": "bone_bolt",
+    "attackSfx": "malgrave_bolt",
+    "voiceSet": "malgrave",
+    "botProfile": "pusher"
+  },
+  "abilities": [
+    {
+      "id": "malgrave_ossuary",
+      "name": "Ossuary",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 1,
+      "description": "Every unit that dies within 9 m leaves Malgrave a Bone Shard (+4% spell amplification each, up to 6, for 40 s). His next ability cast consumes all shards.",
+      "triggers": [
+        {
+          "on": "NearbyDeath",
+          "radius": 9,
+          "team": "Any",
+          "types": "Units",
+          "effects": [
+            {
+              "type": "ApplyStatus",
+              "status": "malgrave_bone_shard",
+              "duration": 40,
+              "target": "Caster"
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "id": "malgrave_bone_shard",
+          "name": "Bone Shards",
+          "description": "Spell amplification per shard.",
+          "isDebuff": false,
+          "dispel": "None",
+          "stacking": "Intensity",
+          "maxStacks": 6,
+          "modifiers": [
+            {
+              "stat": "SpellAmp",
+              "value": 0.04,
+              "perStack": true
+            }
+          ],
+          "triggers": [
+            {
+              "on": "AbilityCast",
+              "team": "Any",
+              "effects": [
+                {
+                  "type": "RemoveStatus",
+                  "target": "Caster",
+                  "status": "malgrave_bone_shard"
+                }
+              ]
+            }
+          ],
+          "icon": "status_bone_shard",
+          "vfx": "bone_shard_orbit"
+        }
+      ],
+      "icon": "ability_malgrave_ossuary"
+    },
+    {
+      "id": "malgrave_raise_the_fallen",
+      "name": "Raise the Fallen",
+      "slot": "Q",
+      "targeting": "NoTarget",
+      "description": "Two skeletal legionnaires claw out of the ground beside Malgrave, and one more rises from each corpse within 7 m (up to 2). They fight for 30 s and grow tougher with each level.",
+      "castPoint": 0.4,
+      "backswing": 0.4,
+      "cooldown": [
+        26,
+        24,
+        22,
+        20
+      ],
+      "manaCost": [
+        90,
+        100,
+        110,
+        120
+      ],
+      "aoeRadius": 7,
+      "onCast": [
+        {
+          "type": "SpawnUnit",
+          "unitId": "malgrave_legionnaire",
+          "count": 2,
+          "summonDuration": 30,
+          "vfx": "bone_raise"
+        },
+        {
+          "type": "Sequence",
+          "effects": [
+            {
+              "type": "ConsumeCorpse",
+              "radius": 7,
+              "effects": [
+                {
+                  "type": "SpawnUnit",
+                  "unitId": "malgrave_legionnaire",
+                  "center": "Point",
+                  "summonDuration": 30,
+                  "vfx": "bone_raise"
+                }
+              ]
+            },
+            {
+              "type": "ConsumeCorpse",
+              "radius": 7,
+              "effects": [
+                {
+                  "type": "SpawnUnit",
+                  "unitId": "malgrave_legionnaire",
+                  "center": "Point",
+                  "summonDuration": 30,
+                  "vfx": "bone_raise"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "icon": "ability_malgrave_raise",
+      "castAnimation": "Cast1",
+      "castSfx": "malgrave_raise",
+      "botUsage": "farm,buff"
+    },
+    {
+      "id": "malgrave_bone_cage",
+      "name": "Bone Cage",
+      "slot": "W",
+      "targeting": "Point",
+      "targetTeam": "Enemy",
+      "description": "A ring of ribs 3.2 m in radius bursts from the ground for 3/3.5/4/4.5 s, blocking movement in and out. Enemies inside are slowed by 20% and take 20/30/40/50 magical damage per second.",
+      "castRange": [
+        8,
+        8,
+        8,
+        8
+      ],
+      "castPoint": 0.35,
+      "backswing": 0.4,
+      "cooldown": [
+        22,
+        20,
+        18,
+        16
+      ],
+      "manaCost": [
+        100,
+        110,
+        120,
+        130
+      ],
+      "aoeRadius": 3.2,
+      "onCast": [
+        {
+          "type": "CreateWall",
+          "radius": 3.2,
+          "center": "Point",
+          "zoneDuration": [
+            3,
+            3.5,
+            4,
+            4.5
+          ],
+          "vfx": "bone_cage_wall"
+        },
+        {
+          "type": "Zone",
+          "radius": 3.0,
+          "center": "Point",
+          "zoneDuration": [
+            3,
+            3.5,
+            4,
+            4.5
+          ],
+          "interval": 0.5,
+          "team": "Enemy",
+          "types": "Units",
+          "vfx": "bone_cage_chill",
+          "effects": [
+            {
+              "type": "Damage",
+              "amount": [
+                10,
+                15,
+                20,
+                25
+              ],
+              "damageType": "Magical"
+            },
+            {
+              "type": "ApplyStatus",
+              "status": "slow_light",
+              "duration": 0.6
+            }
+          ]
+        }
+      ],
+      "icon": "ability_malgrave_cage",
+      "castAnimation": "Cast2",
+      "castSfx": "malgrave_cage",
+      "botUsage": "aoe,stun"
+    },
+    {
+      "id": "malgrave_grave_chill",
+      "name": "Grave Chill",
+      "slot": "E",
+      "targeting": "Point",
+      "targetTeam": "Enemy",
+      "description": "Exhales the cold of the crypts in a 60° cone 7 m long, dealing 75/125/175/225 magical damage and chilling enemies for 3 s: 20/25/30/35% slower movement and 20/30/40/50 slower attacks.",
+      "castRange": [
+        7,
+        7,
+        7,
+        7
+      ],
+      "castPoint": 0.3,
+      "backswing": 0.4,
+      "cooldown": [
+        10,
+        9,
+        8,
+        7
+      ],
+      "manaCost": [
+        80,
+        95,
+        110,
+        125
+      ],
+      "aoeRadius": 7,
+      "onCast": [
+        {
+          "type": "Area",
+          "radius": 7,
+          "center": "Caster",
+          "team": "Enemy",
+          "types": "Units",
+          "coneAngle": 30,
+          "vfx": "grave_chill_cone",
+          "effects": [
+            {
+              "type": "Damage",
+              "amount": [
+                75,
+                125,
+                175,
+                225
+              ],
+              "damageType": "Magical"
+            },
+            {
+              "type": "ApplyStatus",
+              "status": "malgrave_grave_chill",
+              "duration": 3
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "id": "malgrave_grave_chill",
+          "name": "Grave Chill",
+          "description": "Slowed movement and attacks.",
+          "isDebuff": true,
+          "dispel": "Basic",
+          "modifiers": [
+            {
+              "stat": "MoveSpeedPct",
+              "value": [
+                -0.2,
+                -0.25,
+                -0.3,
+                -0.35
+              ]
+            },
+            {
+              "stat": "AttackSpeed",
+              "value": [
+                -20,
+                -30,
+                -40,
+                -50
+              ]
+            }
+          ],
+          "icon": "status_grave_chill",
+          "vfx": "grave_frost"
+        }
+      ],
+      "icon": "ability_malgrave_chill",
+      "castAnimation": "Cast3",
+      "castSfx": "malgrave_chill",
+      "botUsage": "nuke,aoe,farm"
+    },
+    {
+      "id": "malgrave_legion_of_the_pale",
+      "name": "Legion of the Pale",
+      "slot": "R",
+      "isUltimate": true,
+      "maxLevel": 3,
+      "targeting": "Point",
+      "targetTeam": "Enemy",
+      "description": "Tears open a crypt at the target point. Enemies within 4 m take 100/150/200 magical damage and are feared for 1/1.25/1.5 s. Two armoured revenants climb out at once and two more every 2 s (six in total). They guard the ground they rose on for 22 s.",
+      "castRange": [
+        9,
+        10,
+        11
+      ],
+      "castPoint": 0.5,
+      "backswing": 0.5,
+      "cooldown": [
+        120,
+        105,
+        90
+      ],
+      "manaCost": [
+        200,
+        275,
+        350
+      ],
+      "aoeRadius": 4,
+      "onCast": [
+        {
+          "type": "Area",
+          "radius": 4,
+          "center": "Point",
+          "team": "Enemy",
+          "types": "Units",
+          "vfx": "crypt_open",
+          "shake": 0.6,
+          "effects": [
+            {
+              "type": "Damage",
+              "amount": [
+                100,
+                150,
+                200
+              ],
+              "damageType": "Magical"
+            },
+            {
+              "type": "ApplyStatus",
+              "status": "fear",
+              "duration": [
+                1,
+                1.25,
+                1.5
+              ]
+            }
+          ]
+        },
+        {
+          "type": "SpawnUnit",
+          "unitId": "malgrave_pale_revenant",
+          "center": "Point",
+          "count": 2,
+          "summonDuration": 22,
+          "vfx": "bone_raise"
+        },
+        {
+          "type": "Delayed",
+          "delay": 2,
+          "radius": 3,
+          "center": "Point",
+          "vfx": "crypt_telegraph",
+          "effects": [
+            {
+              "type": "SpawnUnit",
+              "unitId": "malgrave_pale_revenant",
+              "center": "Point",
+              "count": 2,
+              "summonDuration": 20,
+              "vfx": "bone_raise"
+            }
+          ]
+        },
+        {
+          "type": "Delayed",
+          "delay": 4,
+          "radius": 3,
+          "center": "Point",
+          "vfx": "crypt_telegraph",
+          "effects": [
+            {
+              "type": "SpawnUnit",
+              "unitId": "malgrave_pale_revenant",
+              "center": "Point",
+              "count": 2,
+              "summonDuration": 18,
+              "vfx": "bone_raise"
+            }
+          ]
+        }
+      ],
+      "icon": "ability_malgrave_legion",
+      "castAnimation": "CastUlt",
+      "castSfx": "malgrave_legion",
+      "voiceLine": "malgrave_ult",
+      "botUsage": "ultimate,aoe"
+    },
+    {
+      "id": "malgrave_legionnaire_drill",
+      "name": "Legion Drill",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 4,
+      "hidden": true,
+      "description": "Grows stronger with the level of the ability that raised this unit.",
+      "passiveModifiers": [
+        {
+          "stat": "MaxHp",
+          "value": [
+            0,
+            80,
+            160,
+            240
+          ]
+        },
+        {
+          "stat": "BaseDamage",
+          "value": [
+            0,
+            6,
+            12,
+            18
+          ]
+        },
+        {
+          "stat": "Armor",
+          "value": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "malgrave_revenant_might",
+      "name": "Pale Might",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 3,
+      "hidden": true,
+      "description": "Grows stronger with the level of the ability that raised this unit.",
+      "passiveModifiers": [
+        {
+          "stat": "MaxHp",
+          "value": [
+            0,
+            150,
+            300
+          ]
+        },
+        {
+          "stat": "BaseDamage",
+          "value": [
+            0,
+            10,
+            20
+          ]
+        },
+        {
+          "stat": "Armor",
+          "value": [
+            0,
+            1,
+            2
+          ]
+        }
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "malgrave_legionnaire",
+      "name": "Skeletal Legionnaire",
+      "kind": "Summon",
+      "attackType": "Melee",
+      "maxHp": 320,
+      "armor": 2,
+      "magicResist": 0.1,
+      "damageMin": 18,
+      "damageMax": 22,
+      "attackRange": 1.3,
+      "attackPoint": 0.4,
+      "attackBackswing": 0.5,
+      "baseAttackTime": 1.2,
+      "moveSpeed": 3.4,
+      "turnRate": 10,
+      "collisionRadius": 0.32,
+      "visionDay": 9,
+      "visionNight": 7,
+      "acquisitionRange": 7,
+      "bountyGoldMin": 14,
+      "bountyGoldMax": 18,
+      "bountyXp": 20,
+      "siegeMultiplier": 1.2,
+      "abilities": [
+        "malgrave_legionnaire_drill"
+      ],
+      "model": "summon_skeleton_legionnaire",
+      "attackSfx": "bone_hit",
+      "deathSfx": "bone_break",
+      "tags": [
+        "undead"
+      ]
+    },
+    {
+      "id": "malgrave_pale_revenant",
+      "name": "Pale Revenant",
+      "kind": "Summon",
+      "attackType": "Melee",
+      "maxHp": 650,
+      "armor": 5,
+      "magicResist": 0.2,
+      "damageMin": 35,
+      "damageMax": 42,
+      "attackRange": 1.5,
+      "attackPoint": 0.45,
+      "attackBackswing": 0.5,
+      "baseAttackTime": 1.3,
+      "moveSpeed": 3.3,
+      "turnRate": 9,
+      "collisionRadius": 0.4,
+      "visionDay": 10,
+      "visionNight": 8,
+      "acquisitionRange": 7.5,
+      "bountyGoldMin": 25,
+      "bountyGoldMax": 32,
+      "bountyXp": 40,
+      "siegeMultiplier": 1.2,
+      "abilities": [
+        "malgrave_revenant_might"
+      ],
+      "model": "summon_pale_revenant",
+      "modelScale": 1.1,
+      "attackSfx": "bone_hit",
+      "deathSfx": "bone_break",
+      "tags": [
+        "guard",
+        "undead"
+      ]
+    }
+  ]
+}

@@ -95,6 +95,7 @@ namespace Bloodfall.Protocol
     {
         public int Id;
         public string DefId;
+        /// <summary>Model override from a status (hex, transforms); null when the unit shows its definition's model.</summary>
         public string ModelKey;
         public UnitKind Kind;
         public Team Team;

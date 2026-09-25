@@ -185,6 +185,27 @@ namespace Bloodfall.Simulation
         public void Think(Match m, Unit u, float dt)
         {
             if (u.Dead) return;
+            var tags = u.UnitDef?.Tags;
+            bool stationary = tags != null && Array.IndexOf(tags, "stationary") >= 0;
+            bool guard = tags != null && Array.IndexOf(tags, "guard") >= 0;
+            if (stationary)
+            {
+                // Totems, cauldrons: never move; fight only what is already in reach.
+                if (u.Stats.DamageMax <= 0f) return;
+                var near = m.FindAttackTarget(u, Math.Max(0.5f, u.Stats.AttackRange + 0.5f));
+                if (near != null && u.CurrentOrder.Type != OrderType.AttackUnit) m.IssueOrder(u, Order.Attack(u.Id, near.Id));
+                return;
+            }
+            if (guard)
+            {
+                // Revenants and wardens hold the ground they were raised on.
+                var home = u.HomePosition;
+                if (Vector2.Distance(u.Position, home) > 9f) { m.IssueOrder(u, Order.MoveTo(u.Id, home)); return; }
+                if (u.CurrentOrder.Type == OrderType.AttackUnit) return;
+                var foe = m.FindAttackTarget(u, u.AcquisitionRange + 2f);
+                if (foe != null && Vector2.Distance(foe.Position, home) < 10f) m.IssueOrder(u, Order.Attack(u.Id, foe.Id));
+                return;
+            }
             if (_controlled && u.Owner != null && !u.Owner.IsBot && u.CurrentOrder.Type != OrderType.None) return;
             if (u.CurrentOrder.Type == OrderType.AttackUnit) return;
             var target = m.FindAttackTarget(u, u.AcquisitionRange);

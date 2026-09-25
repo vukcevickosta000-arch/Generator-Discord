@@ -375,7 +375,8 @@ namespace Bloodfall.Simulation
                     case TargetingMode.Vector:
                     {
                         Vector2 point;
-                        if (usage.Contains("escape"))
+                        // Blinks tagged "escape,engage" flee when escaping and jump onto the target when engaging.
+                        if (intent == "escape" || (usage.Contains("escape") && !usage.Contains("engage")))
                         {
                             var fountain = Fountain(m, u.Team);
                             point = u.Position + MathUtil.SafeNormalize(fountain - u.Position, Vector2.UnitX) * Math.Max(3f, range);

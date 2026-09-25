@@ -493,7 +493,7 @@ namespace Bloodfall.Protocol
             e.OwnerPlayer = r.ReadSByte();
             e.Armor = r.ReadVarInt() / 10f;
             e.Damage = r.ReadVarUInt();
-            e.ModelKey = r.ReadString() ?? e.DefId;
+            e.ModelKey = r.ReadString();
             int n = r.ReadByte();
             for (int i = 0; i < n; i++)
                 e.Statuses.Add(new StatusView { Id = index.Status((int)r.ReadVarUInt()), Remaining = r.ReadTenths(), Duration = r.ReadTenths(), Stacks = r.ReadByte() });

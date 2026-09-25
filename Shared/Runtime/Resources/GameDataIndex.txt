@@ -1,4 +1,10 @@
+heroes/ardyn.json
+heroes/fenrax.json
 heroes/ilyra.json
+heroes/malgrave.json
+heroes/morwen.json
+heroes/nyxara.json
+heroes/thael.json
 heroes/vorak.json
 items/items.json
 maps/velmoragh.json

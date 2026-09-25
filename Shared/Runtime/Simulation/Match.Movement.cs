@@ -474,7 +474,8 @@ namespace Bloodfall.Simulation
                 if (m.Def != null && m.Def.OnArrive != null && (m.Kind == MotionKind.Dash || m.Kind == MotionKind.Leap) && !u.Dead)
                 {
                     var c = m.Context; c.Point = u.Position; c.Depth++;
-                    if (m.Kind == MotionKind.Leap) c.Target = u;
+                    // Point-targeted leaps (Bloodfall) resolve 'Target' to the lander; unit-targeted ones (Pounce) keep their victim.
+                    if (m.Kind == MotionKind.Leap && c.Target == null) c.Target = u;
                     ExecuteEffects(m.Def.OnArrive, c);
                 }
                 // Resume the caster's order after a dash (e.g. keep attacking the charged target).

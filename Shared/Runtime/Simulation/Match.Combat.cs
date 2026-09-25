@@ -222,6 +222,7 @@ namespace Bloodfall.Simulation
 
         private void LaunchAttack(Unit u, Unit target)
         {
+            BreakOnAction(u);
             SetAction(u, ActionState.AttackBackswing);
             u.ActionTimer = u.Stats.AttackBackswing;
             var info = RollAttack(u, target);

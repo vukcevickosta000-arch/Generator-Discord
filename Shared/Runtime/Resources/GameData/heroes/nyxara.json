@@ -1,0 +1,437 @@
+{
+  "hero": {
+    "id": "hero_nyxara",
+    "name": "Nyxara",
+    "title": "The Night Countess",
+    "faction": "CrimsonCourt",
+    "primaryAttribute": "Agility",
+    "roles": [
+      "Assassin",
+      "Escape",
+      "Carry"
+    ],
+    "difficulty": 3,
+    "resource": "Mana",
+    "attackType": "Melee",
+    "lore": "Nyxara hosted the last masquerade of the old Court, the night the Blood Moon cracked. Every guest who danced with her that evening was found at dawn with a thorn-shaped wound over the heart and a smile on their face. The Dawnguard burned her manor and salted the gardens, but the roses grew back black. Now she walks the ruins of Velmoragh as a rumour with a knife, taking the names of those who signed the Court's death warrant, one mark at a time.",
+    "personality": "Playful, patient, theatrical. Treats every kill as an invitation she was delighted to accept.",
+    "strengths": [
+      "Deletes isolated heroes",
+      "Very hard to catch",
+      "Snowballs with early kills"
+    ],
+    "weaknesses": [
+      "Fragile when caught",
+      "Countered by true sight",
+      "Needs a marked target to execute"
+    ],
+    "counters": [
+      "Truesight Lanterns",
+      "Instant disables",
+      "Heroes that punish divers"
+    ],
+    "synergies": [
+      "Heroes that set up long disables",
+      "Morwen's Toad Hex before Midnight Sentence"
+    ],
+    "baseHp": 200,
+    "baseHpRegen": 0.75,
+    "baseMana": 75,
+    "baseManaRegen": 0.25,
+    "baseArmor": 1.0,
+    "magicResist": 0.25,
+    "damageMin": 24,
+    "damageMax": 30,
+    "attackRange": 1.6,
+    "attackPoint": 0.35,
+    "attackBackswing": 0.45,
+    "baseAttackTime": 1.6,
+    "moveSpeed": 3.9,
+    "turnRate": 16,
+    "collisionRadius": 0.33,
+    "visionDay": 22,
+    "visionNight": 12,
+    "str": 18,
+    "strGain": 2.0,
+    "agi": 24,
+    "agiGain": 3.0,
+    "int": 16,
+    "intGain": 1.6,
+    "abilities": [
+      "nyxara_velvet_dark",
+      "nyxara_batwing_step",
+      "nyxara_kiss_of_thorns",
+      "nyxara_countess_veil",
+      "nyxara_midnight_sentence"
+    ],
+    "recommendedItems": {
+      "start": [
+        "item_crimson_draught",
+        "item_nightrunner_slippers",
+        "item_nightrunner_slippers",
+        "item_iron_circlet"
+      ],
+      "early": [
+        "item_marchers_haste",
+        "item_vampiric_mask"
+      ],
+      "core": [
+        "item_voidpiercer",
+        "item_nightfang_greatsword",
+        "item_shadowstep_talisman"
+      ],
+      "late": [
+        "item_headsman_cleaver",
+        "item_heart_colossus"
+      ]
+    },
+    "model": "hero_nyxara",
+    "portrait": "portrait_nyxara",
+    "modelScale": 1.0,
+    "attackSfx": "nyxara_rapier",
+    "voiceSet": "nyxara",
+    "botProfile": "assassin"
+  },
+  "abilities": [
+    {
+      "id": "nyxara_velvet_dark",
+      "name": "Velvet Dark",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 1,
+      "description": "After 3 s unseen by the enemy team (invisible or out of their vision), Nyxara's next attack within 4 s is a guaranteed critical strike for 180% damage.",
+      "triggers": [
+        {
+          "on": "Interval",
+          "internalCooldown": 0.5,
+          "effects": [
+            {
+              "type": "ApplyStatus",
+              "status": "nyxara_shroud",
+              "duration": 0.75,
+              "target": "Caster",
+              "condition": "casterUnseen"
+            },
+            {
+              "type": "ApplyStatus",
+              "status": "nyxara_velvet",
+              "duration": 4,
+              "target": "Caster",
+              "condition": "casterStacksAtLeast:nyxara_shroud:6"
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "id": "nyxara_shroud",
+          "name": "Gathering Dark",
+          "isDebuff": false,
+          "dispel": "None",
+          "stacking": "Intensity",
+          "maxStacks": 6,
+          "hidden": true
+        },
+        {
+          "id": "nyxara_velvet",
+          "name": "Velvet Dark",
+          "description": "The next attack is a critical strike.",
+          "isDebuff": false,
+          "dispel": "Basic",
+          "modifiers": [
+            {
+              "stat": "CritChance",
+              "value": 1.0
+            },
+            {
+              "stat": "CritMultiplier",
+              "value": 1.8
+            }
+          ],
+          "triggers": [
+            {
+              "on": "AttackLanded",
+              "team": "Enemy",
+              "types": "Units",
+              "effects": [
+                {
+                  "type": "RemoveStatus",
+                  "target": "Caster",
+                  "status": "nyxara_velvet"
+                }
+              ]
+            }
+          ],
+          "icon": "status_velvet_dark",
+          "vfx": "velvet_dark_glow"
+        }
+      ],
+      "icon": "ability_nyxara_velvet"
+    },
+    {
+      "id": "nyxara_batwing_step",
+      "name": "Batwing Step",
+      "slot": "Q",
+      "targeting": "Point",
+      "targetTeam": "Enemy",
+      "description": "Nyxara bursts into a swarm of bats and reforms up to 9 m away. Projectiles already flying at her lose track of her when she moves more than 6 m.",
+      "castRange": [
+        9,
+        9,
+        9,
+        9
+      ],
+      "castPoint": 0.1,
+      "backswing": 0.2,
+      "cooldown": [
+        14,
+        12,
+        10,
+        8
+      ],
+      "manaCost": [
+        60,
+        60,
+        60,
+        60
+      ],
+      "onCast": [
+        {
+          "type": "Blink",
+          "target": "Caster",
+          "maxDistance": [
+            9,
+            9,
+            9,
+            9
+          ],
+          "vfx": "bat_swarm_blink"
+        }
+      ],
+      "icon": "ability_nyxara_batwing",
+      "castAnimation": "Cast1",
+      "castSfx": "nyxara_bats",
+      "botUsage": "escape,engage"
+    },
+    {
+      "id": "nyxara_kiss_of_thorns",
+      "name": "Kiss of Thorns",
+      "slot": "W",
+      "targeting": "Unit",
+      "targetTeam": "Enemy",
+      "targetTypes": "Hero, Creep, Neutral, Summon",
+      "description": "A thorned strike deals 60/100/140/180 physical damage and applies Crimson Mark for 5 s: the target loses 2/3/4/5 armor, and every attack an enemy hero lands on it heals Nyxara for 12/18/24/30 health.",
+      "castRange": [
+        3,
+        3,
+        3,
+        3
+      ],
+      "castPoint": 0.25,
+      "backswing": 0.3,
+      "cooldown": [
+        12,
+        11,
+        10,
+        9
+      ],
+      "manaCost": [
+        70,
+        80,
+        90,
+        100
+      ],
+      "onCast": [
+        {
+          "type": "Damage",
+          "amount": [
+            60,
+            100,
+            140,
+            180
+          ],
+          "damageType": "Physical",
+          "vfx": "thorn_strike"
+        },
+        {
+          "type": "ApplyStatus",
+          "status": "nyxara_crimson_mark",
+          "duration": 5
+        }
+      ],
+      "statuses": [
+        {
+          "id": "nyxara_crimson_mark",
+          "name": "Crimson Mark",
+          "description": "Reduced armor. Attacks against this unit heal the Countess.",
+          "isDebuff": true,
+          "dispel": "Basic",
+          "modifiers": [
+            {
+              "stat": "Armor",
+              "value": [
+                -2,
+                -3,
+                -4,
+                -5
+              ]
+            }
+          ],
+          "triggers": [
+            {
+              "on": "Attacked",
+              "team": "Enemy",
+              "types": "Hero",
+              "effects": [
+                {
+                  "type": "Heal",
+                  "target": "StatusSource",
+                  "amount": [
+                    12,
+                    18,
+                    24,
+                    30
+                  ],
+                  "vfx": "heal_blood_thorn"
+                }
+              ]
+            }
+          ],
+          "icon": "status_crimson_mark",
+          "vfx": "crimson_mark_rose"
+        }
+      ],
+      "icon": "ability_nyxara_kiss",
+      "castAnimation": "Attack2",
+      "castSfx": "nyxara_kiss",
+      "botUsage": "nuke"
+    },
+    {
+      "id": "nyxara_countess_veil",
+      "name": "Countess's Veil",
+      "slot": "E",
+      "targeting": "NoTarget",
+      "description": "Nyxara vanishes for 2.5/3/3.5/4 s and moves 20/25/30/35% faster. Attacking or casting another ability ends the veil.",
+      "castPoint": 0,
+      "backswing": 0,
+      "ignoreFacing": true,
+      "keepsStealth": true,
+      "cooldown": [
+        18,
+        16,
+        14,
+        12
+      ],
+      "manaCost": [
+        50,
+        55,
+        60,
+        65
+      ],
+      "onCast": [
+        {
+          "type": "ApplyStatus",
+          "status": "nyxara_veil",
+          "duration": [
+            2.5,
+            3,
+            3.5,
+            4
+          ],
+          "target": "Caster",
+          "vfx": "veil_shadow_burst"
+        }
+      ],
+      "statuses": [
+        {
+          "id": "nyxara_veil",
+          "name": "Countess's Veil",
+          "description": "Invisible and faster.",
+          "isDebuff": false,
+          "dispel": "Basic",
+          "flags": "Invisible",
+          "breakOnAction": true,
+          "modifiers": [
+            {
+              "stat": "MoveSpeedPct",
+              "value": [
+                0.2,
+                0.25,
+                0.3,
+                0.35
+              ]
+            }
+          ],
+          "icon": "status_countess_veil",
+          "vfx": "veil_shadow"
+        }
+      ],
+      "icon": "ability_nyxara_veil",
+      "castAnimation": "Cast2",
+      "castSfx": "nyxara_veil",
+      "botUsage": "escape"
+    },
+    {
+      "id": "nyxara_midnight_sentence",
+      "name": "Midnight Sentence",
+      "slot": "R",
+      "isUltimate": true,
+      "maxLevel": 3,
+      "targeting": "Unit",
+      "targetTeam": "Enemy",
+      "targetTypes": "Hero",
+      "description": "Nyxara steps out of the dark behind an enemy hero and strikes for 150/250/350 pure damage. If the target bears Crimson Mark and is left below 22/28/34% health, it is executed.",
+      "castRange": [
+        6,
+        7,
+        8
+      ],
+      "castPoint": 0.3,
+      "backswing": 0.3,
+      "cooldown": [
+        70,
+        55,
+        40
+      ],
+      "manaCost": [
+        100,
+        150,
+        200
+      ],
+      "onCast": [
+        {
+          "type": "Blink",
+          "target": "Caster",
+          "behindTarget": true,
+          "vfx": "midnight_step"
+        },
+        {
+          "type": "Damage",
+          "amount": [
+            150,
+            250,
+            350
+          ],
+          "damageType": "Pure",
+          "vfx": "midnight_slash",
+          "shake": 0.3
+        },
+        {
+          "type": "Execute",
+          "threshold": [
+            0.22,
+            0.28,
+            0.34
+          ],
+          "condition": "targetHasStatus:nyxara_crimson_mark",
+          "vfx": "midnight_execute"
+        }
+      ],
+      "icon": "ability_nyxara_sentence",
+      "castAnimation": "CastUlt",
+      "castSfx": "nyxara_sentence",
+      "voiceLine": "nyxara_ult",
+      "botUsage": "ultimate,nuke"
+    }
+  ]
+}

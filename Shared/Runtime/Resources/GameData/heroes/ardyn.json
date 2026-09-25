@@ -1,0 +1,540 @@
+{
+  "hero": {
+    "id": "hero_ardyn",
+    "name": "Ardyn",
+    "title": "The Dawnbringer",
+    "faction": "Dawnguard",
+    "primaryAttribute": "Strength",
+    "roles": [
+      "Durable",
+      "Support",
+      "Initiator"
+    ],
+    "difficulty": 1,
+    "resource": "Mana",
+    "attackType": "Melee",
+    "lore": "Ardyn carried the Dawnguard's banner out of the burning chapterhouse when every older knight had fallen, and he has not put it down since. He is not the strongest of the order, nor the holiest; he is simply the one who never retreats. Squires say the sun rises a little earlier over any field he defends. Enemies say he is very hard to kill, and harder still to kill anyone standing behind him.",
+    "personality": "Earnest, steady, dryly humorous. Believes an oath is a thing you keep with your body.",
+    "strengths": [
+      "Keeps allies alive in fights",
+      "Hard to kill",
+      "Simple, reliable initiation"
+    ],
+    "weaknesses": [
+      "Low damage late",
+      "Mana dependent",
+      "Kited when his ultimate is down"
+    ],
+    "counters": [
+      "Pure damage",
+      "Mana burn",
+      "Long-range siege"
+    ],
+    "synergies": [
+      "Fragile carries who need a bodyguard",
+      "Heroes that follow his charge with area damage"
+    ],
+    "baseHp": 220,
+    "baseHpRegen": 1.2,
+    "baseMana": 75,
+    "baseManaRegen": 0.35,
+    "baseArmor": 2.0,
+    "magicResist": 0.25,
+    "damageMin": 26,
+    "damageMax": 32,
+    "attackRange": 1.6,
+    "attackPoint": 0.45,
+    "attackBackswing": 0.5,
+    "baseAttackTime": 1.7,
+    "moveSpeed": 3.7,
+    "turnRate": 14,
+    "collisionRadius": 0.38,
+    "visionDay": 22,
+    "visionNight": 10,
+    "str": 24,
+    "strGain": 2.9,
+    "agi": 15,
+    "agiGain": 1.6,
+    "int": 18,
+    "intGain": 1.9,
+    "abilities": [
+      "ardyn_oathkeeper",
+      "ardyn_aegis_of_dawn",
+      "ardyn_consecrate",
+      "ardyn_judgment_strike",
+      "ardyn_radiant_crusade"
+    ],
+    "recommendedItems": {
+      "start": [
+        "item_crimson_draught",
+        "item_gauntlets_might",
+        "item_ring_warding",
+        "item_iron_circlet"
+      ],
+      "early": [
+        "item_pilgrim_greaves",
+        "item_wellspring_ring"
+      ],
+      "core": [
+        "item_crown_of_mercy",
+        "item_bulwark_plate",
+        "item_grave_ward_amulet"
+      ],
+      "late": [
+        "item_heart_colossus",
+        "item_shadowstep_talisman"
+      ]
+    },
+    "model": "hero_ardyn",
+    "portrait": "portrait_ardyn",
+    "modelScale": 1.05,
+    "attackSfx": "ardyn_mace",
+    "voiceSet": "ardyn",
+    "botProfile": "support"
+  },
+  "abilities": [
+    {
+      "id": "ardyn_oathkeeper",
+      "name": "Oathkeeper",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 1,
+      "description": "Allied heroes within 9 m (Ardyn included) gain 2 armor. While Ardyn is below 40% health the bonus doubles.",
+      "aura": {
+        "radius": 9,
+        "team": "AllyOrSelf",
+        "types": "Hero",
+        "status": "ardyn_oathkeeper",
+        "heroesOnly": true
+      },
+      "triggers": [
+        {
+          "on": "Interval",
+          "internalCooldown": 0.5,
+          "effects": [
+            {
+              "type": "Area",
+              "radius": 9,
+              "center": "Caster",
+              "team": "AllyOrSelf",
+              "types": "Hero",
+              "condition": "casterHpBelow:0.4",
+              "effects": [
+                {
+                  "type": "ApplyStatus",
+                  "status": "ardyn_oath_fervor",
+                  "duration": 0.75
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "id": "ardyn_oathkeeper",
+          "name": "Oathkeeper",
+          "description": "Bonus armor near Ardyn.",
+          "isDebuff": false,
+          "dispel": "None",
+          "modifiers": [
+            {
+              "stat": "Armor",
+              "value": 2
+            }
+          ],
+          "icon": "status_oathkeeper"
+        },
+        {
+          "id": "ardyn_oath_fervor",
+          "name": "Oath Fervor",
+          "description": "Ardyn is wounded: doubled armor.",
+          "isDebuff": false,
+          "dispel": "None",
+          "modifiers": [
+            {
+              "stat": "Armor",
+              "value": 2
+            }
+          ],
+          "icon": "status_oath_fervor",
+          "vfx": "dawn_fervor"
+        }
+      ],
+      "icon": "ability_ardyn_oathkeeper"
+    },
+    {
+      "id": "ardyn_aegis_of_dawn",
+      "name": "Aegis of Dawn",
+      "slot": "Q",
+      "targeting": "Unit",
+      "targetTeam": "AllyOrSelf",
+      "targetTypes": "Hero, Creep, Summon",
+      "description": "Wraps an ally in a sunlit shield that absorbs 120/200/280/360 damage for 6 s. When it expires it bursts, dealing 60/100/140/180 magical damage to enemies within 3.5 m.",
+      "castRange": [
+        7,
+        7,
+        7,
+        7
+      ],
+      "castPoint": 0.2,
+      "backswing": 0.3,
+      "cooldown": [
+        14,
+        13,
+        12,
+        11
+      ],
+      "manaCost": [
+        80,
+        90,
+        100,
+        110
+      ],
+      "onCast": [
+        {
+          "type": "ApplyStatus",
+          "status": "ardyn_aegis",
+          "duration": 6,
+          "vfx": "aegis_cast"
+        }
+      ],
+      "statuses": [
+        {
+          "id": "ardyn_aegis",
+          "name": "Aegis of Dawn",
+          "description": "Absorbs damage, then bursts with light.",
+          "isDebuff": false,
+          "dispel": "Basic",
+          "shield": [
+            120,
+            200,
+            280,
+            360
+          ],
+          "onExpire": [
+            {
+              "type": "Area",
+              "radius": 3.5,
+              "center": "Target",
+              "team": "Enemy",
+              "types": "Units",
+              "vfx": "dawn_burst",
+              "shake": 0.2,
+              "effects": [
+                {
+                  "type": "Damage",
+                  "amount": [
+                    60,
+                    100,
+                    140,
+                    180
+                  ],
+                  "damageType": "Magical"
+                }
+              ]
+            }
+          ],
+          "icon": "status_aegis_of_dawn",
+          "vfx": "aegis_shell"
+        }
+      ],
+      "icon": "ability_ardyn_aegis",
+      "castAnimation": "Cast1",
+      "castSfx": "ardyn_aegis",
+      "botUsage": "buff,self"
+    },
+    {
+      "id": "ardyn_consecrate",
+      "name": "Consecrate",
+      "slot": "W",
+      "targeting": "NoTarget",
+      "description": "Blesses the ground around Ardyn (4.5 m) for 5 s. Allies standing in it heal 20/30/40/50 health per second; enemies burn for 20/30/40/50 magical damage per second, doubled against non-hero units.",
+      "castPoint": 0.3,
+      "backswing": 0.4,
+      "ignoreFacing": true,
+      "cooldown": [
+        16,
+        15,
+        14,
+        13
+      ],
+      "manaCost": [
+        90,
+        100,
+        110,
+        120
+      ],
+      "aoeRadius": 4.5,
+      "onCast": [
+        {
+          "type": "Zone",
+          "radius": 4.5,
+          "center": "Caster",
+          "zoneDuration": 5,
+          "interval": 0.5,
+          "team": "AllyOrSelf",
+          "types": "Units",
+          "vfx": "consecrate_motes",
+          "effects": [
+            {
+              "type": "Heal",
+              "amount": [
+                10,
+                15,
+                20,
+                25
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Zone",
+          "radius": 4.5,
+          "center": "Caster",
+          "zoneDuration": 5,
+          "interval": 0.5,
+          "team": "Enemy",
+          "types": "Units",
+          "vfx": "consecrate_ground",
+          "effects": [
+            {
+              "type": "Damage",
+              "amount": [
+                10,
+                15,
+                20,
+                25
+              ],
+              "damageType": "Magical"
+            },
+            {
+              "type": "Damage",
+              "amount": [
+                10,
+                15,
+                20,
+                25
+              ],
+              "damageType": "Magical",
+              "condition": "targetNotHero"
+            }
+          ]
+        }
+      ],
+      "icon": "ability_ardyn_consecrate",
+      "castAnimation": "Cast2",
+      "castSfx": "ardyn_consecrate",
+      "botUsage": "aoe,farm,buff"
+    },
+    {
+      "id": "ardyn_judgment_strike",
+      "name": "Judgment Strike",
+      "slot": "E",
+      "targeting": "NoTarget",
+      "description": "Ardyn's next attack within 6 s passes judgment: 20/40/60/80 bonus physical damage plus 5/6/7/8% of the target's missing health, and a 0.4 s stun.",
+      "castPoint": 0,
+      "backswing": 0,
+      "ignoreFacing": true,
+      "cooldown": [
+        12,
+        10,
+        8,
+        6
+      ],
+      "manaCost": [
+        40,
+        45,
+        50,
+        55
+      ],
+      "onCast": [
+        {
+          "type": "ApplyStatus",
+          "status": "ardyn_judgment",
+          "duration": 6,
+          "target": "Caster"
+        }
+      ],
+      "statuses": [
+        {
+          "id": "ardyn_judgment",
+          "name": "Judgment",
+          "description": "The next attack stuns and punishes the wounded.",
+          "isDebuff": false,
+          "dispel": "Basic",
+          "triggers": [
+            {
+              "on": "AttackLanded",
+              "team": "Enemy",
+              "types": "Units",
+              "effects": [
+                {
+                  "type": "Damage",
+                  "amount": [
+                    20,
+                    40,
+                    60,
+                    80
+                  ],
+                  "damageType": "Physical",
+                  "pctMissingHp": [
+                    0.05,
+                    0.06,
+                    0.07,
+                    0.08
+                  ],
+                  "vfx": "judgment_strike",
+                  "shake": 0.2
+                },
+                {
+                  "type": "ApplyStatus",
+                  "status": "ministun",
+                  "duration": 0.4
+                },
+                {
+                  "type": "RemoveStatus",
+                  "target": "Caster",
+                  "status": "ardyn_judgment"
+                }
+              ]
+            }
+          ],
+          "icon": "status_judgment",
+          "vfx": "judgment_glow"
+        }
+      ],
+      "icon": "ability_ardyn_judgment",
+      "castAnimation": "Cast3",
+      "castSfx": "ardyn_judgment",
+      "botUsage": "buff"
+    },
+    {
+      "id": "ardyn_radiant_crusade",
+      "name": "Radiant Crusade",
+      "slot": "R",
+      "isUltimate": true,
+      "maxLevel": 3,
+      "targeting": "Point",
+      "targetTeam": "Enemy",
+      "description": "Ardyn raises the banner: he and allied heroes within 6 m are cleansed of basic debuffs and gain 60% status resistance and 20% movement speed for 3/3.5/4 s. Then he charges up to 10/11/12 m, dealing 100/150/200 magical damage to every enemy he passes, knocking them aside and blinding them for 2/2.5/3 s (half their attacks miss).",
+      "castRange": [
+        10,
+        11,
+        12
+      ],
+      "castPoint": 0.25,
+      "backswing": 0.3,
+      "cooldown": [
+        100,
+        90,
+        80
+      ],
+      "manaCost": [
+        150,
+        175,
+        200
+      ],
+      "aoeRadius": 6,
+      "onCast": [
+        {
+          "type": "Area",
+          "radius": 6,
+          "center": "Caster",
+          "team": "AllyOrSelf",
+          "types": "Hero",
+          "vfx": "crusade_banner",
+          "effects": [
+            {
+              "type": "Dispel",
+              "dispelStrength": "Basic",
+              "dispelDebuffs": true
+            },
+            {
+              "type": "ApplyStatus",
+              "status": "ardyn_crusade",
+              "duration": [
+                3,
+                3.5,
+                4
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Dash",
+          "speed": 18,
+          "maxDistance": [
+            10,
+            11,
+            12
+          ],
+          "collisionRadius": 1.4,
+          "vfx": "crusade_charge",
+          "onPass": [
+            {
+              "type": "Damage",
+              "amount": [
+                100,
+                150,
+                200
+              ],
+              "damageType": "Magical",
+              "vfx": "dawn_burst_small"
+            },
+            {
+              "type": "Knockback",
+              "distance": 2,
+              "moveDuration": 0.25
+            },
+            {
+              "type": "ApplyStatus",
+              "status": "ardyn_blinded",
+              "duration": [
+                2,
+                2.5,
+                3
+              ]
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "id": "ardyn_crusade",
+          "name": "Radiant Crusade",
+          "description": "Resists disables; moves faster.",
+          "isDebuff": false,
+          "dispel": "Strong",
+          "modifiers": [
+            {
+              "stat": "StatusResist",
+              "value": 0.6
+            },
+            {
+              "stat": "MoveSpeedPct",
+              "value": 0.2
+            }
+          ],
+          "icon": "status_radiant_crusade",
+          "vfx": "crusade_aura"
+        },
+        {
+          "id": "ardyn_blinded",
+          "name": "Dazzled",
+          "description": "Half of this unit's attacks miss.",
+          "isDebuff": true,
+          "dispel": "Basic",
+          "flags": "Blinded",
+          "icon": "status_dazzled",
+          "vfx": "dazzle_sparks"
+        }
+      ],
+      "icon": "ability_ardyn_crusade",
+      "castAnimation": "CastUlt",
+      "castSfx": "ardyn_crusade",
+      "voiceLine": "ardyn_ult",
+      "botUsage": "ultimate,engage"
+    }
+  ]
+}

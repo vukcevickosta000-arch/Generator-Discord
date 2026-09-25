@@ -21,9 +21,13 @@ namespace Bloodfall.Simulation
         public bool IsAttack;
         public bool PiercesMagicImmunity;
         public StatusInstance StatusInstance;
+        /// <summary>Unit that applied the status whose trigger/interval is running (kill credit for DoTs and curses).</summary>
+        public Unit StatusSource;
         public int Stacks;
         public int Depth;
         public Projectile Projectile;
+        /// <summary>Multiplier on damage/heal/mana amounts (echoed casts). 0 means full power.</summary>
+        public float PowerScale;
     }
 
     public sealed partial class Match
@@ -50,6 +54,7 @@ namespace Bloodfall.Simulation
             {
                 case EffectTarget.Caster: return ctx.Caster;
                 case EffectTarget.TriggerSource: return ctx.TriggerSource;
+                case EffectTarget.StatusSource: return ctx.StatusSource;
                 default: return ctx.Target;
             }
         }
@@ -91,13 +96,79 @@ namespace Bloodfall.Simulation
             if (ctx.StatusInstance != null && ctx.StatusInstance.Def.Stacking == StackingMode.Intensity)
                 a *= Math.Max(1, ctx.StatusInstance.Stacks);
             if (e.Condition == "triggerAmount") a *= ctx.TriggerAmount;
+            if (ctx.PowerScale > 0f) a *= ctx.PowerScale;
             return a;
         }
+
+        /// <summary>
+        /// Optional gates on an effect (<c>condition</c> in data). Special-purpose conditions consumed by specific effect
+        /// types ("triggerAmount", "alliedStructure", "itemMin") are ignored here.
+        /// Supported: targetHasStatus:&lt;id&gt;, targetLacksStatus:&lt;id&gt;, casterHasStatus:&lt;id&gt;, casterLacksStatus:&lt;id&gt;,
+        /// night, day, targetIsHero, targetNotHero, targetHpBelow:&lt;fraction&gt;, casterHpBelow:&lt;fraction&gt;,
+        /// casterUnseen (no enemy team can see the caster), casterStacksAtLeast:&lt;status&gt;:&lt;n&gt;,
+        /// casterNearTrees:&lt;count&gt;:&lt;radius&gt;.
+        /// </summary>
+        public bool CheckCondition(string condition, in EffectContext ctx, Unit unit)
+        {
+            if (string.IsNullOrEmpty(condition)) return true;
+            int colon = condition.IndexOf(':');
+            string key = colon >= 0 ? condition.Substring(0, colon) : condition;
+            string arg = colon >= 0 ? condition.Substring(colon + 1) : null;
+            switch (key)
+            {
+                case "targetHasStatus": return unit != null && unit.FindStatus(arg) != null;
+                case "targetLacksStatus": return unit == null || unit.FindStatus(arg) == null;
+                case "casterHasStatus": return ctx.Caster != null && ctx.Caster.FindStatus(arg) != null;
+                case "casterLacksStatus": return ctx.Caster == null || ctx.Caster.FindStatus(arg) == null;
+                case "night": return IsNight;
+                case "day": return !IsNight;
+                case "targetIsHero": return unit != null && unit.IsHero;
+                case "targetNotHero": return unit != null && !unit.IsHero;
+                case "targetHpBelow": return unit != null && float.TryParse(arg, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var tf) && unit.HpFraction < tf;
+                case "casterHpBelow": return ctx.Caster != null && float.TryParse(arg, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var cf) && ctx.Caster.HpFraction < cf;
+                case "casterUnseen":
+                {
+                    if (ctx.Caster == null) return false;
+                    for (int t = 0; t < 2; t++)
+                        if (t != (int)ctx.Caster.Team && ctx.Caster.VisibleTo[t]) return false;
+                    return true;
+                }
+                case "casterStacksAtLeast":
+                {
+                    if (ctx.Caster == null || !SplitArg(arg, out var id, out var n)) return false;
+                    var s = ctx.Caster.FindStatus(id);
+                    return s != null && s.Stacks >= n;
+                }
+                case "casterNearTrees":
+                {
+                    if (ctx.Caster == null || !SplitArg(arg, out var countText, out var radius)) return false;
+                    return int.TryParse(countText, out int need) && CountTreesNear(ctx.Caster.Position, radius) >= need;
+                }
+                default: return true;
+            }
+        }
+
+        /// <summary>Parses "&lt;text&gt;:&lt;number&gt;" condition arguments.</summary>
+        private static bool SplitArg(string arg, out string head, out float value)
+        {
+            head = null; value = 0f;
+            if (arg == null) return false;
+            int c = arg.LastIndexOf(':');
+            if (c <= 0) return false;
+            head = arg.Substring(0, c);
+            return float.TryParse(arg.Substring(c + 1), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value);
+        }
+
+        // The ability cast currently resolving (for EchoCast) and a guard against echoing an echo.
+        private EffectContext _lastCastContext;
+        private bool _lastCastValid;
+        private bool _echoing;
 
         private void ExecuteEffect(EffectDef e, EffectContext ctx)
         {
             int L = ctx.Level;
             var unit = ResolveUnit(e, ctx);
+            if (!CheckCondition(e.Condition, ctx, unit)) return;
             switch (e.Type)
             {
                 case EffectType.Damage:
@@ -106,7 +177,7 @@ namespace Bloodfall.Simulation
                     float amount = ComputeAmount(e, ctx, unit);
                     DealDamage(new DamageInfo
                     {
-                        Source = ctx.Caster,
+                        Source = e.CreditStatusSource && ctx.StatusSource != null ? ctx.StatusSource : ctx.Caster,
                         Target = unit,
                         Amount = amount,
                         Type = e.DamageType,
@@ -281,6 +352,26 @@ namespace Bloodfall.Simulation
                     ExecuteEffects(e.Effects, cc);
                     break;
                 }
+                case EffectType.EchoCast:
+                {
+                    // Re-runs the ability the caster just cast (fired from an AbilityCast trigger) at reduced power.
+                    if (_echoing || !_lastCastValid || ctx.Caster == null || _lastCastContext.Caster != ctx.Caster) return;
+                    var cast = _lastCastContext;
+                    if (cast.Ability == null || cast.Item != null || cast.Ability.IsUltimate) return;
+                    if (cast.Target != null && cast.Target != ctx.Caster && cast.Target.Dead) return;
+                    cast.PowerScale = e.Amount?.Get(L) ?? 0.5f;
+                    _echoing = true;
+                    try
+                    {
+                        Emit(new SimEvent { Type = SimEventType.EffectVisual, Key = e.Vfx ?? "echo_cast", UnitId = ctx.Caster.Id, Point = ctx.Caster.Position, PlayerId = -1 });
+                        ExecuteEffects(cast.Ability.OnCast, cast);
+                    }
+                    finally { _echoing = false; }
+                    return;
+                }
+                case EffectType.ForceNight:
+                    ForcedNightUntil = Math.Max(ForcedNightUntil, Time + (e.Duration?.Get(L) ?? 0f));
+                    break;
                 case EffectType.Illusion:
                 case EffectType.Resurrect:
                     // Planned: illusions and resurrection share the summon pipeline (see TODO.md).
@@ -401,6 +492,14 @@ namespace Bloodfall.Simulation
                 float life = e.SummonDuration?.Get(L) ?? -1f;
                 s.Lifetime = life;
                 s.Level = L;
+                // Summon abilities (auras, scaling passives) follow the level of the ability that raised them.
+                if (s.Abilities.Count > 0)
+                {
+                    foreach (var ab in s.Abilities) ab.Level = Math.Max(1, Math.Min(ab.Def.MaxLevel, L));
+                    s.RecomputeStats(Rules);
+                    s.Hp = s.Stats.MaxHp;
+                    s.Mana = s.Stats.MaxMana;
+                }
                 if (ud.Kind == UnitKind.Ward) { s.Brain = null; if (ctx.Caster.Owner != null) ctx.Caster.Owner.WardsPlaced++; }
                 else s.Brain = new SummonBrain(e.ControlledByOwner);
                 Emit(new SimEvent { Type = SimEventType.EffectVisual, Key = e.Vfx ?? "summon", UnitId = s.Id, Point = pos, PlayerId = -1 });

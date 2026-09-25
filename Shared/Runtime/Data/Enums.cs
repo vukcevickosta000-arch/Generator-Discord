@@ -95,8 +95,11 @@ namespace Bloodfall.Data
         FlyingVision = 1 << 24,
         Hidden = 1 << 25,
 
-        /// <summary>Anything that prevents actions entirely.</summary>
-        HardDisable = Stunned | Hexed | Frozen | Sleeping,
+        /// <summary>
+        /// Anything that prevents actions and movement entirely. Hex is deliberately excluded: hexed units can still walk
+        /// (slowly); hex statuses carry Silenced/Disarmed/Muted to stop everything else.
+        /// </summary>
+        HardDisable = Stunned | Frozen | Sleeping,
     }
 
     public enum StatType : byte
@@ -123,6 +126,10 @@ namespace Bloodfall.Data
         Execute, Swap, Reveal, ModifyCooldowns, SpendResource, CreateWall,
         GrantGold, AddCharges, Transform, ReduceMana, Illusion, Kill,
         SummonAtTarget, ConsumeCorpse, Resurrect,
+        /// <summary>Re-runs the caster's last ability cast at <c>amount</c> power (Morwen's Witching Hour).</summary>
+        EchoCast,
+        /// <summary>Makes it night for everyone for <c>duration</c> seconds.</summary>
+        ForceNight,
     }
 
     public enum EffectTarget : byte
@@ -134,6 +141,8 @@ namespace Bloodfall.Data
         Point,
         /// <summary>The unit that originally triggered a passive (attacker, killer, ...).</summary>
         TriggerSource,
+        /// <summary>The unit that applied the status whose trigger or interval is running.</summary>
+        StatusSource,
     }
 
     public enum AreaCenter : byte { Caster, Target, Point }

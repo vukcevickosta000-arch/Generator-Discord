@@ -131,6 +131,8 @@ namespace Bloodfall.Data
         public string Vfx;
         public string Sfx;
         public float Shake;
+        /// <summary>Damage from this effect is credited to the unit that applied the running status (curses, DoTs).</summary>
+        public bool CreditStatusSource;
     }
 
     public sealed class TriggerDef
@@ -184,6 +186,8 @@ namespace Bloodfall.Data
         public DamageType? ShieldType;
         /// <summary>Fraction of incoming damage redirected / reduced etc. are expressed as modifiers.</summary>
         public bool AffectedByStatusResist = true;
+        /// <summary>Removed when the bearer attacks or casts (invisibility veils, hidden stances).</summary>
+        public bool BreakOnAction;
         public bool Hidden;
         public bool RemoveOnDeath = true;
         /// <summary>Fear / taunt direction source; forced movement handled by the simulation.</summary>
@@ -243,6 +247,8 @@ namespace Bloodfall.Data
         public string VoiceLine;
         /// <summary>Hint for bots on how to use this ability.</summary>
         public string BotUsage;
+        /// <summary>Casting this ability does not break BreakOnAction statuses (e.g. the veil ability itself).</summary>
+        public bool KeepsStealth;
         public bool Hidden;
 
         public int RequiredHeroLevel(int nextAbilityLevel)
@@ -477,7 +483,7 @@ namespace Bloodfall.Data
         public List<JVec2> WardSpots = new List<JVec2>();
         public JVec2 BossPit;
         public List<JVec2> VharothSeals = new List<JVec2>();
-        /// <summary>Destructible tree positions (x,y pairs * 10, base64 of little-endian ushorts).</summary>
+        /// <summary>Tree trunks: base64 of 5-byte records (ushort x*10, ushort y*10 little endian, byte variant).</summary>
         public string Trees;
         public string DressingFile;
         public string HeightFile;

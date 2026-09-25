@@ -1,0 +1,505 @@
+{
+  "hero": {
+    "id": "hero_morwen",
+    "name": "Morwen",
+    "title": "The Hedge Witch",
+    "faction": "WildCovenant",
+    "primaryAttribute": "Intelligence",
+    "roles": [
+      "Disabler",
+      "Support",
+      "Controller"
+    ],
+    "difficulty": 2,
+    "resource": "Mana",
+    "attackType": "Ranged",
+    "lore": "Morwen kept the old pacts at the edge of the Blackmere: a saucer of milk for the marsh-lights, a coin for the ferryman, a curse for anyone who broke their word. When the Court's knights burned the hedge-villages to smoke out the Covenant, she broke no word of her own. She simply made sure that every knight who rode through her fen went home a toad. She still has most of them in a jar.",
+    "personality": "Warm, gossipy, and utterly merciless about promises. Laughs at her own curses.",
+    "strengths": [
+      "Reliable single-target disable",
+      "Sustains her team with the cauldron",
+      "Punishes spellcasters"
+    ],
+    "weaknesses": [
+      "Fragile",
+      "Short cast range",
+      "Weak without allies to follow up"
+    ],
+    "counters": [
+      "Magic immunity",
+      "Heroes that dive the backline"
+    ],
+    "synergies": [
+      "Nyxara and Fenrax, who kill hexed targets",
+      "Casters who benefit from echoed spells"
+    ],
+    "baseHp": 200,
+    "baseHpRegen": 0.5,
+    "baseMana": 75,
+    "baseManaRegen": 0.45,
+    "baseArmor": 0.5,
+    "magicResist": 0.25,
+    "damageMin": 20,
+    "damageMax": 26,
+    "attackRange": 6.9,
+    "attackPoint": 0.45,
+    "attackBackswing": 0.5,
+    "baseAttackTime": 1.7,
+    "projectileSpeed": 11,
+    "moveSpeed": 3.55,
+    "turnRate": 12,
+    "collisionRadius": 0.32,
+    "visionDay": 22,
+    "visionNight": 10,
+    "str": 17,
+    "strGain": 1.8,
+    "agi": 15,
+    "agiGain": 1.6,
+    "int": 24,
+    "intGain": 3.2,
+    "abilities": [
+      "morwen_old_pact",
+      "morwen_toad_hex",
+      "morwen_bubbling_cauldron",
+      "morwen_crooked_curse",
+      "morwen_witching_hour"
+    ],
+    "recommendedItems": {
+      "start": [
+        "item_crimson_draught",
+        "item_mantle_lore",
+        "item_mantle_lore",
+        "item_iron_circlet"
+      ],
+      "early": [
+        "item_pilgrim_greaves",
+        "item_sapphire_band"
+      ],
+      "core": [
+        "item_crown_of_mercy",
+        "item_stormcaller_rod",
+        "item_shadowstep_talisman"
+      ],
+      "late": [
+        "item_sanguine_scepter",
+        "item_grave_ward_amulet"
+      ]
+    },
+    "model": "hero_morwen",
+    "portrait": "portrait_morwen",
+    "modelScale": 0.95,
+    "projectileVisual": "hex_bolt",
+    "attackSfx": "morwen_bolt",
+    "voiceSet": "morwen",
+    "botProfile": "support"
+  },
+  "abilities": [
+    {
+      "id": "morwen_old_pact",
+      "name": "Old Pact",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 1,
+      "description": "Morwen's hexes and curses break old protections: enemies under Toad Hex, Crooked Curse or Witching Hour's hex lose 15% magic resistance.",
+      "icon": "ability_morwen_pact"
+    },
+    {
+      "id": "morwen_toad_hex",
+      "name": "Toad Hex",
+      "slot": "Q",
+      "targeting": "Unit",
+      "targetTeam": "Enemy",
+      "targetTypes": "Hero, Creep, Neutral, Summon",
+      "description": "Turns an enemy into a toad for 1.5/2/2.5/3 s. Toads cannot attack, cast or use items, and hop 40% slower.",
+      "castRange": [
+        7,
+        7.5,
+        8,
+        8.5
+      ],
+      "castPoint": 0.3,
+      "backswing": 0.4,
+      "cooldown": [
+        16,
+        14,
+        12,
+        10
+      ],
+      "manaCost": [
+        90,
+        110,
+        130,
+        150
+      ],
+      "onCast": [
+        {
+          "type": "ApplyStatus",
+          "status": "morwen_toad",
+          "duration": [
+            1.5,
+            2,
+            2.5,
+            3
+          ],
+          "vfx": "hex_puff"
+        }
+      ],
+      "statuses": [
+        {
+          "id": "morwen_toad",
+          "name": "Toad Hex",
+          "description": "A toad. Cannot attack, cast or use items.",
+          "isDebuff": true,
+          "dispel": "Basic",
+          "flags": "Hexed, Silenced, Disarmed, Muted",
+          "modifiers": [
+            {
+              "stat": "MoveSpeedPct",
+              "value": -0.4
+            },
+            {
+              "stat": "MagicResist",
+              "value": -0.15
+            }
+          ],
+          "modelOverride": "hex_toad",
+          "icon": "status_toad_hex",
+          "vfx": "hex_swirl"
+        }
+      ],
+      "icon": "ability_morwen_hex",
+      "castAnimation": "Cast1",
+      "castSfx": "morwen_hex",
+      "botUsage": "stun"
+    },
+    {
+      "id": "morwen_bubbling_cauldron",
+      "name": "Bubbling Cauldron",
+      "slot": "W",
+      "targeting": "Point",
+      "targetTeam": "Enemy",
+      "description": "Sets down a bubbling cauldron for 12 s. Allies within 5 m regenerate 8/14/20/26 health and 1/1.5/2/2.5 mana per second; enemies within 5 m are slowed by 15/20/25/30%. The cauldron can be destroyed.",
+      "castRange": [
+        7,
+        7,
+        7,
+        7
+      ],
+      "castPoint": 0.4,
+      "backswing": 0.4,
+      "cooldown": [
+        24,
+        22,
+        20,
+        18
+      ],
+      "manaCost": [
+        100,
+        110,
+        120,
+        130
+      ],
+      "aoeRadius": 5,
+      "onCast": [
+        {
+          "type": "SpawnUnit",
+          "unitId": "morwen_cauldron",
+          "center": "Point",
+          "summonDuration": 12,
+          "vfx": "cauldron_splash"
+        }
+      ],
+      "icon": "ability_morwen_cauldron",
+      "castAnimation": "Cast2",
+      "castSfx": "morwen_cauldron",
+      "botUsage": "aoe"
+    },
+    {
+      "id": "morwen_crooked_curse",
+      "name": "Crooked Curse",
+      "slot": "E",
+      "targeting": "Unit",
+      "targetTeam": "Enemy",
+      "targetTypes": "Hero, Creep, Neutral, Summon",
+      "description": "Deals 60/90/120/150 magical damage and curses the target for 8 s. Every time it casts an ability or uses an item, the curse strikes again for the same damage.",
+      "castRange": [
+        7,
+        7,
+        7,
+        7
+      ],
+      "castPoint": 0.3,
+      "backswing": 0.4,
+      "cooldown": [
+        14,
+        12,
+        10,
+        8
+      ],
+      "manaCost": [
+        80,
+        90,
+        100,
+        110
+      ],
+      "onCast": [
+        {
+          "type": "Damage",
+          "amount": [
+            60,
+            90,
+            120,
+            150
+          ],
+          "damageType": "Magical",
+          "vfx": "curse_hit"
+        },
+        {
+          "type": "ApplyStatus",
+          "status": "morwen_crooked_curse",
+          "duration": 8
+        }
+      ],
+      "statuses": [
+        {
+          "id": "morwen_crooked_curse",
+          "name": "Crooked Curse",
+          "description": "Casting abilities or using items hurts.",
+          "isDebuff": true,
+          "dispel": "Basic",
+          "modifiers": [
+            {
+              "stat": "MagicResist",
+              "value": -0.15
+            }
+          ],
+          "triggers": [
+            {
+              "on": "AbilityCast",
+              "team": "Any",
+              "types": "All",
+              "effects": [
+                {
+                  "type": "Damage",
+                  "amount": [
+                    60,
+                    90,
+                    120,
+                    150
+                  ],
+                  "damageType": "Magical",
+                  "target": "Caster",
+                  "creditStatusSource": true,
+                  "vfx": "curse_echo"
+                }
+              ]
+            }
+          ],
+          "icon": "status_crooked_curse",
+          "vfx": "curse_mark"
+        }
+      ],
+      "icon": "ability_morwen_curse",
+      "castAnimation": "Cast3",
+      "castSfx": "morwen_curse",
+      "botUsage": "nuke"
+    },
+    {
+      "id": "morwen_witching_hour",
+      "name": "Witching Hour",
+      "slot": "R",
+      "isUltimate": true,
+      "maxLevel": 3,
+      "targeting": "NoTarget",
+      "description": "For 6 s the old powers listen. Every basic ability Morwen casts happens a second time at 50/60/70% power (damage, healing and mana; durations stay the same, and a second cauldron appears). Enemies within 5 m when the hour strikes are hexed for 1 s.",
+      "castPoint": 0.2,
+      "backswing": 0.2,
+      "ignoreFacing": true,
+      "cooldown": [
+        90,
+        75,
+        60
+      ],
+      "manaCost": [
+        150,
+        200,
+        250
+      ],
+      "aoeRadius": 5,
+      "onCast": [
+        {
+          "type": "ApplyStatus",
+          "status": "morwen_witching_hour",
+          "duration": 6,
+          "target": "Caster"
+        },
+        {
+          "type": "Area",
+          "radius": 5,
+          "center": "Caster",
+          "team": "Enemy",
+          "types": "Units",
+          "vfx": "witching_hour_burst",
+          "shake": 0.3,
+          "effects": [
+            {
+              "type": "ApplyStatus",
+              "status": "morwen_toad",
+              "duration": 1
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "id": "morwen_witching_hour",
+          "name": "Witching Hour",
+          "description": "Abilities are echoed.",
+          "isDebuff": false,
+          "dispel": "Strong",
+          "triggers": [
+            {
+              "on": "AbilityCast",
+              "team": "Any",
+              "types": "All",
+              "effects": [
+                {
+                  "type": "EchoCast",
+                  "amount": [
+                    0.5,
+                    0.6,
+                    0.7
+                  ],
+                  "vfx": "witching_echo"
+                }
+              ]
+            }
+          ],
+          "icon": "status_witching_hour",
+          "vfx": "witching_hour_aura"
+        }
+      ],
+      "icon": "ability_morwen_witching",
+      "castAnimation": "CastUlt",
+      "castSfx": "morwen_witching",
+      "voiceLine": "morwen_ult",
+      "botUsage": "ultimate,buff"
+    },
+    {
+      "id": "morwen_cauldron_brew",
+      "name": "Restoring Brew",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 4,
+      "hidden": true,
+      "description": "Allies near the cauldron regenerate health and mana.",
+      "aura": {
+        "radius": 5,
+        "team": "AllyOrSelf",
+        "types": "Units",
+        "status": "morwen_brew"
+      },
+      "statuses": [
+        {
+          "id": "morwen_brew",
+          "name": "Restoring Brew",
+          "description": "Regenerating.",
+          "isDebuff": false,
+          "dispel": "None",
+          "modifiers": [
+            {
+              "stat": "HpRegen",
+              "value": [
+                8,
+                14,
+                20,
+                26
+              ]
+            },
+            {
+              "stat": "ManaRegen",
+              "value": [
+                1,
+                1.5,
+                2,
+                2.5
+              ]
+            }
+          ],
+          "icon": "status_restoring_brew",
+          "vfx": "brew_steam"
+        }
+      ]
+    },
+    {
+      "id": "morwen_cauldron_fumes",
+      "name": "Choking Fumes",
+      "slot": "Innate",
+      "targeting": "Passive",
+      "maxLevel": 4,
+      "hidden": true,
+      "description": "Enemies near the cauldron are slowed.",
+      "aura": {
+        "radius": 5,
+        "team": "Enemy",
+        "types": "Units",
+        "status": "morwen_fumes"
+      },
+      "statuses": [
+        {
+          "id": "morwen_fumes",
+          "name": "Choking Fumes",
+          "description": "Slowed.",
+          "isDebuff": true,
+          "dispel": "None",
+          "modifiers": [
+            {
+              "stat": "MoveSpeedPct",
+              "value": [
+                -0.15,
+                -0.2,
+                -0.25,
+                -0.3
+              ]
+            }
+          ],
+          "icon": "status_choking_fumes",
+          "vfx": "fumes_green"
+        }
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "morwen_cauldron",
+      "name": "Bubbling Cauldron",
+      "kind": "Summon",
+      "attackType": "Melee",
+      "maxHp": 250,
+      "armor": 4,
+      "magicResist": 0.3,
+      "damageMin": 0,
+      "damageMax": 0,
+      "attackRange": 0,
+      "moveSpeed": 0,
+      "turnRate": 0,
+      "collisionRadius": 0.55,
+      "visionDay": 6,
+      "visionNight": 6,
+      "acquisitionRange": 0,
+      "bountyGoldMin": 20,
+      "bountyGoldMax": 25,
+      "bountyXp": 25,
+      "abilities": [
+        "morwen_cauldron_brew",
+        "morwen_cauldron_fumes"
+      ],
+      "model": "summon_cauldron",
+      "deathSfx": "cauldron_break",
+      "tags": [
+        "stationary"
+      ],
+      "height": 1.2
+    }
+  ]
+}

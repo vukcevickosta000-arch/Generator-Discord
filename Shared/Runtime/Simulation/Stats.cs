@@ -28,6 +28,10 @@ namespace Bloodfall.Simulation
                     if (value >= 0) InvProduct[(int)stat] *= 1f - Math.Min(0.99f, value);
                     else Add[(int)stat] += value; // reductions are additive
                     break;
+                case StatType.CritMultiplier:
+                    // Crit multipliers do not add up: the strongest source wins.
+                    Add[(int)stat] = Math.Max(Add[(int)stat], value);
+                    break;
                 case StatType.AllAttributes:
                     Add[(int)StatType.Str] += value; Add[(int)StatType.Agi] += value; Add[(int)StatType.Int] += value;
                     break;

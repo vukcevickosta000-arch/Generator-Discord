@@ -145,6 +145,7 @@ namespace Bloodfall.Simulation
         {
             var d = ab.Def;
             int L = Math.Max(1, ab.Level);
+            if (!d.KeepsStealth) BreakOnAction(u);
             u.Mana = Math.Max(0f, u.Mana - ManaCostOf(u, ab));
             float hpCost = HealthCostOf(u, ab);
             if (hpCost > 0) u.Hp = Math.Max(1f, u.Hp - hpCost);
@@ -188,7 +189,10 @@ namespace Bloodfall.Simulation
             if (target != null && target.Team != u.Team && d.Targeting == TargetingMode.Unit)
                 FireTriggers(target, TriggerType.SpellHit, u, 0f);
             ExecuteEffects(d.OnCast, ctx);
+            _lastCastContext = ctx;
+            _lastCastValid = true;
             FireTriggers(u, TriggerType.AbilityCast, target, 0f);
+            _lastCastValid = false;
             if (d.Targeting != TargetingMode.NoTarget) u.Facing = MathUtil.AngleOf(dir);
         }
 
