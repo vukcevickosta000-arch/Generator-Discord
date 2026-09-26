@@ -526,6 +526,14 @@ namespace Bloodfall.Protocol
                 w.WriteTenths(it.Active?.CooldownTotal ?? 0);
                 w.WriteVarUInt((uint)m.SellValue(it));
             }
+            var courier = p.Courier;
+            w.WriteVarUInt((uint)(courier?.Id ?? 0));
+            if (courier != null)
+            {
+                w.WriteByte((byte)courier.CourierState);
+                w.WriteTenths(courier.Dead ? Math.Max(0f, courier.RespawnAt - m.Time) : 0f);
+                w.WriteByte((byte)Math.Min(255, courier.Carried.Count));
+            }
         }
 
         public static SnapshotFrame ReadSnapshot(NetReader r, ContentIndex index)
@@ -685,6 +693,13 @@ namespace Bloodfall.Protocol
                 var id = index.Item((int)r.ReadVarUInt());
                 if (id == null) { p.Items[slot] = default; continue; }
                 p.Items[slot] = new ItemView { Id = id, Charges = (int)r.ReadVarUInt(), Cooldown = r.ReadTenths(), CooldownTotal = r.ReadTenths(), SellValue = (int)r.ReadVarUInt() };
+            }
+            p.CourierId = (int)r.ReadVarUInt();
+            if (p.CourierId != 0)
+            {
+                p.CourierState = r.ReadByte();
+                p.CourierRespawnIn = r.ReadTenths();
+                p.CourierCarried = r.ReadByte();
             }
             return p;
         }

@@ -202,6 +202,7 @@ namespace Bloodfall.Simulation
             {
                 SpawnStructures();
                 foreach (var p in Players) SpawnHero(p);
+                SpawnCouriers();
             }
             Emit(new SimEvent { Type = SimEventType.MatchPhase, Value = (float)Phase, PlayerId = -1 });
             Vision.Update(force: true);
@@ -287,6 +288,8 @@ namespace Bloodfall.Simulation
         {
             if (o.Type == OrderType.Ping) { Emit(new SimEvent { Type = SimEventType.Ping, Point = o.Point, Value = o.Slot, Team = p.Team, UnitId = p.Hero?.Id ?? 0, OtherId = p.Id, PlayerId = -1 }); return; }
             if (o.Type == OrderType.Buyback) { TryBuyback(p); return; }
+            // The deliver order always means the sender's own courier, whatever unit id came with it.
+            if (o.Type == OrderType.CourierDeliver) { if (p.Courier != null) TryCourierDeliver(p.Courier); return; }
             if (o.Group != null && o.Group.Length > 0) { ApplyGroupOrder(p, o); return; }
             var unit = GetUnit(o.UnitId) ?? p.Hero;
             if (!PlayerControls(p, unit)) return;
@@ -348,6 +351,7 @@ namespace Bloodfall.Simulation
                 case OrderType.SellItem: TrySellItem(unit, o.Slot); return;
                 case OrderType.SwapItems: SwapItems(unit, o.Slot, o.Slot2); return;
                 case OrderType.ToggleAbility: ToggleAbility(unit, o.Slot); return;
+                case OrderType.CourierDeliver: TryCourierDeliver(unit); return;
             }
             if (TryImmediateRtsOrder(unit, o)) return;
             if (unit.Dead) return;
@@ -464,6 +468,7 @@ namespace Bloodfall.Simulation
                 UpdateUnit(u, dt);
             }
             if (IsRts) UpdateRts(dt);
+            else UpdateCouriers();
 
             UpdateProjectiles(dt);
             UpdateZones(dt);

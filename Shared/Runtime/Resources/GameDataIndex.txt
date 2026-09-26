@@ -16,6 +16,7 @@ rts/resource_nodes.json
 rts/wild_covenant.json
 rules.json
 statuses/common.json
+units/couriers.json
 units/creeps.json
 units/neutrals.json
 units/structures.json

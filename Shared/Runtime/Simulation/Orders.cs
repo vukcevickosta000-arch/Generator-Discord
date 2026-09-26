@@ -30,6 +30,8 @@ namespace Bloodfall.Simulation
         SetRally = 24,
         ReturnResources = 25,
         CancelQueue = 26,
+        /// <summary>Blood War: the player's courier fetches the stash and brings it to their hero (the ` key).</summary>
+        CourierDeliver = 30,
     }
 
     public enum PingKind : byte { Normal, Danger, OnMyWay, Attack, Defend, EnemyMissing, Ward }

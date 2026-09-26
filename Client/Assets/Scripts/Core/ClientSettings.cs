@@ -139,7 +139,7 @@ namespace Bloodfall.Client.Core
             [Item1] = "Z", [Item2] = "X", [Item3] = "C", [Item4] = "V", [Item5] = "B", [Item6] = "N",
             [AttackMove] = "A", [Stop] = "S", [Hold] = "H", [Shop] = "P", [Scoreboard] = "Tab", [CenterHero] = "Space",
             [LevelUpModifier] = "LeftControl", [Ping] = "LeftAlt", [Chat] = "Return", [ChatAll] = "RightShift",
-            [Menu] = "F10", [Buyback] = "F9", [SelectHero] = "F1", [CameraLock] = "Y",
+            [Menu] = "F10", [Buyback] = "F9", [SelectHero] = "F1", [CameraLock] = "Y", [Courier] = "BackQuote",
         };
 
         public static readonly Dictionary<string, string> Labels = new Dictionary<string, string>
@@ -149,6 +149,7 @@ namespace Bloodfall.Client.Core
             [AttackMove] = "Attack / attack-move", [Stop] = "Stop", [Hold] = "Hold position", [Shop] = "Open shop", [Scoreboard] = "Scoreboard (hold)", [CenterHero] = "Center camera on hero",
             [LevelUpModifier] = "Level-up modifier", [Ping] = "Ping modifier", [Chat] = "Team chat", [ChatAll] = "All chat modifier",
             [Menu] = "Game menu", [Buyback] = "Buyback", [SelectHero] = "Select hero", [CameraLock] = "Toggle camera lock",
+            [Courier] = "Courier: deliver bought items",
         };
 
         public static KeyCode Get(ClientSettings s, string action)

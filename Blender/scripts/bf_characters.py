@@ -162,6 +162,10 @@ BEAST_SPECS = {
                                neck_rise=0.2, head_len=0.32),
     "hex_toad": dict(height=0.22, length=0.45, width=0.1, head="toad", body=(0.3, 0.42, 0.18), belly=(0.62, 0.66, 0.36),
                      glow=(0.95, 0.85, 0.3), tail=0.0, neck_rise=0.02, head_len=0.12, leg_r=0.03, girth=1.3, claws=False),
+    # Blood War courier: a big blood bat that carries the stash to its hero.
+    "courier_blood_bat": dict(height=0.34, length=0.72, width=0.18, head="rat", body=(0.28, 0.08, 0.1), belly=(0.46, 0.2, 0.2),
+                              ear_color=(0.34, 0.1, 0.12), glow=(1.0, 0.78, 0.35), wings=1.45, membrane=(0.5, 0.06, 0.1), flying=True,
+                              tail=0.14, neck_rise=0.08, head_len=0.18, leg_r=0.03, claws=False, girth=1.15),
     "hex_bat": dict(height=0.28, length=0.36, width=0.07, head="rat", body=(0.15, 0.1, 0.12), belly=(0.24, 0.16, 0.18),
                     ear_color=(0.2, 0.12, 0.14), glow=(1.0, 0.2, 0.2), wings=0.62, membrane=(0.22, 0.12, 0.14), flying=True,
                     tail=0.08, neck_rise=0.04, head_len=0.08, leg_r=0.015, claws=False),

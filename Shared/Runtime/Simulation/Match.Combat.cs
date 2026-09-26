@@ -361,6 +361,7 @@ namespace Bloodfall.Simulation
             FireTriggers(victim, TriggerType.Death, killer, 0f);
 
             if (IsRts) OnRtsDeath(victim, killerPlayer);
+            if (victim.Kind == UnitKind.Courier) OnCourierDeath(victim);
             if (victim.IsHero && !victim.IsIllusion) OnHeroDeath(victim, killer, killerPlayer, deny);
             else if (victim.IsStructure) OnStructureDeath(victim, killer, killerPlayer, deny);
             else if (!OnVharothUnitDeath(victim, killer, killerPlayer)) OnUnitDeath(victim, killer, killerPlayer, deny);
@@ -666,6 +667,11 @@ namespace Bloodfall.Simulation
                 if (u.IsHero && !u.IsIllusion)
                 {
                     if (Time >= u.RespawnAt && Phase == MatchPhase.Playing) RespawnHero(u);
+                    continue;
+                }
+                if (u.Kind == UnitKind.Courier)
+                {
+                    if (Time >= u.RespawnAt && Phase == MatchPhase.Playing) RespawnCourier(u);
                     continue;
                 }
                 if (u.IsStructure)

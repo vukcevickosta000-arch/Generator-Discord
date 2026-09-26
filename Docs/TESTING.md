@@ -4,7 +4,7 @@
 
 | Suite | Command | What it covers |
 |---|---|---|
-| Unit and simulation tests (109) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
+| Unit and simulation tests (115) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
 | End-to-end online | `Tools/dev/run-e2e.sh` | Real backend (fresh SQLite database) and a real game server over UDP; see §3 |
 | Bot soak | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- <minutes> <seed> [--deaths] [--trace N] [--mirror \| --heroes id1,id2]` | Full 5v5 bot matches (every playable hero by default): stability, performance, balance numbers |
 | RTS bot soak | `... SimRunner -- <minutes> <seed> --rts [--games N] [--factions a,b] [--difficulty X,Y] [--trace] [--log]` | 1v1 RTS bot games on Ashfields: wins per faction and per start side, economy and army statistics, AI errors |
@@ -50,6 +50,13 @@ What the unit and simulation tests cover:
   - determinism and data validity (every requirement buildable by the worker)
   - a complete Normal-vs-Beginner bot game (economy, production, razing; fewer than 60 rejected bot orders)
   - attack-move after a target dies mid-swing (regression)
+- **Couriers** (`CourierTests.cs`, 5 tests):
+  - one courier per player at the fountain;
+  - bought stash items flown to the hero, then the courier flies home;
+  - "nothing to deliver";
+  - a killed courier keeps its cargo, pays its bounty, respawns and returns the cargo to the stash;
+  - bots have their stash flown to them.
+- **Economy:** a last hit pays exactly 32 gold, seen only by its player; passive income is 0.5 gold/s.
 - **RTS factions and heroes** (`RtsFactionTests.cs`, 12 tests):
   - research: cost, queue, no double research, effect on existing and new units, melee-only selector
   - the right building, prerequisites (research and buildings), cancel refunds, "not enough" errors

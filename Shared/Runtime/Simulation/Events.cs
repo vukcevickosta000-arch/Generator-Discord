@@ -65,6 +65,8 @@ namespace Bloodfall.Simulation
         PlayerEliminated = 52,
         /// <summary>Research finished (UnitId = building, Key = upgrade id). Private to the owner.</summary>
         ResearchComplete = 53,
+        /// <summary>A courier handed items to its hero (private: the owner). Value = items delivered.</summary>
+        CourierDelivered = 54,
     }
 
     /// <summary>

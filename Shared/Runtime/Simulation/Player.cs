@@ -65,6 +65,8 @@ namespace Bloodfall.Simulation
         public int UnitsRaised, BloodPriceEarned;
         /// <summary>RTS: heroes recruited at altars, alive or awaiting revival (Player.Hero stays null in the RTS).</summary>
         public readonly List<Unit> RtsHeroes = new List<Unit>();
+        /// <summary>Blood War: the player's courier (null in the strategy mode).</summary>
+        public Unit Courier;
         /// <summary>RTS: what each queued hero recruitment or revival cost (hero id → gold, lumber), for exact refunds.</summary>
         public readonly Dictionary<string, (int Gold, int Lumber)> HeroPaid = new Dictionary<string, (int Gold, int Lumber)>();
         public float NextRaiseAt;

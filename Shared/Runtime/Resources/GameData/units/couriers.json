@@ -1,0 +1,31 @@
+{
+  "$comment": "Blood War couriers: one per player, carrying bought items from the stash to the hero (the ` key).",
+  "units": [
+    {
+      "id": "courier_blood_bat",
+      "name": "Courier",
+      "description": "A blood bat that carries your stash to you.",
+      "kind": "Courier",
+      "maxHp": 180,
+      "hpRegen": 1,
+      "armor": 0,
+      "damageMin": 0,
+      "damageMax": 0,
+      "moveSpeed": 4.6,
+      "turnRate": 12,
+      "collisionRadius": 0.3,
+      "visionDay": 8,
+      "visionNight": 6,
+      "flying": true,
+      "bountyGoldMin": 50,
+      "bountyGoldMax": 50,
+      "bountyXp": 0,
+      "model": "courier_blood_bat",
+      "modelScale": 1.0,
+      "deathSfx": "death_small",
+      "tags": [
+        "courier"
+      ]
+    }
+  ]
+}

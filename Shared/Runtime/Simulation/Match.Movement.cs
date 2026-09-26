@@ -232,6 +232,7 @@ namespace Bloodfall.Simulation
         public bool MoveTowardsPoint(Unit u, Vector2 goal, float dt, float stopDist, bool allowPathing = true)
         {
             u.IdleTime = 0f;
+            if (u.Flying) allowPathing = false; // fliers go straight over cliffs and trees
             float distToGoal = Vector2.Distance(u.Position, goal);
             if (distToGoal <= stopDist) { StopMoving(u); return true; }
             if (!u.CanMove) { u.IsMoving = false; return false; }

@@ -16,7 +16,7 @@ This file is the honest source of truth for what works. Status labels:
 | Check | Result | How to reproduce |
 |---|---|---|
 | Server solution build (`Server/Bloodfall.sln`) | ✅ builds, 0 warnings-as-errors | `dotnet build Server/Bloodfall.sln` |
-| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 109 / 109 pass | `dotnet test Server/tests/Bloodfall.Tests` |
+| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 115 / 115 pass | `dotnet test Server/tests/Bloodfall.Tests` |
 | End-to-end online test (real backend + game server over UDP): a MOBA match, then an RTS match | ✅ **E2E PASSED** | `Tools/dev/run-e2e.sh` |
 | 20-minute 5v5 bot simulation (all eight heroes) | ✅ runs, 0.28 ms/tick | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- 20 11` |
 | RTS bot games (Ashfields, 40-game series) | ✅ games decided in 12–14 min on average with heroes. Faction totals 45–54%. Start sides even: 112–121 over six mirror series. 0–3 draws per 40 games. About 0.05 ms/tick. | `... SimRunner -- 30 5000 --rts --games 40 --factions a,b` |
@@ -32,7 +32,7 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
 | # | Milestone | Status |
 |---|---|---|
 | 1 | Move / attack / cast | **WORKING** in simulation (tests). Unity presentation: IMPLEMENTED (unverified). |
-| 2 | Lane, creeps, towers | **WORKING** in simulation (waves, towers, protection chains, barracks, super/mega creeps). |
+| 2 | Lane, creeps, towers | **WORKING** in simulation (waves, towers, protection chains, barracks, super/mega creeps). Economy: 32 gold per lane creep, 0.5 gold/s passive. Couriers: the ` key flies bought items from the stash to the hero (5 tests; HUD button compile-checked only). |
 | 3 | Offline match with bots | **WORKING** headless (10-bot matches). Unity offline practice: IMPLEMENTED (unverified). |
 | 4 | Multiplayer match | **WORKING** headless. Dedicated server, UDP, signed tickets, fog-filtered snapshots, reconnect and concede are all covered by E2E. |
 | 5 | Client / account / lobby / server flow | Backend **WORKING** (E2E). Unity screens IMPLEMENTED (unverified). |

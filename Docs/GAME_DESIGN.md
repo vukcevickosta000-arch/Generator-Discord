@@ -100,6 +100,14 @@ and only after 15:00.
 ## 7. Items
 
 - **Inventory.** 6 active slots, 3 backpack slots (no passives or actives) and a 6-slot stash.
+- **Courier.** Every player has a flying blood-bat courier (180 HP, 4.6 m/s) at the fountain.
+  - Items bought away from a shop go to the stash. Pressing **`** (rebindable), or the Courier button, sends the
+    courier: it picks up the stash, flies straight to the hero over cliffs and trees, and hands the items over
+    (inventory first, then backpack). Then it flies home.
+  - What does not fit stays aboard and goes back into the stash.
+  - Enemies can kill it for 50 gold. It keeps its cargo and respawns at the fountain after 60 s, so nothing
+    bought is lost.
+  - Bots send theirs automatically.
 - **Buying.** Items bought away from a shop go to the stash. It delivers periodically, or instantly when you walk
   into the base.
 - **Recipes.** Buying a recipe while holding its components combines them. Items with no recipe cost combine

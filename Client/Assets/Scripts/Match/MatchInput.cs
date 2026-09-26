@@ -131,6 +131,7 @@ namespace Bloodfall.Client.Match
             if (InputBridge.GetKeyDown(KeyBinds.Get(_settings, KeyBinds.CameraLock))) _world.Camera.Locked = !_world.Camera.Locked;
             if (InputBridge.GetKeyDown(KeyBinds.Get(_settings, KeyBinds.SelectHero))) { SelectedId = hero.Id; _world.Camera.JumpTo(_world.HeroWorldPosition() ?? _world.Camera.Focus); }
             if (InputBridge.GetKeyDown(KeyBinds.Get(_settings, KeyBinds.Buyback))) Send(new Order { Type = OrderType.Buyback, UnitId = hero.Id });
+            if (InputBridge.GetKeyDown(KeyBinds.Get(_settings, KeyBinds.Courier))) DeliverCourier();
             if (InputBridge.GetKeyDown(KeyCode.Escape) && Targeting) CancelTargeting();
         }
 
@@ -244,6 +245,15 @@ namespace Bloodfall.Client.Match
         }
 
         private void Send(Order o) => Mc.SendOrder(o);
+
+        /// <summary>Sends the courier for the items bought away from a shop (the ` key; the server checks everything).</summary>
+        public void DeliverCourier()
+        {
+            var me = Me;
+            if (me == null || me.CourierId == 0) { Error("You have no courier."); return; }
+            if (me.CourierRespawnIn > 0f) { Error($"Your courier is dead ({Mathf.CeilToInt(me.CourierRespawnIn)} s)."); return; }
+            Send(new Order { Type = OrderType.CourierDeliver, UnitId = me.CourierId });
+        }
 
         public static NVec2 ToSim(Vector3 w) => new NVec2(w.x, w.z);
 

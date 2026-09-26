@@ -68,6 +68,10 @@ namespace Bloodfall.Tests
             Assert.NotNull(me);
             Assert.NotNull(client.Latest.Me);
             Assert.Equal(600, client.Latest.Me.Gold);
+            // v8: the player's own courier and its state.
+            Assert.NotEqual(0, client.Latest.Me.CourierId);
+            Assert.Equal((byte)CourierState.Idle, client.Latest.Me.CourierState);
+            Assert.Contains(client.Latest.Entities, e => e.Id == client.Latest.Me.CourierId && e.Kind == UnitKind.Courier);
             // Fog: the enemy hero at its fountain is not visible to us.
             Assert.DoesNotContain(client.Latest.Entities, e => e.Kind == UnitKind.Hero && e.Team == Team.Dusk);
 

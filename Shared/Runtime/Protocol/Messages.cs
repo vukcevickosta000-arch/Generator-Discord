@@ -10,7 +10,7 @@ namespace Bloodfall.Protocol
     public static class ProtocolInfo
     {
         /// <summary>Bump when the wire format changes. Clients with a different version are rejected with a clear message.</summary>
-        public const ushort Version = 7;
+        public const ushort Version = 8;
         public const string ConnectionKey = "bloodfall";
         public const int DefaultGamePort = 27015;
     }
@@ -218,6 +218,11 @@ namespace Bloodfall.Protocol
 
     public sealed class PrivateState
     {
+        /// <summary>v8: the player's courier (0 = none), what it is doing, its respawn countdown and items aboard.</summary>
+        public int CourierId;
+        public byte CourierState;
+        public float CourierRespawnIn;
+        public int CourierCarried;
         public int Gold;
         public int Xp;
         public int XpLevelStart;

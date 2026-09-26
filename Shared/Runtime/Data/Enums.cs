@@ -18,6 +18,8 @@ namespace Bloodfall.Data
         Soldier,
         /// <summary>RTS: harvestable resource nodes (gold mines). Invulnerable and never attacked.</summary>
         Resource,
+        /// <summary>Blood War: a player's flying courier, which carries bought items from the stash to the hero.</summary>
+        Courier,
     }
 
     public enum AttackType : byte { Melee, Ranged }
@@ -55,7 +57,7 @@ namespace Bloodfall.Data
         Objective = 512,
         /// <summary>RTS resource nodes. Not part of Units/All.</summary>
         Resource = 1024,
-        Basic = Creep | Neutral | Summon | Boss | Illusion,
+        Basic = Creep | Neutral | Summon | Boss | Illusion | Courier,
         Units = Hero | Basic,
         All = Units | Structure | Ward,
     }

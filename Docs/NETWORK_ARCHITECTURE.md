@@ -25,7 +25,7 @@ backend.
    - Payload: `matchId`, `accountId`, `displayName`, `team`, `slot`, `spectator`, `exp` (unix s), `nonce`.
 3. **The client connects over UDP** (connection key `bloodfall`) and sends `Hello` with:
    - protocol version (currently **7**; v4 added the Vharoth phase and seal count to the snapshot header, v5 the
-     RTS fields listed in §3, v6 research, v7 RTS heroes)
+     RTS fields listed in §3, v6 research, v7 RTS heroes, v8 couriers)
    - game data content hash
    - client version
    - the ticket
@@ -86,6 +86,12 @@ Every message starts with one `MsgType` byte.
 - The private RTS block ends with the completed research: a count byte (at most 64), then upgrade indices in
   ordinal order.
 - `ResearchComplete` events go only to the researching player.
+
+**Couriers (v8).**
+- The Blood War private block ends with the player's courier: its unit id (0 = none), then its state (idle, fetching,
+  delivering, returning), respawn countdown and number of items aboard.
+- `CourierDeliver` (order 30) always acts on the sender's own courier, whatever unit id it carries.
+- `CourierDelivered` events go only to the owner.
 
 **RTS heroes (v7).**
 - Altars take ordinary `Train` commands whose unit index names a hero, and queue entries use the unit index as well.

@@ -168,6 +168,9 @@ namespace Bloodfall.Simulation
         public int LaneIndex = -1;
         public int WaypointIndex;
         public string CampId;
+        /// <summary>Couriers: what the courier is doing, and the bought items it is carrying.</summary>
+        public CourierState CourierState;
+        public readonly List<ItemInstance> Carried = new List<ItemInstance>();
         /// <summary>RTS neutral: attacks intruders near its camp instead of only retaliating (CampPlacement.Guards).</summary>
         public bool CampGuards;
         public Vector2 HomePosition;
@@ -275,6 +278,7 @@ namespace Bloodfall.Simulation
                 case UnitKind.Soldier: return TargetType.Creep;
                 case UnitKind.Resource: return TargetType.Resource;
                 case UnitKind.Objective: return TargetType.Objective;
+                case UnitKind.Courier: return TargetType.Courier;
                 default: return TargetType.Structure;
             }
         }
@@ -469,6 +473,18 @@ namespace Bloodfall.Simulation
         }
 
         public override string ToString() => $"{Name}#{Id}({Team}, {Hp:0}/{Stats.MaxHp:0})";
+    }
+
+    public enum CourierState : byte
+    {
+        /// <summary>At the fountain, waiting.</summary>
+        Idle,
+        /// <summary>Flying to the fountain to pick up the stash.</summary>
+        Fetching,
+        /// <summary>Carrying items to its hero.</summary>
+        Delivering,
+        /// <summary>Flying back to the fountain.</summary>
+        Returning,
     }
 
     public interface IUnitBrain

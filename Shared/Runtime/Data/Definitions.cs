@@ -550,6 +550,10 @@ namespace Bloodfall.Data
         public int MaxHeroLevel = 25;
         public int StartingGold = 600;
         public float PassiveGoldPerSecond = 0.5f;
+        /// <summary>Couriers: seconds to respawn at the fountain after being killed, and the hand-over distance.</summary>
+        public string CourierUnit = "courier_blood_bat";
+        public float CourierRespawnTime = 60f;
+        public float CourierReach = 2.2f;
         public float PreGameTime = 60f;
         public float HeroSelectTime = 60f;
         public float CreepWaveInterval = 30f;

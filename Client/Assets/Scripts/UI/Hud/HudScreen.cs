@@ -24,6 +24,7 @@ namespace Bloodfall.Client.UI.Screens
         private Minimap _minimap;
         private ShopPanel _shop;
         private Scoreboard _scoreboard;
+        private Button _courierBtn;
         private VisualElement _plate, _abilityRow, _inventory, _backpack, _stash, _buffs, _topDawn, _topDusk, _killfeed, _chatLog, _deathOverlay, _menu, _targetFrame;
         private VisualElement _portrait, _hpFill, _manaFill, _xpFill;
         private Label _vharoth, _bossText;
@@ -280,6 +281,14 @@ namespace Bloodfall.Client.UI.Screens
             for (int i = 10; i < 16; i++) _stash.Add(CreateItemSlot(i, true));
             _plate.Add(_stash);
 
+            // Courier: sends the stash (items bought away from a shop) to the hero. Key: ` by default.
+            _courierBtn = El.Btn("Courier", () => _mc.World?.Input?.DeliverCourier(), "btn--small");
+            _courierBtn.style.position = Position.Absolute;
+            _courierBtn.style.left = 0;
+            _courierBtn.style.top = -64;
+            UI.AttachTooltip(_courierBtn, "Courier", $"Flies the items you bought away from a shop (your stash) to your hero, then flies home. Key: {KeyName(KeyBinds.Get(App.Settings, KeyBinds.Courier))}.");
+            _plate.Add(_courierBtn);
+
             root.Add(_plate);
         }
 
@@ -405,6 +414,7 @@ namespace Bloodfall.Client.UI.Screens
 
         private static string KeyName(KeyCode k)
         {
+            if (k == KeyCode.BackQuote) return "`";
             var s = k.ToString();
             if (s.StartsWith("Alpha")) return s.Substring(5);
             return s.Length > 3 ? s.Substring(0, 3) : s;
@@ -459,6 +469,10 @@ namespace Bloodfall.Client.UI.Screens
                 case SimEventType.Heal:
                     if (numbers && e.Value >= 15f && world.TryGetView(e.UnitId, out var hv) && hv.State?.OwnerPlayer == world.LocalPlayerId) _overlay.Float(hv.Point(1f), "+" + Mathf.RoundToInt(e.Value), "floating--heal");
                     break;
+                case SimEventType.CourierDelivered:
+                    if (world.TryGetView(e.OtherId, out var receiver)) _overlay.Float(receiver.Point(1.2f), $"+{Mathf.RoundToInt(e.Value)} item(s)", "floating--gold", 1.4f);
+                    GameApp.Instance?.Audio?.PlayUi("gold");
+                    break;
                 case SimEventType.LastHitGold:
                     _overlay.Float(world.Map.World(e.Point, 2.2f), "+" + Mathf.RoundToInt(e.Value), "floating--gold", 1.4f);
                     break;
@@ -488,6 +502,21 @@ namespace Bloodfall.Client.UI.Screens
                     break;
                 }
             }
+        }
+
+        private void UpdateCourierButton(PrivateState me)
+        {
+            _courierBtn.Show(me.CourierId != 0);
+            if (me.CourierId == 0) return;
+            string key = KeyName(KeyBinds.Get(App.Settings, KeyBinds.Courier));
+            string text = me.CourierRespawnIn > 0f ? $"Courier: dead {Mathf.CeilToInt(me.CourierRespawnIn)} s"
+                : me.CourierState == (byte)CourierState.Fetching ? "Courier: fetching"
+                : me.CourierState == (byte)CourierState.Delivering ? $"Courier: bringing {me.CourierCarried}"
+                : me.CourierState == (byte)CourierState.Returning ? "Courier: returning"
+                : $"Send courier [{key}]";
+            if (_courierBtn.text != text) _courierBtn.text = text;
+            bool stash = me.Items.Skip(10).Take(6).Any(i => !string.IsNullOrEmpty(i.Id));
+            _courierBtn.SetEnabled(me.CourierRespawnIn <= 0f && (stash || me.CourierCarried > 0 || me.CourierState != (byte)CourierState.Idle));
         }
 
         private void ShowError(string msg)
@@ -771,6 +800,7 @@ namespace Bloodfall.Client.UI.Screens
             _gold.text = me.Gold.ToString();
             _stats.text = $"⚔ {heroState.Damage:0}\n⛨ {heroState.Armor:0.#}\n➶ {heroState.MoveSpeed:0.00} m/s\n⏱ {heroState.AttackTime:0.00}s\n{(me.AbilityPoints > 0 ? $"<color=#E2BA6E>{me.AbilityPoints} point(s)</color>" : "")}";
             _stash.Show(me.Items.Skip(10).Take(6).Any(i => !string.IsNullOrEmpty(i.Id)) || me.AtBase);
+            UpdateCourierButton(me);
             UpdateAbilities(me, heroState);
             UpdateItems(me);
             UpdateBuffs(heroState);
