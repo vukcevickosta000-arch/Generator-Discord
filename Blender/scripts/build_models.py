@@ -4,6 +4,7 @@ Builds the Bloodfall character and structure models and exports them as FBX for 
     python3 Blender/scripts/build_models.py                 # everything
     python3 Blender/scripts/build_models.py hero_vorak      # selected keys
     python3 Blender/scripts/build_models.py --preview ...   # also render Blender/previews/<key>.png (Cycles, CPU)
+    python3 Blender/scripts/build_models.py --preview-idle  # only a small idle preview per model (faster)
 
 Output: Client/Assets/Resources/Models/<key>.fbx (ModelFactory loads these instead of the procedural stand-ins).
 """
@@ -33,8 +34,9 @@ def build_character(key, preview=False):
     info = f"{key}: {tris} tris, {len(clips)} clips, {os.path.getsize(path) / 1024:.0f} KiB"
     if preview:
         arm.animation_data.action = next(c for c in clips if c.name == "Idle")
-        L.render_preview(os.path.join(L.PREVIEW_OUT, key + ".png"), s["H"] * 1.15, frame=0)
-        for clip_name, frame in (("Attack1", 12), ("Run", 0)):
+        L.render_preview(os.path.join(L.PREVIEW_OUT, key + ".png"), s["H"] * 1.15, frame=0, size=256 if preview == "idle" else 512,
+                         samples=12 if preview == "idle" else 24)
+        for clip_name, frame in (("Attack1", 12), ("Run", 0)) if preview != "idle" else ():
             arm.animation_data.action = next(c for c in clips if c.name == clip_name)
             L.render_preview(os.path.join(L.PREVIEW_OUT, f"{key}_{clip_name.lower()}.png"), s["H"] * 1.15, frame=frame, size=320, samples=12)
     return info
@@ -72,7 +74,7 @@ def contact_sheet(keys, path, cell=256, cols=6):
 
 
 def main(argv):
-    preview = "--preview" in argv
+    preview = "idle" if "--preview-idle" in argv else "--preview" in argv
     keys = [a for a in argv if not a.startswith("--")] or list(SPECS) + list(BEAST_SPECS) + ST.STATIC_KEYS + SIEGE_KEYS
     built = []
     for key in keys:

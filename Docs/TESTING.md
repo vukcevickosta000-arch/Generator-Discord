@@ -4,9 +4,9 @@
 
 | Suite | Command | What it covers |
 |---|---|---|
-| Unit and simulation tests (116) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
+| Unit and simulation tests (118) | `dotnet test Server/tests/Bloodfall.Tests` | See the breakdown below |
 | End-to-end online | `Tools/dev/run-e2e.sh` | Real backend (fresh SQLite database) and a real game server over UDP; see §3 |
-| Bot soak | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- <minutes> <seed> [--deaths] [--trace N] [--mirror \| --heroes id1,id2]` | Full 5v5 bot matches (every playable hero by default): stability, performance, balance numbers |
+| Bot soak | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- <minutes> <seed> [--deaths] [--trace N] [--mirror \| --random \| --heroes id1,...]` | Full 5v5 bot matches: stability, performance, balance numbers. The default lineups differ between the teams, so use `--mirror` for side balance and `--random` (ten distinct heroes per seed) for per-hero win rates. |
 | RTS bot soak | `... SimRunner -- <minutes> <seed> --rts [--games N] [--factions a,b] [--difficulty X,Y] [--trace] [--log]` | 1v1 RTS bot games on Ashfields: wins per faction and per start side, economy and army statistics, AI errors |
 | Unity client compile | `dotnet build Tools/UnityCompileCheck` | Every client script plus Shared, against UnityEngine 2021.3 reference assemblies |
 | Unity editor compile | `dotnet build Tools/UnityCompileCheck/Editor` | Editor scripts against Unity3D.SDK 2021.1; APIs newer than 2021.2 are behind `UNITY_2021_2_OR_NEWER` |
@@ -57,6 +57,12 @@ What the unit and simulation tests cover:
   - a killed courier keeps its cargo, pays its bounty, respawns and returns the cargo to the stash;
   - bots have their stash flown to them.
 - **Economy:** a last hit pays exactly 32 gold, seen only by its player; passive income is 0.5 gold/s.
+- **Roster** (`RosterTests.cs`):
+  - every playable hero (96) learns every ability at max level and casts each active ability on a live enemy (or
+    itself or an ally) in a real match;
+  - the target must survive one cast at full health;
+  - 10-bot games of the generated roster: every hero's bot casts, and at least 90% cast two or more different
+    abilities in 8 minutes.
 - **Creeps** (`CreepTests.cs`): a wave that reaches the end of its lane marches on and hits the core (regression for
   bot games that never ended).
 - **Shields:** a shield's remaining absorb travels in the snapshot (in the Ardyn aegis test).

@@ -176,3 +176,10 @@ BEAST_SPECS = {
                               glow=(0.65, 0.35, 1.0), horn=(0.72, 0.62, 0.84), spikes=True, wings=2.6, membrane=(0.24, 0.12, 0.32),
                               tail=2.6, tail_r=0.14, tail_blade=True, neck_rise=0.7, neck_len=0.35, head_len=0.6, girth=1.1),
 }
+
+# The generated roster heroes (Tools/heroes/generate_heroes.py).
+try:
+    from bf_roster_specs import ROSTER_SPECS
+    SPECS.update(ROSTER_SPECS)
+except ImportError:
+    pass

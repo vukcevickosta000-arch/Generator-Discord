@@ -261,6 +261,8 @@
 .hero-tile { width: 76px; height: 96px; margin: 3px; border-width: 2px; border-color: rgb(70, 54, 38); background-color: rgb(12, 10, 12); }
 .hero-tile:hover { border-color: rgb(226, 186, 110); scale: 1.05 1.05; }
 .hero-tile--selected { border-color: rgb(236, 60, 50); }
+.hero-tile--compact { width: 62px; height: 78px; margin: 2px; }
+.btn--active { border-color: rgb(236, 186, 90); color: rgb(236, 186, 90); }
 .hero-tile--taken { opacity: 0.3; }
 .hero-tile--locked { opacity: 0.55; }
 .hero-tile { transition-property: scale, border-color; transition-duration: 0.1s; }

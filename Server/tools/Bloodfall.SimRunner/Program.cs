@@ -27,6 +27,14 @@ namespace Bloodfall.SimRunner
 
             string[] heroes = data.PlayableHeroes().Select(h => h.Id).ToArray();
             if (args.Contains("--mirror")) heroes = new[] { "hero_vorak" };
+            if (args.Contains("--random"))
+            {
+                // Ten distinct heroes drawn by the seed (Dawn gets the first five): per-hero win rates over many seeds.
+                var rng = new Bloodfall.Core.DeterministicRandom(seed * 7919UL + 13UL);
+                var pool = data.PlayableHeroes().Select(h => h.Id).OrderBy(id => id, StringComparer.Ordinal).ToList();
+                for (int i = pool.Count - 1; i > 0; i--) { int j = (int)(rng.NextFloat() * (i + 1)) % (i + 1); (pool[i], pool[j]) = (pool[j], pool[i]); }
+                heroes = pool.Take(10).ToArray();
+            }
             int hi = Array.IndexOf(args, "--heroes");
             if (hi >= 0 && hi + 1 < args.Length) heroes = args[hi + 1].Split(',', StringSplitOptions.RemoveEmptyEntries);
             foreach (var h in heroes)

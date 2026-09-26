@@ -54,6 +54,13 @@ namespace Bloodfall.Client.UI.Screens
         private VisualElement _dawn, _dusk, _grid, _detail, _chatLog;
         private Button _lock, _random;
         private string _selected;
+        private Faction? _faction;
+        private PrimaryAttribute? _attribute;
+        private TextField _search;
+        private readonly List<Button> _factionTabs = new List<Button>(), _attributeTabs = new List<Button>();
+        private string _gridKey;
+        private MatchStateInfo _lastState;
+        private bool _lastLocked;
         private float _localTimer;
         private TextField _chat;
         private int _lastChat;
@@ -78,10 +85,45 @@ namespace Bloodfall.Client.UI.Screens
             _dusk = El.Div("panel-thin", "col").Width(300);
             body.Add(_dawn); body.Add(center); body.Add(_dusk);
             var gridPanel = El.Div("panel-thin", "col");
-            gridPanel.Add(El.Text("HEROES", "t-subheading"));
-            _grid = El.Div("row");
+            // 96 heroes: faction tabs, an attribute filter and a name search above a scrolling grid.
+            var filters = El.Div("row");
+            filters.style.alignItems = Align.Center;
+            filters.style.flexWrap = Wrap.Wrap;
+            filters.Add(El.Text("HEROES", "t-subheading"));
+            foreach (var f in new Faction?[] { null, Faction.CrimsonCourt, Faction.AshenLegion, Faction.WildCovenant, Faction.Dawnguard })
+            {
+                var ff = f;
+                var b = El.Btn(f == null ? "All" : GameText.Faction(f.Value), () => { _faction = ff; RefreshGrid(); }, "btn--ghost", "btn--small");
+                b.style.marginLeft = 6;
+                b.style.minWidth = 0;
+                b.userData = f;
+                _factionTabs.Add(b);
+                filters.Add(b);
+            }
+            foreach (var a in new PrimaryAttribute?[] { null, PrimaryAttribute.Strength, PrimaryAttribute.Agility, PrimaryAttribute.Intelligence })
+            {
+                var aa = a;
+                var b = El.Btn(a == null ? "Any" : GameText.Attribute(a.Value), () => { _attribute = aa; RefreshGrid(); }, "btn--ghost", "btn--small");
+                b.style.marginLeft = a == null ? 16 : 4;
+                b.style.minWidth = 0;
+                b.userData = a;
+                _attributeTabs.Add(b);
+                filters.Add(b);
+            }
+            _search = El.Field("Search", false, "", 24);
+            _search.style.width = 220;
+            _search.style.marginLeft = 16;
+            _search.style.marginBottom = 0;
+            _search.RegisterValueChangedCallback(_ => RefreshGrid());
+            filters.Add(_search);
+            gridPanel.Add(filters);
+            var scroll = El.Scroll();
+            scroll.style.height = 268;
+            scroll.style.marginTop = 6;
+            _grid = scroll.contentContainer;
+            _grid.style.flexDirection = FlexDirection.Row;
             _grid.style.flexWrap = Wrap.Wrap;
-            gridPanel.Add(_grid);
+            gridPanel.Add(scroll);
             center.Add(gridPanel);
             _detail = El.Div("panel-thin", "col", "grow", "mt-m");
             center.Add(_detail);
@@ -151,16 +193,38 @@ namespace Bloodfall.Client.UI.Screens
             }
         }
 
+        private void RefreshGrid()
+        {
+            if (_lastState != null) RenderGrid(_lastState, _lastLocked);
+        }
+
+        private bool Matches(HeroDef h)
+        {
+            if (_faction != null && h.Faction != _faction.Value) return false;
+            if (_attribute != null && h.PrimaryAttribute != _attribute.Value) return false;
+            string q = _search?.value?.Trim();
+            return string.IsNullOrEmpty(q) || h.Name.IndexOf(q, System.StringComparison.OrdinalIgnoreCase) >= 0
+                || (h.Title ?? "").IndexOf(q, System.StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         private void RenderGrid(MatchStateInfo s, bool locked)
         {
-            _grid.Clear();
+            _lastState = s;
+            _lastLocked = locked;
             var taken = new HashSet<string>(s.Players.Where(p => p.HeroLocked && p.HeroId != null && p.Id != _mc.Client.LocalPlayerId).Select(p => p.HeroId));
             int playable = App.Data.PlayableHeroes().Count();
             bool unique = playable >= s.Players.Count;
-            foreach (var h in App.Data.PlayableHeroes())
+            foreach (var b in _factionTabs) b.EnableInClassList("btn--active", (Faction?)b.userData == _faction);
+            foreach (var b in _attributeTabs) b.EnableInClassList("btn--active", (PrimaryAttribute?)b.userData == _attribute);
+            // Rebuilt only when something shown changes (state updates arrive several times a second).
+            string key = $"{_faction}|{_attribute}|{_search?.value}|{_selected}|{locked}|{string.Join(",", taken.OrderBy(t => t))}";
+            if (key == _gridKey) return;
+            _gridKey = key;
+            _grid.Clear();
+            foreach (var h in App.Data.PlayableHeroes().Where(Matches).OrderBy(h => h.Faction).ThenBy(h => h.Name))
             {
                 bool isTaken = unique && taken.Contains(h.Id);
-                var tile = El.Div("hero-tile", "portrait", h.Id == _selected ? "hero-tile--selected" : "", isTaken ? "hero-tile--taken" : "", locked && h.Id != _selected ? "hero-tile--locked" : "");
+                var tile = El.Div("hero-tile", "hero-tile--compact", "portrait", h.Id == _selected ? "hero-tile--selected" : "", isTaken ? "hero-tile--taken" : "", locked && h.Id != _selected ? "hero-tile--locked" : "");
                 El.SetImage(tile, GameText.PortraitPath(h));
                 var name = El.Text(h.Name, "t-small", "t-center");
                 name.style.position = Position.Absolute; name.style.bottom = 0; name.style.left = 0; name.style.right = 0;
@@ -176,7 +240,7 @@ namespace Bloodfall.Client.UI.Screens
         {
             _detail.Clear();
             if (_selected == null || !App.Data.Heroes.TryGetValue(_selected, out var h)) { _detail.Add(El.Text("Select a hero to see their abilities.", "t-body")); return; }
-            _detail.Add(El.Text($"{h.Name} - {h.Title}", "t-title"));
+            _detail.Add(El.Text(GameText.HeroFullName(h), "t-title"));
             _detail.Add(El.Text($"{GameText.Faction(h.Faction)} · {string.Join(", ", h.Roles)} · {GameText.Attribute(h.PrimaryAttribute)} · {h.AttackType}", "t-small"));
             var row = El.Div("row", "mt-m");
             foreach (var aid in h.Abilities)

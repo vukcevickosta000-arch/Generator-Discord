@@ -622,13 +622,13 @@ namespace Bloodfall.Client.UI.Screens
                         string cost = lumber > 0 ? $"{gold} / {lumber}" : $"{gold}";
                         string role = string.Join(", ", hd.Roles ?? new string[0]);
                         if (hs != null && !hs.Dead)
-                            Add(hd.Name, $"level {hs.Level}", KeyCode.None, () => { }, false, $"{hd.Name}, {hd.Title}, already fights for you.");
+                            Add(hd.Name, $"level {hs.Level}", KeyCode.None, () => { }, false, $"{GameText.HeroFullName(hd, ", ")} already fights for you.");
                         else if (hs != null)
                             Add("Revive " + hd.Name, cost, KeyCode.None, () => rts.Recruit(heroId), can,
                                 $"Bring {hd.Name} (level {hs.Level}) back at this altar.\n{cost} · {data.Rules.RtsReviveTime + data.Rules.RtsReviveTimePerLevel * hs.Level:0} s" + (why != null ? "\n" + why : ""));
                         else
                             Add(hd.Name, cost, KeyCode.None, () => rts.Recruit(heroId), can,
-                                $"{hd.Name}, {hd.Title} ({El.Pretty(hd.Faction.ToString())}; {role}).\n{cost} · {data.Rules.RtsHeroSupply} supply · {data.Rules.RtsHeroTrainTime:0} s. "
+                                $"{GameText.HeroFullName(hd, ", ")} ({El.Pretty(hd.Faction.ToString())}; {role}).\n{cost} · {data.Rules.RtsHeroSupply} supply · {data.Rules.RtsHeroTrainTime:0} s. "
                                 + $"Up to {data.Rules.RtsMaxHeroes} heroes; each one costs more than the last." + (why != null ? "\n" + why : ""));
                     }
                     Add("Rally", "", KeyCode.Y, rts.ArmRally, true, "Set where new heroes gather.");

@@ -67,7 +67,7 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
 
     Still to do: dedicated Dawnguard and Ashen Legion units and buildings (they borrow the MOBA creep and structure
     models), and construction scaffolds.
-- **T-001 Blender model pipeline.** *Done for every unit and structure key (84 models,
+- **T-001 Blender model pipeline.** *Done for every unit and structure key (172 models,
   `Blender/scripts/build_models.py`).* Remaining:
   - Props (`Models/Props/<type>.fbx`, 28 dressing types) and tree variants (MapRenderer still draws C# meshes).
   - Texture maps (normal and mask) once hand-authored art replaces the generated shapes; the rigs and clip names
@@ -136,8 +136,13 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
   interface. Development keeps logging.
 - **T-018** Illusions and resurrection effect types, which are currently no-ops with a comment.
 - **T-019** Unity: pooled health-bar meshes if UI Toolkit bar count becomes a bottleneck (profile first).
-- **T-036** Find the Dawn lean in 5v5 bot games (B-010): mirror runs with every hero, lane assignment by lane name,
-  Vharoth access, bot code using team coordinates.
+- **T-037** The 88 generated roster heroes (`Tools/heroes`):
+  - A balance pass using `SimRunner -- 60 <seed> --random`: per-hero win rates over many seeds (first numbers are
+    in BALANCE_NOTES).
+  - Bespoke VFX. Kits reuse the effect library, and unknown keys fall back by theme.
+  - Voice lines and signature sounds.
+  - More distinct body shapes for the robe-and-staff casters.
+  - Hand-tuned twists where an archetype is only an approximation (see the table in HERO_ROSTER.md).
 - **T-021** Side shops: purchases within side-shop range go to the inventory. Flag side-shop and secret-shop stock
   in the item data.
 - **T-020** SSAO renderer feature via ProjectSetup once verified against URP 17 APIs (the setting exists but is not

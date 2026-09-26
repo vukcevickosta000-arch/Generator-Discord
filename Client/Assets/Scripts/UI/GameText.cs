@@ -122,6 +122,9 @@ namespace Bloodfall.Client.UI
         public static string StatusIconPath(StatusDef d) => "Textures/Icons/Statuses/" + (d.Icon ?? d.Id);
         public static string PortraitPath(HeroDef h) => "Textures/Icons/Portraits/" + (h.Portrait ?? ("portrait_" + h.Id.Replace("hero_", "")));
 
+        /// <summary>"Vorak - The Blood Tyrant", or just the name for heroes without a title.</summary>
+        public static string HeroFullName(HeroDef h, string separator = " - ") => string.IsNullOrEmpty(h.Title) ? h.Name : h.Name + separator + h.Title;
+
         public static string Attribute(PrimaryAttribute a) => a switch { PrimaryAttribute.Strength => "Strength", PrimaryAttribute.Agility => "Agility", _ => "Intelligence" };
         public static string Faction(Faction f) => f switch
         {

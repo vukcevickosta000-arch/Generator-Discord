@@ -38,7 +38,7 @@ namespace Bloodfall.Client.UI.Screens
             scroll.Add(_grid);
             left.Add(scroll);
             int playable = App.Data.PlayableHeroes().Count();
-            left.Add(El.Text($"{playable} heroes playable in this build. The full 96-hero roster is in production (see HERO_ROSTER.md).", "t-small", "t-wrap", "mt-m"));
+            left.Add(El.Text($"{playable} heroes playable in this build.", "t-small", "t-wrap", "mt-m"));
             row.Add(left);
             _detail = El.Div("panel-thin", "col", "grow");
             _detail.style.marginLeft = 10;
@@ -60,7 +60,7 @@ namespace Bloodfall.Client.UI.Screens
             _grid.Clear();
             foreach (var h in App.Data.Heroes.Values.Where(h => h.Playable && (_filter == null || h.Faction == _filter)))
             {
-                var tile = El.Div("hero-tile", "portrait", h.Id == _selected ? "hero-tile--selected" : "");
+                var tile = El.Div("hero-tile", "hero-tile--compact", "portrait", h.Id == _selected ? "hero-tile--selected" : "");
                 El.SetImage(tile, GameText.PortraitPath(h));
                 var name = El.Text(h.Name, "t-small", "t-center");
                 name.style.position = Position.Absolute;

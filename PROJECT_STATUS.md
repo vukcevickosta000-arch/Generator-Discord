@@ -16,10 +16,10 @@ This file is the honest source of truth for what works. Status labels:
 | Check | Result | How to reproduce |
 |---|---|---|
 | Server solution build (`Server/Bloodfall.sln`) | ✅ builds, 0 warnings-as-errors | `dotnet build Server/Bloodfall.sln` |
-| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 116 / 116 pass | `dotnet test Server/tests/Bloodfall.Tests` |
+| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 118 / 118 pass | `dotnet test Server/tests/Bloodfall.Tests` |
 | End-to-end online test (real backend + game server over UDP): a MOBA match, then an RTS match | ✅ **E2E PASSED** | `Tools/dev/run-e2e.sh` |
 | 20-minute 5v5 bot simulation (all eight heroes) | ✅ runs, 0.28 ms/tick | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- 20 11` |
-| Soak: 40 hour-long 5v5 bot games (seeds 101–140) plus 48 RTS games (every faction pairing) | ✅ no crash or exception in 88 games. Every 5v5 game ends, in 25–53 min (mean 38). 0.30 ms/tick median, 0.46 max. Dawn wins 33 of 40 (B-010). | `... SimRunner -- 60 <seed>` |
+| Soak: 40 hour-long 5v5 bot games (seeds 101–140) plus 48 RTS games (every faction pairing) | ✅ no crash or exception in 88 games. Every 5v5 game ends, in 25–53 min (mean 38). 0.30 ms/tick median, 0.46 max. Dawn won 33 of 40, but only because the runner gave the two teams different default lineups; with identical lineups the sides are even (Dusk 16, Dawn 13; F-038). | `... SimRunner -- 60 <seed>` |
 | RTS bot games (Ashfields, 40-game series) | ✅ games decided in 12–14 min on average with heroes. Faction totals 45–54%. Start sides even: 112–121 over six mirror series. 0–3 draws per 40 games. About 0.05 ms/tick. | `... SimRunner -- 30 5000 --rts --games 40 --factions a,b` |
 | Unity client scripts compile check (UnityEngine 2021.3 reference assemblies) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck` |
 | Unity editor scripts compile check (Unity3D.SDK 2021.1) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck/Editor` |
@@ -37,7 +37,7 @@ The plan's milestones run from 1 (move/attack/cast) to 10 (polish). Here is wher
 | 3 | Offline match with bots | **WORKING** headless (10-bot matches). Unity offline practice: IMPLEMENTED (unverified). |
 | 4 | Multiplayer match | **WORKING** headless. Dedicated server, UDP, signed tickets, fog-filtered snapshots, reconnect and concede are all covered by E2E. |
 | 5 | Client / account / lobby / server flow | Backend **WORKING** (E2E). Unity screens IMPLEMENTED (unverified). |
-| 6 | Multiple heroes and items | PARTIAL: **8 of 96 heroes** playable (all eight concept heroes: Vorak, Ilyra, Nyxara, Malgrave, Ardyn, Fenrax, Morwen, Thael), each with kit tests and bot usage. 38 items. |
+| 6 | Multiple heroes and items | **96 of 96 heroes** playable. The eight concept heroes are hand-written with dedicated kit tests; the other 88 are generated from roster kits (`Tools/heroes`, kits in Docs/HERO_KITS.md). Every ability of every hero casts in a real match (`RosterTests`), and roster bots use their kits. All 96 have Blender models and portraits. Generated kits use shared VFX, have no voice lines, and are balanced first-pass only (T-037). 38 items. |
 | 7 | Vharoth event | **WORKING** in simulation: seals, awakening, three boss phases, Blood Moon, Heart of Vharoth with revive, bots that break seals and kill him. 13 tests. Unity presentation (models, effects, HUD boss bar, Blood Moon lighting, corpse): IMPLEMENTED (unverified). |
 | 8 | RTS match | PARTIAL.<br>**Server side WORKING** (R1–R4 and R2: 32 simulation tests, 4 protocol tests, E2E section 5): harvesting, construction, training, supply, rally points, victory by razing, the Ashfields map, an RTS AI at four difficulties, protocol v7, lobby factions and the strategy queue, all played over UDP.<br>**Unity interface IMPLEMENTED (unverified)** (R5): selection, control groups, command card, placement ghost, resource HUD, practice vs AI, Strategy queue and lobby factions. It compiles against the reference assemblies but has never been run in Unity.<br>**All four factions** (Dawnguard, Ashen Legion, Crimson Court, Wild Covenant). Each has its own mechanic (healing shrines, raising the dead, Blood Price, Moonlit night forms) and five or six research upgrades, and each wins 45–58% of 40-game bot series against every other faction. Also:
 - research over protocol v6 with command-card buttons, and camps that guard the expansions;
@@ -200,11 +200,11 @@ lobby → hero select → loading → match → post-game.
 | Terrain layer textures (8), VFX sprites (24), Velmoragh heightfield/splat/dressing | Done (procedural) |
 | Ashfields (RTS map) heightfield/splat/dressing | Done (procedural, `Tools/mapgen/generate_ashfields.py`, preview `Docs/Images/ashfields_layout.png`) |
 | OFL fonts | Done |
-| Hero/creep/summon/neutral/boss/structure 3D models | **Done (generated)**: 84 FBX models (including the RTS blood-iron vein, the Crimson Court and Wild Covenant kits, four hero altars and the blood-bat courier) from the Blender pipeline (`Blender/scripts`), with rigs, 12–13 animation clips and baked ambient occlusion (`Docs/Images/models_all.png`). Stylised primitive-based modelling, not sculpted or textured. Not yet imported in Unity. |
+| Hero/creep/summon/neutral/boss/structure 3D models | **Done (generated)**: 172 FBX models: all 96 heroes (88 from generated roster specs), plus creeps, summons, neutrals, the boss, structures, the RTS kits, altars and the courier from the Blender pipeline (`Blender/scripts`), with rigs, 12–13 animation clips and baked ambient occlusion (`Docs/Images/models_all.png`). Stylised primitive-based modelling, not sculpted or textured. Not yet imported in Unity. |
 | Map props and trees | Procedural stand-ins (C#); Blender versions are still to do |
 | RTS unit and building models | **Crimson Court and Wild Covenant: generated.** 22 models: blood-marble noble buildings, organic Covenant groves, a lodge, a stone circle and a den, and every unit including the shifter's wolf form. **Dawnguard and Ashen Legion: borrowed** Dawn/Dusk creep and structure models, scaled (TODO T-034). |
 | Ability/item/status icons (123) | Done (procedural embossed emblems, `Tools/art/generate_icons.py`) |
-| Hero portraits (8) | Rendered from the hero models (`Blender/scripts/render_portraits.py`), faction-coloured |
+| Hero portraits (96) | Rendered from the hero models (`Blender/scripts/render_portraits.py`), faction-coloured |
 | UI sounds, combat/spell/death SFX, ambience, music loops and stingers (97 clips) | Placeholder quality, procedurally synthesised (`Tools/audio/generate_audio.py`) |
 | Announcer (35 lines) | Placeholder: espeak-ng speech processed into a deep, reverberant voice. Original streak names. |
 | Hero voice lines | **Missing** (no content references any yet) |
