@@ -136,12 +136,30 @@ namespace Bloodfall.Tests
             var creep = m.Units.First(u => u.IsCreep && u.Team == Team.Dusk && u.LaneIndex == 1);
             TestUtil.Teleport(m, hero, creep.Position + new Vector2(-1.2f, -1.2f));
             creep.Hp = 5;
-            int gold = p.Gold;
             m.IssueOrder(hero, Order.Attack(hero.Id, creep.Id));
-            TestUtil.Run(m, 2f);
+            int bounty = 0;
+            for (int i = 0; i < 60; i++)
+            {
+                m.Events.Clear();
+                m.Step();
+                bounty += (int)m.Events.Where(e => e.Type == SimEventType.LastHitGold && e.PlayerId == p.Id).Sum(e => e.Value);
+            }
             Assert.True(creep.Dead);
             Assert.Equal(1, p.LastHits);
-            Assert.True(p.Gold > gold + 30);
+            Assert.Equal(32, bounty); // every lane creep is worth exactly 32 gold
+            Assert.Equal(0, p.Id); // regression: player 0's gold popups used to be broadcast to everyone
+        }
+
+        [Fact]
+        public void PassiveIncome_IsHalfAGoldPerSecond()
+        {
+            var m = TestUtil.NewMatch();
+            TestUtil.Run(m, 1.2f);
+            var p = m.Players[0];
+            long earned = p.GoldEarned;
+            TestUtil.Run(m, 60f);
+            // Only passive income: nobody is near a creep in the first minute of a fresh match.
+            Assert.InRange(p.GoldEarned - earned, 29, 31);
         }
 
         [Fact]

@@ -390,7 +390,7 @@ namespace Bloodfall.Simulation
                     GiveGold(killerPlayer, gold, victim.Position, true);
                     if (victim.IsCreep || victim.IsNeutral) killerPlayer.LastHits++;
                     if (victim.IsNeutral) killerPlayer.NeutralKills++;
-                    Emit(new SimEvent { Type = SimEventType.LastHitGold, UnitId = victim.Id, OtherId = killer.Id, Value = gold, Point = victim.Position, PlayerId = killerPlayer.Id });
+                    EmitPrivate(new SimEvent { Type = SimEventType.LastHitGold, UnitId = victim.Id, OtherId = killer.Id, Value = gold, Point = victim.Position }, killerPlayer.Id);
                 }
             }
             Team xpTeam = killer != null && killer.Team != Team.Neutral ? killer.Team : OtherTeam(victim.Team);
@@ -489,7 +489,7 @@ namespace Bloodfall.Simulation
                 int gold = Rules.HeroKillBaseGold + Rules.HeroKillGoldPerLevel * victim.Level + streakBonus;
                 if (!_firstBloodTaken) { gold += Rules.FirstBloodBonus; _firstBloodTaken = true; Announce(AnnouncerKeys.FirstBlood, Team.None, killerPlayer.Id, killer.Id); }
                 GiveGold(killerPlayer, gold, victim.Position, true);
-                Emit(new SimEvent { Type = SimEventType.LastHitGold, UnitId = victim.Id, OtherId = killer?.Id ?? 0, Value = gold, Point = victim.Position, PlayerId = killerPlayer.Id });
+                EmitPrivate(new SimEvent { Type = SimEventType.LastHitGold, UnitId = victim.Id, OtherId = killer?.Id ?? 0, Value = gold, Point = victim.Position }, killerPlayer.Id);
                 if (victimStreak >= 3) Announce(AnnouncerKeys.Shutdown, Team.None, killerPlayer.Id, killer?.Id ?? 0);
                 AnnounceStreaks(killerPlayer, killer);
             }

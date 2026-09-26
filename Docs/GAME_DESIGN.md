@@ -85,8 +85,9 @@ and only after 15:00.
 | Rule | Value |
 |---|---|
 | Starting gold | 600 |
-| Passive gold | 1.5 / s after the horn |
-| Creep waves | Every 30 s: 3 melee + 1 ranged, a siege creep every 5th wave. Creeps upgrade every 7.5 min. |
+| Passive gold | 0.5 / s after the horn (1 gold every 2 seconds) |
+| Creep bounty | 32 gold for every lane creep you last-hit (melee, ranged, siege, elite; it does not grow over time) |
+| Creep waves | Every 30 s: 3 melee + 1 ranged, a siege creep every 5th wave. Creeps upgrade every 7.5 min (HP and damage; the bounty stays 32). |
 | Deny | Allied creeps below 50% HP (towers below 10%); the victim's killers get 50% XP. |
 | XP share radius | 12.5 m |
 | Hero kill | 110 + 8 × victim level, plus the streak bounty (+60 per step from 3 kills up to +480) and first blood +150 |

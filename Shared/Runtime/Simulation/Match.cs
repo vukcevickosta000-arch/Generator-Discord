@@ -656,6 +656,10 @@ namespace Bloodfall.Simulation
 
         // =================================================================== events
 
+        /// <summary>
+        /// Emits an event. PlayerId 0 is treated as "not set" and becomes a broadcast, so an event meant for one player
+        /// must go through <see cref="EmitPrivate"/> (player 0 is a real player).
+        /// </summary>
         public void Emit(SimEvent e)
         {
             e.Tick = Tick;

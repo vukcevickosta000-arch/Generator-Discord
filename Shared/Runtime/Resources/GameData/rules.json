@@ -5,7 +5,7 @@
     "snapshotRate": 20,
     "maxHeroLevel": 25,
     "startingGold": 600,
-    "passiveGoldPerSecond": 1.5,
+    "passiveGoldPerSecond": 0.5,
     "preGameTime": 60,
     "heroSelectTime": 60,
     "creepWaveInterval": 30,

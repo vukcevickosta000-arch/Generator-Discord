@@ -8,7 +8,7 @@ These notes record intent and measured results.
 | Metric (20 min, competent players) | Target | Notes |
 |---|---|---|
 | Carry GPM | 450–600 | Last hits are the main source |
-| Support GPM | 250–350 | Passive income 1.5/s = 90 GPM baseline |
+| Support GPM | 200–300 | Passive income 0.5/s = 30 GPM baseline |
 | Carry level at 20:00 | 16–18 | |
 | Kills per team at 20:00 | 15–30 | |
 | Match length | 30–45 min | Vharoth becomes available at 25:00 |
@@ -17,11 +17,14 @@ These notes record intent and measured results.
 
 | Creep | Gold | XP |
 |---|---|---|
-| Melee | 36–46 | 57 |
-| Ranged | 41–49 | 69 |
-| Siege | 66–80 | 88 |
+| Melee | 32 | 57 |
+| Ranged | 32 | 69 |
+| Siege | 32 | 88 |
+| Elite (after barracks fall) | 32 | as before |
 
-Creeps upgrade every 7.5 min (+HP, +damage, +gold).
+Creeps upgrade every 7.5 min (+HP, +damage); the bounty stays at a flat 32 (2026-09-26, by request, replacing 36–80
+with growth). Passive income dropped from 1.5/s to 0.5/s at the same time. Both make the early game leaner: expect
+fewer items per minute until this table is re-measured.
 
 ## 2. Measured: bot simulation (SimRunner, 20 min, seed 11, 5 Vorak/Ilyra bots per side, 2026-09-25)
 

@@ -549,7 +549,7 @@ namespace Bloodfall.Data
         public int SnapshotRate = 20;
         public int MaxHeroLevel = 25;
         public int StartingGold = 600;
-        public float PassiveGoldPerSecond = 1.5f;
+        public float PassiveGoldPerSecond = 0.5f;
         public float PreGameTime = 60f;
         public float HeroSelectTime = 60f;
         public float CreepWaveInterval = 30f;
