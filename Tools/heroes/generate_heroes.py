@@ -46,9 +46,11 @@ STATS = {
     (AGI, R): dict(baseHp=200, baseHpRegen=0.6, baseMana=75, baseManaRegen=0.25, baseArmor=0.0, damageMin=23, damageMax=29,
                    attackRange=6.3, attackPoint=0.38, attackBackswing=0.5, baseAttackTime=1.65, moveSpeed=3.8, turnRate=15,
                    collisionRadius=0.33, str=17, strGain=1.9, agi=23, agiGain=2.9, int=16, intGain=1.6, projectileSpeed=12.5),
-    (INT, M): dict(baseHp=200, baseHpRegen=0.7, baseMana=75, baseManaRegen=0.35, baseArmor=0.5, damageMin=24, damageMax=30,
-                   attackRange=1.6, attackPoint=0.42, attackBackswing=0.5, baseAttackTime=1.7, moveSpeed=3.7, turnRate=13,
-                   collisionRadius=0.35, str=20, strGain=2.2, agi=14, agiGain=1.4, int=22, intGain=2.8),
+    # Intelligence melee heroes stand in melee range: front-line armor and strength (the first soak had Othniel
+    # dying 13 times a game on caster numbers).
+    (INT, M): dict(baseHp=210, baseHpRegen=1.0, baseMana=75, baseManaRegen=0.35, baseArmor=2.0, damageMin=24, damageMax=30,
+                   attackRange=1.6, attackPoint=0.42, attackBackswing=0.5, baseAttackTime=1.7, moveSpeed=3.75, turnRate=13,
+                   collisionRadius=0.35, str=22, strGain=2.5, agi=14, agiGain=1.4, int=22, intGain=2.6),
     (INT, R): dict(baseHp=200, baseHpRegen=0.5, baseMana=75, baseManaRegen=0.35, baseArmor=0.3, damageMin=21, damageMax=27,
                    attackRange=6.7, attackPoint=0.45, attackBackswing=0.5, baseAttackTime=1.7, moveSpeed=3.6, turnRate=12,
                    collisionRadius=0.33, str=18, strGain=1.9, agi=15, agiGain=1.5, int=24, intGain=3.0, projectileSpeed=11),

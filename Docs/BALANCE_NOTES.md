@@ -99,6 +99,59 @@ fewer items per minute until this table is re-measured.
 | Morwen | Disabler and support | Echoes double her burst during the ultimate: Crooked Curse deals about 1.6× (the echo lands after the curse's -15% magic resistance). A second cauldron does not stack its auras (same source definition) |
 | Thael | Forest initiator | Barkskin is binary (3+ trees within 5 m). Grove Call is a 60 m teleport on a 25 s cooldown at level 4: watch map pressure |
 
+### Measured: the 96-hero roster (SimRunner `--random`, 60 hour-long games, seeds 1001–1060, 2026-09-26)
+
+**Setup.** Each seed draws ten distinct heroes from all 96 (Dawn gets the first five); bots on both sides.
+`python3 Tools/heroes/soak_report.py <logs>` prints the table.
+
+**Stability.**
+
+- No crash or exception.
+- 59 of 60 games were decided: 24 to 60 minutes, median 41.
+- 0.22 ms/tick median, 0.32 max.
+- 95 of the 96 heroes played at least once.
+
+**Win share by faction.**
+
+| Faction | Win share |
+|---|---|
+| Crimson Court | 50% |
+| Ashen Legion | 49% |
+| Dawnguard | 45% |
+| Wild Covenant | 57% |
+
+**Per hero.** Each hero played only about 6 games, so single win rates are noise. Read these as patterns:
+
+- **Strongest:** ranged casters whose ultimate is an area storm or zone. Per game:
+
+  | Hero | Kills | Deaths |
+  |---|---|---|
+  | Pallor | 10.8 | 7.1 |
+  | Lunara | 9.6 | 4.7 |
+  | Varuun | 9.7 | 5.3 |
+  | Malgrave | 10.5 | 5.8 |
+
+  Bots cast zones reliably, and zones keep ticking through a fight.
+- **Weakest:** melee supports and bruisers without an escape. Deaths per game:
+
+  | Hero | Deaths |
+  |---|---|
+  | Othniel | 13.0 |
+  | Mossbeard | 10.4 |
+  | Varric | 9.0 |
+  | Tobias | 9.4 |
+
+  Part of this is bot behaviour: melee supports walk into fights to cast.
+
+**Change made.** The Intelligence-melee stat template, used only by Othniel, now has front-line numbers: 2 armor, +10
+health, more strength and regeneration.
+
+**Next (T-037).**
+
+- Run about 300 seeds so each hero plays about 30 games.
+- Then tune the archetype numbers in `Tools/heroes/kitlib.py`, which moves every hero using that archetype, before
+  tuning individual kits.
+
 ## 4. Items
 
 - Component pricing follows attribute value, roughly 1 attribute point ≈ 75 gold.
@@ -263,6 +316,22 @@ Heroes, over about 75 recruitments each (wins/games they appeared in):
 
 The Blood War assassins and carries rely on items and on the finesse of hero play; bots cast their abilities but do
 not play them well. Tuning heroes for the strategy mode is TODO T-035.
+
+### Faction heroes for RTS bots (tried and reverted), 2026-09-26
+
+**What was tried.** With 24 heroes per faction, bots recruited only their own faction's heroes. Series: 20 games per
+ordered pairing (40 per pair), 30-minute cap, seed 5000.
+
+| Faction | Win share |
+|---|---|
+| Ashen Legion | 63% (74 of 117) |
+| Crimson Court | 50% |
+| Wild Covenant | 46% |
+| Dawnguard | 41% |
+
+**Why it was reverted.** The Legion's summoners (Bone Archers, Bone Colossi, Chitin Swarm, Raise the Fallen) and plague
+zones are unusually strong in the strategy mode. With any hero, faction totals stay at 45–54%. Players can still
+recruit any hero they like. Mirror series were even by start side (8–12 at worst).
 
 ## 6. Process
 

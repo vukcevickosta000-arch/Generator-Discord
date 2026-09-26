@@ -58,6 +58,9 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
     Ilyra, Ardyn and Vorak win 62–72% of their games, and Fenrax, Nyxara and Morwen 31–37% (BALANCE_NOTES §5).
     - Consider strategy-mode tuning per hero (for example an `rtsOverrides` block), or better bot play for the
       assassins.
+    - With 96 heroes the same pattern holds by kit type. Faction-locked recruiting gave the Ashen Legion (summoners,
+      plague zones) 63% and Dawnguard 41%, so bots recruit any hero (BALANCE_NOTES §5). Tuning summoners and zones
+      for this mode would allow faction-flavoured recruiting.
     - Veteran's edge over Normal fell to 62% with heroes. Veteran could use its heroes better, for example by
       focusing enemy heroes and retreating hurt heroes to the altar.
   - **T-034 RTS art.** The Crimson Court and Wild Covenant have their own models:

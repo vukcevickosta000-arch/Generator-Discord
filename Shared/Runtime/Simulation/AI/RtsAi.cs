@@ -421,12 +421,10 @@ namespace Bloodfall.Simulation
             }
             if (m.HeroCount(_p) >= MaxHeroes(m)) return;
             var owned = new HashSet<string>(_p.RtsHeroes.Select(h => h.DefId));
-            // Bots recruit their own faction's heroes (24 each), falling back to any hero. (With one or two heroes per
-            // faction this tied faction balance to those few kits - the Legion's lone summoner won 30 of 40 games - so
-            // bots used to pick from every hero.)
-            var faction = _p.RtsFaction?.Faction;
-            var pool = m.Data.PlayableHeroes().Where(h => !owned.Contains(h.Id) && h.Faction == faction).ToList();
-            if (pool.Count == 0) pool = m.Data.PlayableHeroes().Where(h => !owned.Contains(h.Id)).ToList();
+            // Any hero answers any altar. Recruiting the faction's own heroes ties faction balance to those kits: with
+            // one Legion hero (a summoner) the Legion won 30 of 40; with all 96 heroes it still won 63% (summoners and
+            // plague zones suit this mode) while Dawnguard fell to 41%, against 45-54% for every faction with any hero.
+            var pool = m.Data.PlayableHeroes().Where(h => !owned.Contains(h.Id)).ToList();
             if (pool.Count == 0) return;
             var pick = pool[_rng.Range(0, pool.Count)];
             var (gold, lumber) = m.NextHeroPrice(_p);
