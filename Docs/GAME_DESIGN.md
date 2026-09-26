@@ -73,7 +73,9 @@ and only after 15:00.
   day/night vision radius.
 - **Roles:** Carry, Support, Initiator, Nuker, Disabler, Durable, Escape, Jungler, Pusher.
 
-**Roster:** 96 heroes planned (24 per faction); 2 are playable today. See [HERO_ROSTER.md](HERO_ROSTER.md).
+**Roster:** 96 heroes (24 per faction), all playable. The eight concept heroes are hand-written; the other 88 are
+generated from roster kits (`Tools/heroes`). See [HERO_ROSTER.md](HERO_ROSTER.md) for identities and
+[HERO_KITS.md](HERO_KITS.md) for every generated kit. Two examples:
 
 | Hero | Faction | Role | Kit summary |
 |---|---|---|---|

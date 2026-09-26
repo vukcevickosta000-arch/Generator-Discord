@@ -421,9 +421,12 @@ namespace Bloodfall.Simulation
             }
             if (m.HeroCount(_p) >= MaxHeroes(m)) return;
             var owned = new HashSet<string>(_p.RtsHeroes.Select(h => h.DefId));
-            // Any hero answers any altar. (Preferring the faction's own heroes tied faction balance to how strong
-            // those few heroes are: the Legion's one hero is a summoner and won 30 of 40 games.)
-            var pool = m.Data.PlayableHeroes().Where(h => !owned.Contains(h.Id)).ToList();
+            // Bots recruit their own faction's heroes (24 each), falling back to any hero. (With one or two heroes per
+            // faction this tied faction balance to those few kits - the Legion's lone summoner won 30 of 40 games - so
+            // bots used to pick from every hero.)
+            var faction = _p.RtsFaction?.Faction;
+            var pool = m.Data.PlayableHeroes().Where(h => !owned.Contains(h.Id) && h.Faction == faction).ToList();
+            if (pool.Count == 0) pool = m.Data.PlayableHeroes().Where(h => !owned.Contains(h.Id)).ToList();
             if (pool.Count == 0) return;
             var pick = pool[_rng.Range(0, pool.Count)];
             var (gold, lumber) = m.NextHeroPrice(_p);

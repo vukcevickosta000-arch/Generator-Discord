@@ -260,11 +260,22 @@ identity. All eight are implemented, used by bots, and covered by `Server/tests/
 
 ## Adding a hero
 
-1. Create `Shared/Runtime/Resources/GameData/heroes/<name>.json` with the hero, its abilities and statuses. Use
-   `vorak.json` and `ilyra.json` as references.
-2. Run `python3 Tools/dev/gen_gamedata_index.py`, then `dotnet test Server/tests/Bloodfall.Tests`. Data validation
-   errors fail the load.
-3. Tag abilities with `botUsage` (`engage`, `stun`, `nuke`, `aoe`, `buff`, `escape`, `farm`, `ultimate`) so bots can
-   use them. Add `recommendedItems`.
-4. Add the model (`model` key), portrait and icons (see ART_DIRECTION.md). Until then the client uses stand-ins.
-5. Run the SimRunner with the new hero and record balance notes.
+**Generated (the usual way).**
+
+1. Add an `H(...)` entry and a kit function to the faction's `Tools/heroes/roster_*.py`. That means identity, lore,
+   an optional look, and five `kitlib` calls: innate, Q, W, E, R. Add an archetype to `kitlib.py` if nothing fits.
+2. Run `python3 Tools/heroes/generate_heroes.py`. It writes the hero JSON, the Blender spec, HERO_KITS.md and the data
+   index.
+3. Run `python3 Blender/scripts/build_models.py hero_<stem> --preview-idle`, then
+   `python3 Blender/scripts/render_portraits.py hero_<stem>`, then `python3 Tools/art/generate_icons.py` for the
+   ability icons.
+4. Run `dotnet test Server/tests/Bloodfall.Tests`. `RosterTests` casts every ability and checks bot usage.
+5. For balance, run `SimRunner -- 60 <seed> --random` over many seeds, then `python3 Tools/heroes/soak_report.py <logs>`.
+
+**Hand-written (bespoke mechanics).**
+
+1. Create `Shared/Runtime/Resources/GameData/heroes/<name>.json`. Use `vorak.json` and `ilyra.json` as references,
+   and do not add it to a roster module.
+2. Tag abilities with `botUsage` so bots can use them: `engage`, `stun`, `nuke`, `aoe`, `buff`, `escape`, `farm` or
+   `ultimate`, plus `ally` or `self` for friendly targets.
+3. Add a Blender spec to `bf_characters.py`, then continue with steps 3–5 above.

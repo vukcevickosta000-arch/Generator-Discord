@@ -33,6 +33,7 @@ namespace Bloodfall.Client.UI.Screens
         private bool _chatTeam = true;
         private float _errorTimer, _announceTimer, _attackAlertCooldown;
         private string _cardSignature = "", _selectionSignature = "";
+        private int _altarPage;
         private bool _buildMenu;
         private int _chatCount;
         private readonly List<CardButton> _buttons = new List<CardButton>();
@@ -614,7 +615,17 @@ namespace Bloodfall.Client.UI.Screens
                 }
                 if (!s.UnderConstruction && primary.Unit != null && primary.Unit.HeroAltar)
                 {
-                    foreach (var hd in data.PlayableHeroes())
+                    // 96 heroes: your own heroes always show, then pages of eight, your faction's heroes first.
+                    const int PerPage = 8;
+                    var ownedIds = new HashSet<string>((frame.Rts?.Heroes ?? new List<RtsHeroState>()).Select(h => h.HeroId));
+                    string facId = _mc.LocalPlayer?.RtsFaction;
+                    Faction? mine = facId != null && data.RtsFactions.TryGetValue(facId, out var fdef) ? fdef.Faction : (Faction?)null;
+                    var owned = data.PlayableHeroes().Where(h => ownedIds.Contains(h.Id)).ToList();
+                    var others = data.PlayableHeroes().Where(h => !ownedIds.Contains(h.Id))
+                        .OrderBy(h => h.Faction == mine ? 0 : 1).ThenBy(h => h.Name).ToList();
+                    int pages = Math.Max(1, (others.Count + PerPage - 1) / PerPage);
+                    _altarPage = ((_altarPage % pages) + pages) % pages;
+                    foreach (var hd in owned.Concat(others.Skip(_altarPage * PerPage).Take(PerPage)))
                     {
                         var heroId = hd.Id;
                         var hs = frame.Rts?.Heroes?.FirstOrDefault(h => h.HeroId == heroId);
@@ -631,6 +642,9 @@ namespace Bloodfall.Client.UI.Screens
                                 $"{GameText.HeroFullName(hd, ", ")} ({El.Pretty(hd.Faction.ToString())}; {role}).\n{cost} · {data.Rules.RtsHeroSupply} supply · {data.Rules.RtsHeroTrainTime:0} s. "
                                 + $"Up to {data.Rules.RtsMaxHeroes} heroes; each one costs more than the last." + (why != null ? "\n" + why : ""));
                     }
+                    if (pages > 1)
+                        Add("More heroes", $"{_altarPage + 1}/{pages}", KeyCode.None, () => _altarPage++, true,
+                            "Show the next heroes. Your own faction's heroes come first.");
                     Add("Rally", "", KeyCode.Y, rts.ArmRally, true, "Set where new heroes gather.");
                 }
                 if (!s.UnderConstruction && primary.Unit?.Research != null)
