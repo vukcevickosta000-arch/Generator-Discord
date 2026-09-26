@@ -658,7 +658,6 @@ namespace Bloodfall.Client.UI.Screens
             var client = _mc.Client;
             var frame = client.Latest;
             var world = _mc.World;
-            _overlay.Update(dt, world.Camera?.Cam);
             _minimap.Update(dt);
             _shop.Tick();
             _paused.Show(_mc.Paused);

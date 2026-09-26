@@ -341,7 +341,6 @@ namespace Bloodfall.Client.UI.Screens
             if (_mc == null || _mc.World == null) return;
             var world = _mc.World;
             var frame = _mc.Client.Latest;
-            _overlay.Update(dt, world.Camera?.Cam);
             _minimap.Update(dt);
             _paused.Show(_mc.Paused);
             _attackAlertCooldown -= dt;

@@ -278,6 +278,14 @@ namespace Bloodfall.Tests
             m.DealDamage(new DamageInfo { Source = ilyra, Target = ardyn, Amount = 80, Type = DamageType.Pure });
             Assert.Equal(hp, ardyn.Hp, 1);
             Assert.Equal(40f, ardyn.FindStatus("ardyn_aegis").ShieldRemaining, 1);
+            // The remaining shield is streamed so the health bar can draw it.
+            var index = new Bloodfall.Protocol.ContentIndex(m.Data);
+            var bytes = Bloodfall.Protocol.Codec.Snapshot(m, Team.Dawn, m.Players[0], index);
+            var r = new Bloodfall.Protocol.NetReader(bytes, 0, bytes.Length);
+            r.ReadByte();
+            var frame = Bloodfall.Protocol.Codec.ReadSnapshot(r, index);
+            Assert.Equal(40f, frame.Entities.Single(e => e.Id == ardyn.Id).Shield, 1);
+            Assert.Equal(0f, frame.Entities.Single(e => e.Id == ilyra.Id).Shield);
             float ilyraHp = ilyra.Hp;
             TestUtil.Run(m, 6.2f);
             Assert.Null(ardyn.FindStatus("ardyn_aegis"));

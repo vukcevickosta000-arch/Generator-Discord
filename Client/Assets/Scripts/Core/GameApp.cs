@@ -105,19 +105,26 @@ namespace Bloodfall.Client.Core
                     if (_mainThread.Count == 0) break;
                     a = _mainThread.Dequeue();
                 }
-                try { a(); } catch (Exception e) { Debug.LogException(e); }
+                try { a(); } catch (Exception e) { Faults.Report("main-thread", e); }
             }
-            Match?.Tick(dt);
+            // Each stage is contained: a fault in the match must not also stop the HUD, audio and menus this frame.
+            if (Match != null)
+            {
+                try { Match.Tick(dt); }
+                catch (Exception e) { Faults.Report("match", e); }
+            }
             for (int i = 0; i < _tickables.Count; i++)
             {
                 try { _tickables[i].Tick(dt); }
-                catch (Exception e) { Debug.LogException(e); }
+                catch (Exception e) { Faults.Report(_tickables[i].GetType().Name, e); }
             }
         }
 
         private void LateUpdate()
         {
-            Match?.LateTick(Time.unscaledDeltaTime);
+            if (Match == null) return;
+            try { Match.LateTick(Time.unscaledDeltaTime); }
+            catch (Exception e) { Faults.Report("match-late", e); }
         }
 
         private void OnApplicationQuit()

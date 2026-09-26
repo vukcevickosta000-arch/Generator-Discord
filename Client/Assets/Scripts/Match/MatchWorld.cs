@@ -250,8 +250,13 @@ namespace Bloodfall.Client.Match
 
             foreach (var v in _viewList)
             {
-                v.Model.Root.transform.SetPositionAndRotation(v.Position - Vector3.up * v.ConstructionSink, Quaternion.Euler(0, v.FacingDeg, 0));
-                v.Tick(dt, this);
+                // One broken view (bad model, missing clip) must not freeze every other unit on screen.
+                try
+                {
+                    v.Model.Root.transform.SetPositionAndRotation(v.Position - Vector3.up * v.ConstructionSink, Quaternion.Euler(0, v.FacingDeg, 0));
+                    v.Tick(dt, this);
+                }
+                catch (Exception e) { Faults.Report("view " + v.DefId, e); }
             }
             for (int i = _viewList.Count - 1; i >= 0; i--)
             {
@@ -322,7 +327,14 @@ namespace Bloodfall.Client.Match
                 Input?.Update(dt, overUi);
                 Rts?.Update(dt, overUi);
             }
+            CameraMoved?.Invoke(dt);
         }
+
+        /// <summary>
+        /// Raised every frame once the camera has its final transform. Anything projected to the screen (health bars,
+        /// combat text) must be placed here, not in Update, or it trails one frame behind while the camera moves.
+        /// </summary>
+        public event System.Action<float> CameraMoved;
 
         private Vector3 WorldPos(EntityState e) => Map.World(e.Position, e.Height);
 
@@ -496,6 +508,8 @@ namespace Bloodfall.Client.Match
                     break;
                 case SimEventType.Respawn:
                     Vfx.Play("respawn", Map.World(e.Point));
+                    // Follow mode: back on the hero when it respawns.
+                    if (GameApp.Instance.Settings.CameraFollowHero && e.UnitId == Controller.LocalHero?.Id) Camera.Locked = true;
                     break;
                 case SimEventType.Blink:
                     Vfx.Play(string.IsNullOrEmpty(e.Key) ? "shadowstep" : e.Key, Map.World(e.Point, 0.8f));

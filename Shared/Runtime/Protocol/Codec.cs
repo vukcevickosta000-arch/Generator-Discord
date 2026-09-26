@@ -426,6 +426,9 @@ namespace Bloodfall.Protocol
             w.WriteSByte((sbyte)(u.Owner?.Id ?? (u.Summoner?.Owner?.Id ?? -1)));
             w.WriteVarInt((int)Math.Round(u.Stats.Armor * 10));
             w.WriteVarUInt((uint)Math.Max(0, Math.Round(u.Stats.AverageDamage)));
+            float shield = 0f;
+            foreach (var s in u.Statuses) if (s.ShieldRemaining > 0f) shield += s.ShieldRemaining;
+            w.WriteVarUInt((uint)Math.Ceiling(shield));
             string modelOverride = null;
             for (int i = u.Statuses.Count - 1; i >= 0; i--) if (!string.IsNullOrEmpty(u.Statuses[i].Def.ModelOverride)) { modelOverride = u.Statuses[i].Def.ModelOverride; break; }
             w.WriteString(modelOverride);
@@ -616,6 +619,7 @@ namespace Bloodfall.Protocol
             e.OwnerPlayer = r.ReadSByte();
             e.Armor = r.ReadVarInt() / 10f;
             e.Damage = r.ReadVarUInt();
+            e.Shield = r.ReadVarUInt();
             e.ModelKey = r.ReadString();
             int n = r.ReadByte();
             for (int i = 0; i < n; i++)

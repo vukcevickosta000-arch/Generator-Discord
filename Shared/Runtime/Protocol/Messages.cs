@@ -10,7 +10,7 @@ namespace Bloodfall.Protocol
     public static class ProtocolInfo
     {
         /// <summary>Bump when the wire format changes. Clients with a different version are rejected with a clear message.</summary>
-        public const ushort Version = 8;
+        public const ushort Version = 9;
         public const string ConnectionKey = "bloodfall";
         public const int DefaultGamePort = 27015;
     }
@@ -110,6 +110,8 @@ namespace Bloodfall.Protocol
         public float Facing;
         public float Height;
         public float Hp, MaxHp, Mana, MaxMana;
+        /// <summary>Damage the unit's shield statuses can still absorb (drawn on the health bar).</summary>
+        public float Shield;
         public int Level;
         public ActionState Action;
         public int ActionStartTick;

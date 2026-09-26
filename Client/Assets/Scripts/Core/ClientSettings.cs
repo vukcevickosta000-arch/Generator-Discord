@@ -44,6 +44,8 @@ namespace Bloodfall.Client.Core
         public bool InvertDrag = false;
         public float ZoomSpeed = 1f;
         public bool QuickCast = false;
+        /// <summary>Blood War: the camera stays on your hero; panning looks away until your next move or attack order.</summary>
+        public bool CameraFollowHero = true;
         public bool AutoAttack = true;
         public bool MinimapRightClickMoves = true;
         public bool MinimapOnLeft = true;

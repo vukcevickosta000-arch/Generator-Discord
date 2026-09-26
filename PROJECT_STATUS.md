@@ -157,7 +157,11 @@ lobby → hero select → loading → match → post-game.
 - Procedural stand-in models with jointed rigs and procedural animation. A Playables animator takes over when authored
   FBX models are added.
 - Snapshot interpolation and client-side fog rendering.
-- MOBA camera and input: smart right-click, attack-move, targeting indicators, quick-cast, pings.
+- MOBA camera and input: smart right-click, attack-move, targeting indicators, quick-cast, pings. The camera follows
+  the hero by default: panning looks away, the next move or attack order brings it back, Y toggles, and the
+  Settings > Gameplay "Camera follows your hero" box turns it off.
+- Health bars are drawn after the camera moves, so they stay on their units while it follows. They show a draining
+  damage chip and shields (protocol v9).
 - Pooled VFX: impacts, projectiles, zones, statuses, deaths.
 - HUD: bars, abilities, items, stash, buffs, minimap with fog, kill feed, announcer text, chat, shop, scoreboard,
   death/buyback screen and game menu (pause in practice).
@@ -183,7 +187,7 @@ lobby → hero select → loading → match → post-game.
 | Terrain layer textures (8), VFX sprites (24), Velmoragh heightfield/splat/dressing | Done (procedural) |
 | Ashfields (RTS map) heightfield/splat/dressing | Done (procedural, `Tools/mapgen/generate_ashfields.py`, preview `Docs/Images/ashfields_layout.png`) |
 | OFL fonts | Done |
-| Hero/creep/summon/neutral/boss/structure 3D models | **Done (generated)**: 83 FBX models (including the RTS blood-iron vein, the Crimson Court and Wild Covenant kits and four hero altars) from the Blender pipeline (`Blender/scripts`), with rigs, 12–13 animation clips and baked ambient occlusion (`Docs/Images/models_all.png`). Stylised primitive-based modelling, not sculpted or textured. Not yet imported in Unity. |
+| Hero/creep/summon/neutral/boss/structure 3D models | **Done (generated)**: 84 FBX models (including the RTS blood-iron vein, the Crimson Court and Wild Covenant kits, four hero altars and the blood-bat courier) from the Blender pipeline (`Blender/scripts`), with rigs, 12–13 animation clips and baked ambient occlusion (`Docs/Images/models_all.png`). Stylised primitive-based modelling, not sculpted or textured. Not yet imported in Unity. |
 | Map props and trees | Procedural stand-ins (C#); Blender versions are still to do |
 | RTS unit and building models | **Crimson Court and Wild Covenant: generated.** 22 models: blood-marble noble buildings, organic Covenant groves, a lodge, a stone circle and a den, and every unit including the shifter's wolf form. **Dawnguard and Ashen Legion: borrowed** Dawn/Dusk creep and structure models, scaled (TODO T-034). |
 | Ability/item/status icons (123) | Done (procedural embossed emblems, `Tools/art/generate_icons.py`) |

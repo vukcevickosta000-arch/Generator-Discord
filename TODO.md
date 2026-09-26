@@ -67,7 +67,7 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
 
     Still to do: dedicated Dawnguard and Ashen Legion units and buildings (they borrow the MOBA creep and structure
     models), and construction scaffolds.
-- **T-001 Blender model pipeline.** *Done for every unit and structure key (83 models,
+- **T-001 Blender model pipeline.** *Done for every unit and structure key (84 models,
   `Blender/scripts/build_models.py`).* Remaining:
   - Props (`Models/Props/<type>.fbx`, 28 dressing types) and tree variants (MapRenderer still draws C# meshes).
   - Texture maps (normal and mask) once hand-authored art replaces the generated shapes; the rigs and clip names

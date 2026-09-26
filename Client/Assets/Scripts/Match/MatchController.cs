@@ -251,8 +251,12 @@ namespace Bloodfall.Client.Match
             while (Client.PendingEvents.Count > 0)
             {
                 var e = Client.PendingEvents.Dequeue();
-                if (_worldReady) World.HandleEvent(e);
-                try { EventReceived?.Invoke(e); } catch (Exception ex) { Debug.LogException(ex); }
+                if (_worldReady)
+                {
+                    try { World.HandleEvent(e); }
+                    catch (Exception ex) { Faults.Report("world-event " + e.Type, ex); }
+                }
+                try { EventReceived?.Invoke(e); } catch (Exception ex) { Faults.Report("hud-event " + e.Type, ex); }
             }
             if (_worldReady) World.Tick(dt);
 

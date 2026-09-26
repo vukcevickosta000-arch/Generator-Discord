@@ -174,6 +174,8 @@ namespace Bloodfall.Client.UI.Screens
 
         private static void Gameplay(VisualElement c, ClientSettings s)
         {
+            var cam = Section(c, "CAMERA");
+            cam.Add(El.Check("Camera follows your hero (pan to look away; your next order brings it back)", s.CameraFollowHero, v => s.CameraFollowHero = v));
             var sec = Section(c, "COMBAT FEEDBACK");
             sec.Add(El.Check("Show health bars", s.ShowHealthBars, v => s.ShowHealthBars = v));
             sec.Add(El.Check("Show allied hero bars", s.ShowAllyHeroBars, v => s.ShowAllyHeroBars = v));

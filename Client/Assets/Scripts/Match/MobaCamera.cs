@@ -40,6 +40,7 @@ namespace Bloodfall.Client.Match
             Cam.depth = 0;
             Listener = go.AddComponent<AudioListener>();
             RenderPipelineBridge.SetupCamera(Cam, settings);
+            Locked = settings.CameraFollowHero;
         }
 
         public Vector3 Focus => _focus;

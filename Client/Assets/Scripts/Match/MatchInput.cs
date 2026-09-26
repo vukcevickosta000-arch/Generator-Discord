@@ -244,7 +244,14 @@ namespace Bloodfall.Client.Match
             LocalError?.Invoke(msg);
         }
 
-        private void Send(Order o) => Mc.SendOrder(o);
+        private void Send(Order o)
+        {
+            // Follow mode: moving or attacking with the hero brings the camera back onto it after the player looked away.
+            if (_settings.CameraFollowHero && MyHero != null && o.UnitId == MyHero.Id
+                && (o.Type == OrderType.Move || o.Type == OrderType.AttackMove || o.Type == OrderType.AttackUnit))
+                _world.Camera.Locked = true;
+            Mc.SendOrder(o);
+        }
 
         /// <summary>Sends the courier for the items bought away from a shop (the ` key; the server checks everything).</summary>
         public void DeliverCourier()
