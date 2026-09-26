@@ -22,13 +22,23 @@ from mathutils import Euler, Vector
 
 SKIN = (0.72, 0.58, 0.5)
 
+# Heroic stylisation (heroes only): MOBA heroes are read from a high camera, so they get bigger heads, hands, shoulders
+# and weapons and sturdier limbs than creeps. Bones keep their layout, so every clip still fits.
+HEROIC = dict(head=1.2, hand=1.35, limb=1.18, pauldron=1.4, weapon=1.3, shoulder=1.06, chest=1.06)
+
+
+def heroic(spec, part):
+    """The stylisation factor for a body part: 1 for non-heroes, HEROIC[part] for hero_* keys (spec 'heroic' overrides)."""
+    on = spec.get("heroic", str(spec.get("key", "")).startswith("hero_"))
+    return HEROIC[part] if on else 1.0
+
 
 def skeleton(spec):
     H = spec["height"]
     k = spec.get("bulk", 1.0)
     hipY, chestY, neckY, headY = 0.52 * H, 0.70 * H, 0.83 * H, 0.865 * H
     shoulderY = 0.805 * H
-    sx = 0.13 * H * (0.85 + 0.15 * k)
+    sx = 0.13 * H * (0.85 + 0.15 * k) * heroic(spec, "shoulder")
     upper, fore, hand = 0.175 * H, 0.155 * H, 0.065 * H
     hx = 0.058 * H * (0.9 + 0.1 * k)
     kneeY, ankleY = 0.27 * H, 0.045 * H
@@ -81,7 +91,7 @@ def build_body(kit, spec, s):
 
     # ---- pelvis / abdomen / chest --------------------------------------------------------------
     hipY, chestY, shoulderY, neckY, headY = s["hipY"], s["chestY"], s["shoulderY"], s["neckY"], s["headY"]
-    chestW, chestD = R(0.105) * k, R(0.07) * k
+    chestW, chestD = R(0.105) * k * heroic(spec, "chest"), R(0.07) * k * heroic(spec, "chest")
     if bone_body:
         bonec = skin
         kit.use(bone="spine", color=bonec, mat="bf_matte", smooth=True)
@@ -107,6 +117,15 @@ def build_body(kit, spec, s):
                    (chestW * 1.1, shoulderY - R(0.01)), (chestW * 0.55, shoulderY + R(0.025))],
                   center=(0, 0, 0), seg=18, scale=(1.0, chestD / chestW))
         if spec.get("cuirass", not spec.get("robe")):
+            if heroic(spec, "chest") > 1.0:
+                # Heroes: two lames across the belly and a gorget, so armour reads as plates rather than one shell.
+                kit.use(color=mul3(spec.get("torso", armor), 0.62), mat=metal)
+                for i, z in enumerate((chestY - R(0.035), chestY - R(0.005))):
+                    kit.lathe([(chestW * (0.93 + 0.05 * i), z - R(0.006)), (chestW * (0.96 + 0.05 * i), z + R(0.006))],
+                              center=(0, 0, 0), seg=18, scale=(1.0, chestD / chestW * 1.02), close_top=False, close_bottom=False)
+                kit.use(color=spec.get("trim", accent), mat=metal)
+                kit.lathe([(chestW * 0.62, shoulderY + R(0.006)), (chestW * 0.5, shoulderY + R(0.04))],
+                          center=(0, 0, 0), seg=16, scale=(1.0, 0.9), close_top=False, close_bottom=False)
             kit.use(color=accent, mat=metal)
             kit.box((0, -chestD * 1.08, chestY + R(0.06)), (chestW * 0.9, R(0.012), R(0.1)), bevel=R(0.004), taper=0.7)
             kit.use(color=glow, mat=kit.glow(glow))
@@ -116,6 +135,12 @@ def build_body(kit, spec, s):
         kit.lathe([(R(0.098) * k, hipY + R(0.03)), (R(0.1) * k, hipY + R(0.055))], seg=18, scale=(1.0, 0.75))
         kit.use(color=accent)
         kit.box((0, -R(0.075) * k, hipY + R(0.043)), (R(0.04), R(0.012), R(0.03)), bevel=R(0.003))
+        if heroic(spec, "chest") > 1.0:
+            # Pouches on the hips.
+            kit.use(color=mul3(spec.get("belt", mul3(armor, 0.7)), 0.8), mat="bf_matte")
+            for sgn in (-1, 1):
+                kit.box((sgn * R(0.085) * k, -R(0.035) * k, hipY + R(0.02)), (R(0.035), R(0.03), R(0.04)), bevel=R(0.006),
+                        rot=Euler((0, 0, math.radians(sgn * 35))), smooth=True)
         if spec.get("tabard"):
             tab = spec["tabard"]
             kit.use(bone="hips", color=tab, mat="bf_matte", smooth=True)
@@ -134,6 +159,16 @@ def build_body(kit, spec, s):
                    (R(0.16) * kr, R(0.01))], seg=20, scale=(1.0, 0.85), close_top=False)
         kit.use(color=accent)
         kit.lathe([(R(0.165) * kr, R(0.03)), (R(0.167) * kr, R(0.05))], seg=20, scale=(1.0, 0.85), close_top=False, close_bottom=False)
+        if heroic(spec, "chest") > 1.0:
+            # Heroes: a sash at the waist, a trim strip down the front and hanging tabs.
+            kit.lathe([(R(0.104) * k, hipY + R(0.02)), (R(0.106) * k, hipY + R(0.05))], seg=20, scale=(1.0, 0.85), close_top=False, close_bottom=False)
+            kit.box((0, -R(0.105) * kr, R(0.32)), (R(0.035), R(0.01), R(0.42)), bevel=R(0.004), taper=0.7,
+                    rot=Euler((math.radians(-7), 0, 0)))
+            kit.use(color=mul3(cloth, 0.7), mat="bf_matte")
+            for sgn in (-1, 1):
+                kit.sheet([(sgn * R(0.03), -R(0.1) * k, hipY + R(0.02)), (sgn * R(0.07), -R(0.095) * k, hipY + R(0.02))],
+                          [(sgn * R(0.035), -R(0.118) * kr, hipY - R(0.16)), (sgn * R(0.08), -R(0.112) * kr, hipY - R(0.15))],
+                          cols=2, rows=3, bulge=-R(0.004), thick=R(0.005))
     elif spec.get("skirt", True) and not bone_body:
         kit.use(bone="hips", color=spec.get("skirt_color", mul3(cloth, 0.9)), mat="bf_matte", smooth=True)
         for side in (-1, 1):
@@ -152,7 +187,7 @@ def build_body(kit, spec, s):
                   cols=8, rows=8, bulge=-R(0.025), wave=R(0.012), thick=R(0.008))
 
     # ---- neck / head ---------------------------------------------------------------------------
-    hr = R(0.052) * (1 + (k - 1) * 0.25) * spec.get("head_scale", 1.0)
+    hr = R(0.052) * (1 + (k - 1) * 0.25) * spec.get("head_scale", heroic(spec, "head"))
     hc = Vector((0, -R(0.005), headY + hr * 1.05))
     kit.use(bone="neck", color=skin, mat="bf_matte", smooth=True)
     kit.capsule((0, 0, neckY - R(0.01)), (0, -R(0.004), headY + R(0.01)), R(0.024) * k, R(0.022) * k, seg=10)
@@ -195,7 +230,8 @@ def build_body(kit, spec, s):
         sh = Vector((sgn * s["sx"], 0, shoulderY))
         el = Vector((sgn * s["elbow"].x, s["elbow"].y, s["elbow"].z))
         wr = Vector((sgn * s["wrist"].x, s["wrist"].y, s["wrist"].z))
-        arm_r = R(0.03) * k
+        arm_r = R(0.03) * k * heroic(spec, "limb")
+        hand_k = heroic(spec, "hand")
         sleeve = skin if bone_body else (cloth if spec.get("robe") else spec.get("sleeve", skin))
         kit.use(bone=f"upper_arm.{side}", color=sleeve, mat="bf_matte", smooth=True)
         if bone_body:
@@ -215,7 +251,7 @@ def build_body(kit, spec, s):
             kit.use(color=cloth, mat="bf_matte")
             kit.lathe([(arm_r * 1.8, 0), (arm_r * 1.1, (el - wr).length * 0.9)], center=wr + (wr - el).normalized() * R(0.01), axis=(el - wr), seg=12, close_top=False, close_bottom=False)
         kit.use(bone=f"hand.{side}", color=skin if not spec.get("gauntlets") else armor, mat="bf_matte" if not spec.get("gauntlets") else metal)
-        kit.ellipsoid(wr + Vector((0, -R(0.004), -s["hand"] * 0.5)), (arm_r * 0.75, arm_r * 0.6, s["hand"] * 0.55), seg=10, rings=6)
+        kit.ellipsoid(wr + Vector((0, -R(0.004), -s["hand"] * 0.5 * hand_k)), (arm_r * 0.75 * hand_k / heroic(spec, "limb"), arm_r * 0.6 * hand_k / heroic(spec, "limb"), s["hand"] * 0.55 * hand_k), seg=12, rings=7)
         if spec.get("claws_hands"):
             kit.use(color=(0.92, 0.88, 0.8), mat="bf_matte")
             for i in (-1, 0, 1):
@@ -229,13 +265,18 @@ def build_body(kit, spec, s):
         # Pauldrons.
         if spec.get("pauldrons", not spec.get("robe") and not bone_body):
             kit.use(bone=f"upper_arm.{side}", color=spec.get("pauldron", armor), mat=metal)
-            pc = sh + Vector((sgn * R(0.012), 0, R(0.005)))
+            pk = k * heroic(spec, "pauldron")
+            pc = sh + Vector((sgn * R(0.012) * pk / k, 0, R(0.005) * pk / k))
             tilt = Euler((0, math.radians(sgn * 25), 0))
-            kit.ellipsoid(pc, (R(0.052) * k, R(0.052) * k, R(0.036) * k), seg=16, rings=8, rot=tilt)
-            kit.ellipsoid(pc + Vector((sgn * R(0.018) * k, 0, -R(0.028) * k)), (R(0.046) * k, R(0.048) * k, R(0.022) * k), seg=16, rings=6, rot=tilt)
+            kit.ellipsoid(pc, (R(0.052) * pk, R(0.052) * pk, R(0.036) * pk), seg=18, rings=9, rot=tilt)
+            kit.ellipsoid(pc + Vector((sgn * R(0.018) * pk, 0, -R(0.028) * pk)), (R(0.046) * pk, R(0.048) * pk, R(0.022) * pk), seg=18, rings=6, rot=tilt)
             kit.use(color=spec.get("trim", accent))
-            kit.lathe([(R(0.047) * k, -R(0.003)), (R(0.05) * k, R(0.003))], center=pc + Vector((sgn * R(0.024) * k, 0, -R(0.036) * k)),
-                      axis=tilt.to_matrix() @ Vector((0, 0, 1)), seg=16, close_top=False, close_bottom=False)
+            kit.lathe([(R(0.047) * pk, -R(0.003)), (R(0.05) * pk, R(0.003))], center=pc + Vector((sgn * R(0.024) * pk, 0, -R(0.036) * pk)),
+                      axis=tilt.to_matrix() @ Vector((0, 0, 1)), seg=18, close_top=False, close_bottom=False)
+            if heroic(spec, "pauldron") > 1.0:
+                # Heroes: a raised rim plate over each pauldron for a stronger shoulder line from above.
+                kit.use(color=spec.get("pauldron", armor))
+                kit.ellipsoid(pc + Vector((sgn * R(0.004) * pk, 0, R(0.022) * pk)), (R(0.036) * pk, R(0.04) * pk, R(0.014) * pk), seg=14, rings=5, rot=tilt)
             if spec.get("spiked"):
                 kit.use(color=accent)
                 kit.spikes(sh + Vector((sgn * R(0.02), 0, R(0.03))), (sgn * 0.4, 0, 1), R(0.025), 3, R(0.05), r=R(0.008))
@@ -245,7 +286,7 @@ def build_body(kit, spec, s):
         hip = Vector((sgn * s["hx"], 0, hipY))
         kn = Vector((sgn * s["hx"], 0, s["kneeY"]))
         an = Vector((sgn * s["hx"], R(0.01), s["ankleY"]))
-        leg_r = R(0.043) * k
+        leg_r = R(0.043) * k * (1 + (heroic(spec, "limb") - 1) * 0.7)
         legc = skin if bone_body else spec.get("legs", mul3(cloth, 0.75))
         kit.use(bone=f"thigh.{side}", color=legc, mat="bf_matte", smooth=True)
         if bone_body:
@@ -262,6 +303,10 @@ def build_body(kit, spec, s):
             ln = (kn - an).length
             kit.lathe([(leg_r * 0.6, -R(0.01)), (leg_r * 0.72, ln * 0.2), (leg_r * 0.86, ln * 0.55), (leg_r * 0.95, ln * 0.7), (leg_r * 1.05, ln * 0.74)],
                       center=an, axis=(kn - an), seg=14, close_top=False, close_bottom=False, scale=(1.0, 1.08))
+            if heroic(spec, "limb") > 1.0:
+                kit.use(color=mul3(spec.get("boots", mul3(armor, 0.8)), 1.25))
+                kit.lathe([(leg_r * 1.02, ln * 0.7), (leg_r * 1.12, ln * 0.78)], center=an, axis=(kn - an), seg=14,
+                          close_top=False, close_bottom=False, scale=(1.0, 1.08))
             kit.use(color=spec.get("knee", armor), mat=metal)
             kit.ellipsoid(kn + Vector((0, -leg_r * 0.55, 0)), (leg_r * 0.6, leg_r * 0.4, leg_r * 0.55), seg=10, rings=6)
         kit.use(bone=f"foot.{side}", color=spec.get("boots", mul3(armor, 0.8)) if not bone_body else skin, mat="bf_matte", smooth=True)
@@ -403,7 +448,8 @@ def build_weapon(kit, spec, s):
     w = spec.get("weapon")
     if not w:
         return
-    H = s["H"]
+    # Heroes carry oversized weapons (readable silhouettes); everything below scales with H.
+    H = s["H"] * heroic(spec, "weapon")
     R = lambda f: f * H
     grip = Vector((-s["wrist"].x, s["wrist"].y - R(0.005), s["wrist"].z - s["hand"] * 0.55))
     steel = spec.get("steel", (0.66, 0.66, 0.7))

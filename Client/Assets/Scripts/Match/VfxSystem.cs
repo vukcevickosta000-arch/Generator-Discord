@@ -174,6 +174,9 @@ namespace Bloodfall.Client.Match
             R("hit_magic").Add(Burst("dot", new Color(0.6f, 0.4f, 1f), new Color(1f, 0.6f, 1f), 10, 1.5f, 3f, 0.08f, 0.18f, 0.5f)).Add(Flash(new Color(0.7f, 0.4f, 1f), 1.1f, 0.15f)).Duration = 0.7f;
             R("hit_blood").Add(BloodSpray(8, 3.5f)).Add(Flash(blood, 0.9f, 0.12f)).Duration = 0.8f;
             R("hit_bone").Add(Burst("dot", new Color(0.9f, 0.85f, 0.75f), new Color(0.7f, 0.65f, 0.55f), 8, 2f, 4f, 0.05f, 0.12f, 0.6f, false, 3f)).Duration = 0.7f;
+            // Melee swing arcs at the point of impact (heroes' blows and every crit).
+            R("melee_swing").Add(GroundRing("slash_arc", new Color(1f, 0.9f, 0.8f, 0.8f), 1.5f, 0.16f, 1.25f)).Duration = 0.3f;
+            R("melee_swing_heavy").Add(GroundRing("slash_arc", new Color(1f, 0.55f, 0.35f), 2.4f, 0.22f, 1.35f)).Add(Sparks(new Color(1f, 0.6f, 0.3f), 8, 6f)).Duration = 0.45f;
             R("miss").Add(Burst("dust", dust, dust, 4, 0.5f, 1.2f, 0.4f, 0.7f, 0.5f, false)).Duration = 0.6f;
 
             // --- deaths

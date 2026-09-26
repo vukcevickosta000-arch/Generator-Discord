@@ -457,9 +457,10 @@ namespace Bloodfall.Simulation
             if (Tick % 15 == 0) UpdateAuras();
             if (Tick % 3 == 0) UpdateIntervalTriggers();
 
-            // RTS: alternate the update direction every tick. Units update in creation order, so a fixed order let
-            // the first player's units win every simultaneous exchange of blows (a 2:1 edge in bot mirrors).
-            bool reverse = IsRts && (Tick & 1) == 1;
+            // Alternate the update direction every tick. Units update in creation order, so a fixed order let the
+            // first-created side win every simultaneous exchange of blows: a 2:1 edge in RTS bot mirrors, and in
+            // Blood War, where each wave spawns Dawn's creeps first, Dawn won 20 of 30 decided bot games.
+            bool reverse = (Tick & 1) == 1;
             for (int n = 0; n < Units.Count; n++)
             {
                 var u = Units[reverse ? Units.Count - 1 - n : n];

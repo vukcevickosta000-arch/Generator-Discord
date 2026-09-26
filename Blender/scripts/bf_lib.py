@@ -77,7 +77,12 @@ def material(name, glow=None):
         bsdf.inputs["Base Color"].default_value = srgb_to_linear((0.55, 0.06, 0.09))
         bsdf.inputs["Roughness"].default_value = 0.6
     else:
-        nt.links.new(attr.outputs["Color"], bsdf.inputs["Base Color"])
+        # Col is an 8-bit sRGB attribute that holds *linear* values (Unity reads the bytes as linear), and the Attribute
+        # node decodes sRGB once more. Re-encode so Blender renders (previews, portraits) show the authored colours.
+        gamma = nt.nodes.new("ShaderNodeGamma")
+        gamma.inputs["Gamma"].default_value = 1.0 / 2.2
+        nt.links.new(attr.outputs["Color"], gamma.inputs["Color"])
+        nt.links.new(gamma.outputs["Color"], bsdf.inputs["Base Color"])
         bsdf.inputs["Roughness"].default_value = 0.35 if name == "bf_metal" else 0.75
         bsdf.inputs["Metallic"].default_value = 0.75 if name == "bf_metal" else 0.0
     if glow is not None:
@@ -552,7 +557,8 @@ def render_preview(path, focus_height, distance=None, size=512, samples=24, yaw=
     scene.render.resolution_x = size
     scene.render.resolution_y = size
     scene.render.film_transparent = False
-    scene.view_settings.view_transform = 'AgX' if 'AgX' in [v.identifier for v in bpy.types.ColorManagedViewSettings.bl_rna.properties['view_transform'].enum_items] else 'Filmic'
+    # Standard, like the game (AgX desaturated every preview).
+    scene.view_settings.view_transform = 'Standard'
     world = bpy.data.worlds.new("preview") if not scene.world else scene.world
     scene.world = world
     world.use_nodes = True
@@ -561,7 +567,7 @@ def render_preview(path, focus_height, distance=None, size=512, samples=24, yaw=
         bg.inputs[0].default_value = (0.09, 0.085, 0.09, 1)
         bg.inputs[1].default_value = 1.0
     h = focus_height
-    dist = distance or max(3.0, h * 2.3)
+    dist = distance or max(3.0, h * 2.0)
     cam_data = bpy.data.cameras.new("cam")
     cam_data.lens = 50
     cam = link(bpy.data.objects.new("cam", cam_data))
@@ -573,7 +579,7 @@ def render_preview(path, focus_height, distance=None, size=512, samples=24, yaw=
     scene.camera = cam
     for i, (loc, energy, col) in enumerate((((3, -4, 5), 1600, (1, 0.93, 0.85)), ((-4, -1, 3), 700, (0.6, 0.7, 1.0)), ((0, 5, 4), 700, (1, 0.35, 0.3)))):
         ld = bpy.data.lights.new(f"l{i}", 'AREA')
-        ld.energy = energy * extra_light * max(1.0, h / 2.0) ** 2
+        ld.energy = energy * 0.6 * extra_light * max(1.0, h / 2.0) ** 2   # 0.6: tuned for the Standard transform
         ld.size = 3
         ld.color = col
         lo = link(bpy.data.objects.new(f"l{i}", ld))

@@ -162,10 +162,17 @@ namespace Bloodfall.Client.Match
         }
 
         /// <summary>Ground-plane corners of the view (for the minimap frustum outline).</summary>
+        private readonly Vector3[] _corners = new Vector3[4];
+        private readonly Vector2[] _screenCorners = new Vector2[4];
+
+        /// <summary>Ground points under the four screen corners. The array is reused: copy it to keep it.</summary>
         public Vector3[] ViewCorners()
         {
-            var corners = new Vector3[4];
-            Vector2[] screen = { new Vector2(0, 0), new Vector2(Screen.width, 0), new Vector2(Screen.width, Screen.height), new Vector2(0, Screen.height) };
+            var corners = _corners;
+            var screen = _screenCorners;
+            screen[1] = new Vector2(Screen.width, 0);
+            screen[2] = new Vector2(Screen.width, Screen.height);
+            screen[3] = new Vector2(0, Screen.height);
             for (int i = 0; i < 4; i++)
             {
                 var ray = Cam.ScreenPointToRay(screen[i]);

@@ -182,9 +182,36 @@ namespace Bloodfall.Client.Match
             }
         }
 
+        /// <summary>Visual-only recoil away from a hit, and a short animation freeze on heavy blows (crits).</summary>
+        public float HitStop;
+        private Vector3 _flinchDir;
+        private float _flinchAmount, _flinchT = 1f;
+        private const float FlinchTime = 0.16f;
+
+        /// <summary>Current recoil offset, added to the rendered position.</summary>
+        public Vector3 FlinchOffset => _flinchT < 1f ? _flinchDir * (_flinchAmount * Mathf.Sin(_flinchT * Mathf.PI)) : Vector3.zero;
+
+        /// <summary>Pushes the model briefly away from <paramref name="from"/> (structures never move).</summary>
+        public void Flinch(Vector3 from, float amount)
+        {
+            if (IsStructure || Dying) return;
+            var d = Position - from;
+            d.y = 0f;
+            if (d.sqrMagnitude < 1e-4f) return;
+            _flinchDir = d.normalized;
+            // A bigger blow always wins over a smaller one still playing.
+            if (_flinchT < 1f && amount < _flinchAmount * Mathf.Sin(_flinchT * Mathf.PI)) return;
+            _flinchAmount = amount;
+            _flinchT = 0f;
+        }
+
         public void Tick(float dt, MatchWorld world)
         {
-            Animator.Update(dt);
+            // Hit-stop slows this unit's animation to a near-freeze for a few frames; the simulation is unaffected.
+            float animDt = dt;
+            if (HitStop > 0f) { HitStop -= dt; animDt = dt * 0.06f; }
+            Animator.Update(animDt);
+            if (_flinchT < 1f) _flinchT = Mathf.Min(1f, _flinchT + dt / FlinchTime);
             HitFlash = Mathf.Max(0f, HitFlash - dt * 5f);
             if (FadeIn < 1f) FadeIn = Mathf.Min(1f, FadeIn + dt * 3f);
 

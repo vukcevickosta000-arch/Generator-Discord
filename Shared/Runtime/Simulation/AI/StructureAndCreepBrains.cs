@@ -40,17 +40,49 @@ namespace Bloodfall.Simulation
                 return;
             }
 
-            // Advance along the lane.
+            // Advance along the lane. Past its last waypoint (index -1 or Count) the wave marches on the enemy base:
+            // the lane ends short of the core, and a wave that stopped there would stand idle out of reach forever.
             int dir = u.Team == Team.Dawn ? 1 : -1;
-            u.WaypointIndex = MathUtil.Clamp(u.WaypointIndex, 0, wps.Count - 1);
-            Vector2 wp = wps[u.WaypointIndex];
-            if (Vector2.Distance(u.Position, wp) < 3f)
+            u.WaypointIndex = MathUtil.Clamp(u.WaypointIndex, -1, wps.Count);
+            Vector2 wp;
+            if (u.WaypointIndex < 0 || u.WaypointIndex >= wps.Count)
             {
-                int next = u.WaypointIndex + dir;
-                if (next >= 0 && next < wps.Count) { u.WaypointIndex = next; wp = wps[next]; }
+                var s = SiegeTarget(m, u);
+                if (s == null) return;
+                wp = s.Position;
+            }
+            else
+            {
+                wp = wps[u.WaypointIndex];
+                if (Vector2.Distance(u.Position, wp) < 3f)
+                {
+                    u.WaypointIndex += dir;
+                    if (u.WaypointIndex >= 0 && u.WaypointIndex < wps.Count) wp = wps[u.WaypointIndex];
+                    else
+                    {
+                        var s = SiegeTarget(m, u);
+                        if (s == null) return;
+                        wp = s.Position;
+                    }
+                }
             }
             if (u.CurrentOrder.Type != OrderType.AttackMove || Vector2.DistanceSquared(u.CurrentOrder.Point, wp) > 0.01f)
                 m.IssueOrder(u, Order.AttackMoveTo(u.Id, wp));
+        }
+
+        /// <summary>The nearest enemy tower, barracks or core, preferring ones that can be damaged now.</summary>
+        private static Unit SiegeTarget(Match m, Unit u)
+        {
+            Unit best = null;
+            float bestScore = float.MaxValue;
+            foreach (var t in m.Units)
+            {
+                if (t.Dead || t.Team == u.Team || t.Team == Team.Neutral) continue;
+                if (t.Kind != UnitKind.Tower && t.Kind != UnitKind.Barracks && t.Kind != UnitKind.Core) continue;
+                float score = Vector2.DistanceSquared(u.Position, t.Position) + (t.Invulnerable ? 1e6f : 0f);
+                if (score < bestScore) { bestScore = score; best = t; }
+            }
+            return best;
         }
 
         private static Unit FindCreepTarget(Match m, Unit u)

@@ -75,6 +75,32 @@ headless through the `bpy` module (Blender 5.0) or `blender -b -P`, and exports 
 **Unity mapping.** Materials are named `bf_matte`, `bf_metal`, `bf_team` or `bf_glow_RRGGBB`, and colours live in
 vertex colours. `ModelFactory.ConvertMaterials` maps them to the Bloodfall/Lit materials.
 
+**Colour encoding.** The `Col` attribute is 8-bit sRGB but holds *linear* values, which Unity's Lit shader reads as
+linear. Blender's own renders (previews, portraits) re-encode the attribute with a 1/2.2 gamma node and use the
+Standard view transform. Before this they decoded it twice under AgX, so every preview and portrait was darker and
+greyer than the authored colours; the models themselves were unaffected.
+
+**Heroic stylisation.** `hero_*` keys get MOBA proportions for readability from the high camera
+(`bf_humanoid.HEROIC`):
+
+| Part | Factor |
+|---|---|
+| Head | 1.2× |
+| Hands | 1.35× |
+| Pauldrons | 1.4× |
+| Weapons | 1.3× |
+| Limbs | 1.18× |
+| Shoulders and chest | 1.06× |
+
+Heroes also get:
+
+- belly lames and a gorget on cuirasses;
+- a sash, front trim and hem tabs on robes;
+- hip pouches and boot cuffs.
+
+The bones keep their layout, so every clip fits. A spec can opt out with `heroic=False`. The current eight heroes are in
+`Docs/Images/heroes.png`.
+
 **Not yet verified in Unity** (T-002):
 
 - the FBX axis conversion (+Z forward)

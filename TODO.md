@@ -136,6 +136,8 @@ Items are listed in priority order. IDs are stable, so they can be referenced fr
   interface. Development keeps logging.
 - **T-018** Illusions and resurrection effect types, which are currently no-ops with a comment.
 - **T-019** Unity: pooled health-bar meshes if UI Toolkit bar count becomes a bottleneck (profile first).
+- **T-036** Find the Dawn lean in 5v5 bot games (B-010): mirror runs with every hero, lane assignment by lane name,
+  Vharoth access, bot code using team coordinates.
 - **T-021** Side shops: purchases within side-shop range go to the inventory. Flag side-shop and secret-shop stock
   in the item data.
 - **T-020** SSAO renderer feature via ProjectSetup once verified against URP 17 APIs (the setting exists but is not

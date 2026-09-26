@@ -49,7 +49,7 @@ def render(key):
     scene.cycles.samples = 48
     scene.cycles.use_denoising = True
     scene.render.resolution_x, scene.render.resolution_y = 256, 320
-    scene.view_settings.view_transform = 'AgX'
+    scene.view_settings.view_transform = 'Standard'
     world = bpy.data.worlds.new("w"); scene.world = world;     world.node_tree.nodes["Background"].inputs[0].default_value = (*L.srgb_to_linear(back)[:3], 1)
     world.node_tree.nodes["Background"].inputs[1].default_value = 0.6
     # Backdrop card with a radial glow behind the head.
@@ -58,7 +58,7 @@ def render(key):
     cam = L.link(bpy.data.objects.new("cam", cam_d))
     # From the character's left (weapons are held in the right hand), looking slightly up at the face.
     yaw = math.radians(24)
-    dist = H * 1.02
+    dist = H * 1.18   # heroes have bigger heads (bf_humanoid.HEROIC): frame a little wider
     aim = head - Vector((0, 0, 0.05 * H))
     cam.location = aim + Vector((math.sin(yaw) * dist, -math.cos(yaw) * dist, -0.02 * H))
     cam.rotation_euler = (aim - cam.location).to_track_quat('-Z', 'Y').to_euler()
@@ -66,7 +66,7 @@ def render(key):
     for i, (loc, energy, col, size) in enumerate(((((1.5, -2.5, 1.2)), 380, (1, 0.95, 0.9), 1.5),
                                                   (((-2.0, 1.5, 0.8)), 700, rim, 0.8),
                                                   (((0.0, 2.0, 1.5)), 450, rim, 1.5))):
-        ld = bpy.data.lights.new(f"l{i}", 'AREA'); ld.energy = energy * (H / 2) ** 2; ld.size = size; ld.color = col
+        ld = bpy.data.lights.new(f"l{i}", 'AREA'); ld.energy = energy * 0.65 * (H / 2) ** 2; ld.size = size; ld.color = col
         lo = L.link(bpy.data.objects.new(f"l{i}", ld))
         lo.location = head + Vector(loc) * (H / 2)
         lo.rotation_euler = (head - lo.location).to_track_quat('-Z', 'Y').to_euler()

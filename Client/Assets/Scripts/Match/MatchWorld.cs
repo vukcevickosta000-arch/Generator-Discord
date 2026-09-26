@@ -35,8 +35,9 @@ namespace Bloodfall.Client.Match
         private readonly Dictionary<int, EntityView> _views = new Dictionary<int, EntityView>();
         private readonly List<EntityView> _viewList = new List<EntityView>();
         private readonly HashSet<int> _seen = new HashSet<int>();
-        private readonly Dictionary<int, object> _statusFx = new Dictionary<int, object>();
-        private readonly Dictionary<(int, string), object> _statusHandles = new Dictionary<(int, string), object>();
+        /// <summary>Looping status effects per entity id, keyed by vfx id.</summary>
+        private readonly Dictionary<int, Dictionary<string, object>> _statusFx = new Dictionary<int, Dictionary<string, object>>();
+        private readonly List<string> _endedFx = new List<string>();
         private Light _sun;
         private float _nightBlend;
         private float _bloodMoonBlend;
@@ -165,6 +166,8 @@ namespace Bloodfall.Client.Match
             return _views.TryGetValue(h.Id, out var v) ? v.Position : Map.World(h.Position);
         }
 
+        private readonly Dictionary<int, EntityState> _prevById = new Dictionary<int, EntityState>();
+
         public void Tick(float dt)
         {
             var client = Controller.Client;
@@ -188,7 +191,8 @@ namespace Bloodfall.Client.Match
             }
             float t = b.Tick == a.Tick ? 1f : Mathf.Clamp01((float)((_renderTick - a.Tick) / (b.Tick - a.Tick)));
 
-            var prevByid = new Dictionary<int, EntityState>(a.Entities.Count);
+            var prevByid = _prevById;
+            prevByid.Clear();
             foreach (var e in a.Entities) prevByid[e.Id] = e;
             _seen.Clear();
             foreach (var e in b.Entities)
@@ -253,7 +257,7 @@ namespace Bloodfall.Client.Match
                 // One broken view (bad model, missing clip) must not freeze every other unit on screen.
                 try
                 {
-                    v.Model.Root.transform.SetPositionAndRotation(v.Position - Vector3.up * v.ConstructionSink, Quaternion.Euler(0, v.FacingDeg, 0));
+                    v.Model.Root.transform.SetPositionAndRotation(v.Position + v.FlinchOffset - Vector3.up * v.ConstructionSink, Quaternion.Euler(0, v.FacingDeg, 0));
                     v.Tick(dt, this);
                 }
                 catch (Exception e) { Faults.Report("view " + v.DefId, e); }
@@ -353,39 +357,45 @@ namespace Bloodfall.Client.Match
                 if (s.Id == null || !Data.Statuses.TryGetValue(s.Id, out var def) || string.IsNullOrEmpty(def.Vfx) || def.Vfx == "stun_stars" || def.Vfx == "magic_immune") continue;
                 SetStatusFx(v, def.Vfx, true);
             }
-            // Remove effects whose status ended.
-            List<(int, string)> ended = null;
-            foreach (var key in _statusHandles.Keys)
+            // Remove effects whose status ended (only this entity's own effects are scanned).
+            if (!_statusFx.TryGetValue(v.Id, out var mine) || mine.Count == 0) return;
+            _endedFx.Clear();
+            foreach (var key in mine.Keys)
             {
-                if (key.Item1 != v.Id || key.Item2 == "stun_stars" || key.Item2 == "magic_immune") continue;
+                if (key == "stun_stars" || key == "magic_immune") continue;
                 bool still = false;
                 foreach (var s in e.Statuses)
-                    if (s.Id != null && Data.Statuses.TryGetValue(s.Id, out var d) && d.Vfx == key.Item2) { still = true; break; }
-                if (!still) (ended ??= new List<(int, string)>()).Add(key);
+                    if (s.Id != null && Data.Statuses.TryGetValue(s.Id, out var d) && d.Vfx == key) { still = true; break; }
+                if (!still) _endedFx.Add(key);
             }
-            if (ended != null) foreach (var k in ended) { Vfx.Stop(_statusHandles[k]); _statusHandles.Remove(k); }
+            foreach (var k in _endedFx) { Vfx.Stop(mine[k]); mine.Remove(k); }
         }
 
         private void SetStatusFx(EntityView v, string key, bool on)
         {
-            var k = (v.Id, key);
-            bool has = _statusHandles.ContainsKey(k);
+            _statusFx.TryGetValue(v.Id, out var mine);
+            bool has = mine != null && mine.ContainsKey(key);
             if (on && !has)
             {
                 var h = Vfx.Play(key, v.Point(0.5f), v, 0f, 999f);
-                if (h != null) _statusHandles[k] = h;
+                if (h == null) return;
+                if (mine == null) _statusFx[v.Id] = mine = new Dictionary<string, object>();
+                mine[key] = h;
             }
             else if (!on && has)
             {
-                Vfx.Stop(_statusHandles[k]);
-                _statusHandles.Remove(k);
+                Vfx.Stop(mine[key]);
+                mine.Remove(key);
             }
         }
 
         private void RemoveStatusEffects(int id)
         {
-            var keys = _statusHandles.Keys.Where(k => k.Item1 == id).ToList();
-            foreach (var k in keys) { Vfx.Stop(_statusHandles[k]); _statusHandles.Remove(k); }
+            if (_statusFx.TryGetValue(id, out var mine))
+            {
+                foreach (var h in mine.Values) Vfx.Stop(h);
+                _statusFx.Remove(id);
+            }
             if (_channelFx.TryGetValue(id, out var c)) { Vfx.Stop(c); _channelFx.Remove(id); }
         }
 
@@ -419,6 +429,20 @@ namespace Bloodfall.Client.Match
                     if (!_views.TryGetValue(e.OtherId, out var target)) break;
                     target.HitFlash = 1f;
                     bool crit = (e.Flags & SimEvent.FlagCrit) != 0;
+                    _views.TryGetValue(e.UnitId, out var attacker);
+                    if (attacker != null)
+                    {
+                        // Weight: the target recoils from the blow (more for crits and melee), melee swings leave an arc.
+                        bool melee = attacker.Hero != null ? attacker.Hero.AttackType == AttackType.Melee : attacker.Unit != null && attacker.Unit.AttackType == AttackType.Melee;
+                        target.Flinch(attacker.Position, crit ? 0.2f : melee ? 0.09f : 0.05f);
+                        if (melee && (attacker.IsHero || crit)) Vfx.Play(crit ? "melee_swing_heavy" : "melee_swing", target.Point(0.55f));
+                        var me = Controller.LocalHero;
+                        if (crit && me != null && (attacker.Id == me.Id || target.Id == me.Id))
+                        {
+                            attacker.HitStop = target.HitStop = 0.08f;
+                            Camera.Shake(0.18f, target.Position);
+                        }
+                    }
                     string hitFx = crit ? "hit_crit" : target.Unit != null && target.Unit.Tags != null && Array.IndexOf(target.Unit.Tags, "undead") >= 0 ? "hit_bone" : target.IsStructure ? "hit_physical" : "hit_blood";
                     Vfx.Play(hitFx, target.Point(0.55f));
                     var sfx = SfxFor(e.UnitId, true);
@@ -439,7 +463,16 @@ namespace Bloodfall.Client.Match
                     if (_views.TryGetValue(e.UnitId, out var hit)) { hit.HitFlash = 0.8f; Vfx.Play(e.Key != null && e.Key.Contains("blood") ? "blood_impact" : "hit_magic", hit.Point(0.55f)); }
                     break;
                 case SimEventType.Damage:
-                    if (_views.TryGetValue(e.UnitId, out var dv)) dv.HitFlash = Mathf.Max(dv.HitFlash, 0.6f);
+                    if (_views.TryGetValue(e.UnitId, out var dv))
+                    {
+                        dv.HitFlash = Mathf.Max(dv.HitFlash, 0.6f);
+                        // Our own hero taking a big hit: a shake scaled by the share of health it cost.
+                        if (dv.Id == Controller.LocalHero?.Id && dv.State != null && dv.State.MaxHp > 0)
+                        {
+                            float share = e.Value / dv.State.MaxHp;
+                            if (share >= 0.08f) Camera.Shake(Mathf.Min(0.5f, 0.1f + share * 1.2f), dv.Position);
+                        }
+                    }
                     if (!string.IsNullOrEmpty(e.Key)) Vfx.Play(e.Key, EventPoint(e, e.UnitId));
                     break;
                 case SimEventType.Miss:

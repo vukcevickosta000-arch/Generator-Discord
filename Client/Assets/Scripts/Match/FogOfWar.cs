@@ -34,6 +34,8 @@ namespace Bloodfall.Client.Match
         private readonly Texture2D _mini;
         private readonly Color32[] _miniPixels;
         private float _miniTimer;
+        private float _smoothAccum;
+        private bool _miniDirty = true, _enabledShown;
 
         public FogOfWar(NavGrid grid, GameData data)
         {
@@ -47,6 +49,10 @@ namespace Bloodfall.Client.Match
             _miniPixels = new Color32[Width * Height];
             _current = new float[Width * Height];
             _explored = new float[Width * Height];
+            // Start fully fogged: only cells whose visibility changes are written afterwards.
+            for (int i = 0; i < _pixels.Length; i++) _pixels[i] = new Color32(0, 0, 0, 255);
+            _tex.SetPixels32(_pixels);
+            _tex.Apply(false, false);
             Shader.SetGlobalTexture(FogTexId, _tex);
             Shader.SetGlobalVector(FogParamsId, new Vector4(1f / grid.WorldWidth, 1f / grid.WorldHeight, 1f, 0.42f));
             Shader.SetGlobalColor(FogColorId, new Color(0.62f, 0.66f, 0.85f));
@@ -66,6 +72,7 @@ namespace Bloodfall.Client.Match
             if (!Enabled || team == Team.None)
             {
                 Shader.SetGlobalVector(FogParamsId, new Vector4(1f / Width, 1f / Height, 0f, 0.42f));
+                _enabledShown = false;
                 return;
             }
             _timer -= dt;
@@ -86,24 +93,44 @@ namespace Bloodfall.Client.Match
                 int t = team == Team.Dawn ? 0 : 1;
                 _vision.UpdateFromSources(t, _sources);
             }
-            // Smooth towards the target every frame for soft edges.
+            // Smooth towards the target for soft edges, at most 30 times a second (the texture is bilinear-filtered, so a
+            // faster refresh is invisible) and with no upload at all once every cell has settled.
+            _smoothAccum += dt;
+            if (_smoothAccum < 1f / 30f) return;
+            dt = Mathf.Min(_smoothAccum, 0.25f);
+            _smoothAccum = 0f;
             int ti = team == Team.Dawn ? 0 : 1;
             var vis = _vision.Visible[ti];
             float k = 1f - Mathf.Exp(-dt * 10f);
+            bool changed = false;
             for (int i = 0; i < _current.Length; i++)
             {
                 float target = vis[i] > 0 ? 1f : 0f;
-                _current[i] += (target - _current[i]) * k;
-                if (_current[i] > _explored[i]) _explored[i] = _current[i];
-                _pixels[i] = new Color32((byte)(_current[i] * 255f), (byte)(_explored[i] * 255f), 0, 255);
+                float c = _current[i];
+                if (c == target) continue;
+                c += (target - c) * k;
+                if (Mathf.Abs(target - c) < 0.004f) c = target;
+                _current[i] = c;
+                if (c > _explored[i]) _explored[i] = c;
+                var px = new Color32((byte)(c * 255f), (byte)(_explored[i] * 255f), 0, 255);
+                if (px.r != _pixels[i].r || px.g != _pixels[i].g) { _pixels[i] = px; changed = true; }
             }
-            _tex.SetPixels32(_pixels);
-            _tex.Apply(false, false);
-            Shader.SetGlobalVector(FogParamsId, new Vector4(1f / Width, 1f / Height, 1f, 0.42f));
+            if (changed)
+            {
+                _tex.SetPixels32(_pixels);
+                _tex.Apply(false, false);
+                _miniDirty = true;
+            }
+            if (!_enabledShown)
+            {
+                _enabledShown = true;
+                Shader.SetGlobalVector(FogParamsId, new Vector4(1f / Width, 1f / Height, 1f, 0.42f));
+            }
             _miniTimer -= dt;
-            if (_miniTimer <= 0f)
+            if (_miniTimer <= 0f && _miniDirty)
             {
                 _miniTimer = 0.2f;
+                _miniDirty = false;
                 for (int i = 0; i < _current.Length; i++)
                 {
                     float dark = (1f - _current[i]) * (_explored[i] > 0.5f ? 0.45f : 0.75f);
@@ -128,6 +155,7 @@ namespace Bloodfall.Client.Match
         public void Reveal()
         {
             Enabled = false;
+            _enabledShown = false;
             Shader.SetGlobalVector(FogParamsId, new Vector4(1f / Width, 1f / Height, 0f, 0.42f));
         }
 

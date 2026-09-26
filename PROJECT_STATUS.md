@@ -16,9 +16,10 @@ This file is the honest source of truth for what works. Status labels:
 | Check | Result | How to reproduce |
 |---|---|---|
 | Server solution build (`Server/Bloodfall.sln`) | ✅ builds, 0 warnings-as-errors | `dotnet build Server/Bloodfall.sln` |
-| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 115 / 115 pass | `dotnet test Server/tests/Bloodfall.Tests` |
+| Unit tests (`Server/tests/Bloodfall.Tests`) | ✅ 116 / 116 pass | `dotnet test Server/tests/Bloodfall.Tests` |
 | End-to-end online test (real backend + game server over UDP): a MOBA match, then an RTS match | ✅ **E2E PASSED** | `Tools/dev/run-e2e.sh` |
 | 20-minute 5v5 bot simulation (all eight heroes) | ✅ runs, 0.28 ms/tick | `dotnet run -c Release --project Server/tools/Bloodfall.SimRunner -- 20 11` |
+| Soak: 40 hour-long 5v5 bot games (seeds 101–140) plus 48 RTS games (every faction pairing) | ✅ no crash or exception in 88 games. Every 5v5 game ends, in 25–53 min (mean 38). 0.30 ms/tick median, 0.46 max. Dawn wins 33 of 40 (B-010). | `... SimRunner -- 60 <seed>` |
 | RTS bot games (Ashfields, 40-game series) | ✅ games decided in 12–14 min on average with heroes. Faction totals 45–54%. Start sides even: 112–121 over six mirror series. 0–3 draws per 40 games. About 0.05 ms/tick. | `... SimRunner -- 30 5000 --rts --games 40 --factions a,b` |
 | Unity client scripts compile check (UnityEngine 2021.3 reference assemblies) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck` |
 | Unity editor scripts compile check (Unity3D.SDK 2021.1) | ✅ 0 errors | `dotnet build Tools/UnityCompileCheck/Editor` |
@@ -163,6 +164,18 @@ lobby → hero select → loading → match → post-game.
 - Health bars are drawn after the camera moves, so they stay on their units while it follows. They show a draining
   damage chip and shields (protocol v9).
 - Pooled VFX: impacts, projectiles, zones, statuses, deaths.
+- Hit feel:
+  - struck units flinch away from the blow;
+  - crits involving your hero freeze both models for 80 ms and shake the camera;
+  - hero and crit melee blows leave a swing arc;
+  - a hit that costs your hero 8% or more of its health shakes the screen in proportion;
+  - below 30% health a red vignette pulses.
+- Frame cost:
+  - minimap markers are one mesh;
+  - fog smoothing runs at 30 Hz and uploads only when it changes;
+  - HUD pips, portraits and buffs are rebuilt only when they change;
+  - status effects are tracked per unit.
+  (Not profiled in Unity yet.)
 - HUD: bars, abilities, items, stash, buffs, minimap with fog, kill feed, announcer text, chat, shop, scoreboard,
   death/buyback screen and game menu (pause in practice).
 

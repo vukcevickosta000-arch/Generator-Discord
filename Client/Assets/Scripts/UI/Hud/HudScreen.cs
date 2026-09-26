@@ -34,12 +34,47 @@ namespace Bloodfall.Client.UI.Screens
         private TextField _chatInput;
         private bool _chatTeam = true;
         private float _errorTimer, _announceTimer;
-        private string _abilityKey = "";
         private readonly List<SlotView> _abilitySlots = new List<SlotView>();
         private readonly List<SlotView> _itemSlots = new List<SlotView>();
         private int _dragFrom = -1;
         private int _chatCount;
         private float _slowTick;
+        private VisualElement _lowHp;
+        private static Texture2D _vignette;
+
+        /// <summary>A red edge vignette (transparent centre), built once.</summary>
+        private static Texture2D VignetteTexture()
+        {
+            if (_vignette != null) return _vignette;
+            const int n = 128;
+            _vignette = new Texture2D(n, n, TextureFormat.RGBA32, false) { name = "LowHealthVignette", wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[n * n];
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float dx = (x + 0.5f) / n * 2f - 1f, dy = (y + 0.5f) / n * 2f - 1f;
+                    float d = Mathf.Sqrt(dx * dx * 0.8f + dy * dy);
+                    float a = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.55f, 1.25f, d));
+                    px[y * n + x] = new Color32(150, 0, 8, (byte)(a * 230f));
+                }
+            _vignette.SetPixels32(px);
+            _vignette.Apply(false, true);
+            return _vignette;
+        }
+
+        /// <summary>Pulses the red vignette below 30% health, faster and stronger the lower it gets.</summary>
+        private void UpdateLowHealth(EntityState hero)
+        {
+            float frac = hero != null && hero.MaxHp > 0 && !hero.Has(EntityFlags.Dead) ? hero.Hp / hero.MaxHp : 1f;
+            float danger = Mathf.Clamp01((0.3f - frac) / 0.3f);
+            float opacity = 0f;
+            if (danger > 0f)
+            {
+                float rate = Mathf.Lerp(2.5f, 6f, danger);
+                opacity = Mathf.Lerp(0.35f, 0.85f, danger) * (0.7f + 0.3f * Mathf.Sin(Time.unscaledTime * rate));
+            }
+            if (Mathf.Abs(_lowHp.resolvedStyle.opacity - opacity) > 0.01f) _lowHp.style.opacity = opacity;
+        }
 
         private sealed class SlotView
         {
@@ -48,6 +83,7 @@ namespace Bloodfall.Client.UI.Screens
             public Button LevelUp;
             public int Index;
             public string Id;
+            public int PipLevel = -1, PipMax = -1;
         }
 
         protected override void OnBuild(VisualElement root)
@@ -55,6 +91,11 @@ namespace Bloodfall.Client.UI.Screens
             root.pickingMode = PickingMode.Ignore;
             _overlay = new WorldOverlay(App.Settings);
             root.Add(_overlay.Root);
+            _lowHp = new VisualElement { pickingMode = PickingMode.Ignore };
+            _lowHp.AddToClassList("fill");
+            _lowHp.style.backgroundImage = new StyleBackground(VignetteTexture());
+            _lowHp.style.opacity = 0f;
+            root.Add(_lowHp);
 
             BuildTopBar(root);
             BuildKillFeed(root);
@@ -428,7 +469,7 @@ namespace Bloodfall.Client.UI.Screens
             _overlay.Bind(mc.World);
             _minimap.Bind(mc.World);
             _shop.Bind(mc);
-            _abilityKey = "";
+            _abilityIds = new string[0];
             mc.EventReceived -= OnEvent;
             mc.EventReceived += OnEvent;
             if (mc.World?.Input != null)
@@ -748,8 +789,32 @@ namespace Bloodfall.Client.UI.Screens
             FillPortraits(_topDusk, frame, Team.Dusk);
         }
 
+        private static int PortraitHash(SnapshotFrame frame, Team team)
+        {
+            int h = 17;
+            unchecked
+            {
+                foreach (var p in frame.Players)
+                {
+                    if (p.Team != team) continue;
+                    h = h * 31 + p.Slot;
+                    h = h * 31 + (p.HeroId?.GetHashCode() ?? 0);
+                    h = h * 31 + (p.Name?.GetHashCode() ?? 0);
+                    h = h * 31 + Mathf.CeilToInt(p.RespawnIn);
+                    h = h * 31 + p.Level;
+                    h = h * 31 + (int)p.Connection;
+                    h = h * 31 + p.Kills * 961 + p.Deaths * 31 + p.Assists;
+                }
+            }
+            return h;
+        }
+
         private void FillPortraits(VisualElement host, SnapshotFrame frame, Team team)
         {
+            // Rebuilt only when something shown changed (respawn seconds, level, K/D/A, connection).
+            int hash = PortraitHash(frame, team);
+            if (host.userData is int shown && shown == hash) return;
+            host.userData = hash;
             host.Clear();
             foreach (var p in frame.Players.Where(p => p.Team == team).OrderBy(p => p.Slot))
             {
@@ -783,6 +848,7 @@ namespace Bloodfall.Client.UI.Screens
             var heroState = _mc.LocalHero;
             var lp = _mc.LocalPlayer;
             _plate.Show(heroState != null && me != null);
+            UpdateLowHealth(heroState);
             if (heroState == null || me == null) { _deathOverlay.Show(false); return; }
             if (lp?.HeroId != null && App.Data.Heroes.TryGetValue(lp.HeroId, out var hd))
             {
@@ -816,10 +882,8 @@ namespace Bloodfall.Client.UI.Screens
 
         private void UpdateAbilities(PrivateState me, EntityState hero)
         {
-            string key = string.Join(",", me.Abilities.Select(a => a.Id));
-            if (key != _abilityKey)
+            if (AbilitiesChanged(me.Abilities))
             {
-                _abilityKey = key;
                 _abilityRow.Clear();
                 _abilitySlots.Clear();
                 for (int i = 0; i < me.Abilities.Length; i++)
@@ -848,9 +912,28 @@ namespace Bloodfall.Client.UI.Screens
                 if (sv.Cost != null) sv.Cost.text = a.ManaCost > 0 ? Mathf.RoundToInt(a.ManaCost).ToString() : a.HealthCost > 0 ? Mathf.RoundToInt(a.HealthCost) + "hp" : "";
                 sv.Cost?.EnableInClassList("hud-cost--hp", a.ManaCost <= 0 && a.HealthCost > 0);
                 sv.LevelUp.Show(a.CanLevel && me.AbilityPoints > 0);
-                sv.Pips.Clear();
-                for (int l = 0; l < def.MaxLevel; l++) sv.Pips.Add(El.Div("hud-pip", l < a.Level ? "hud-pip--on" : ""));
+                if (sv.PipLevel != a.Level || sv.PipMax != def.MaxLevel)
+                {
+                    // Rebuilt only when the level changes (it used to be rebuilt every frame).
+                    sv.PipLevel = a.Level;
+                    sv.PipMax = def.MaxLevel;
+                    sv.Pips.Clear();
+                    for (int l = 0; l < def.MaxLevel; l++) sv.Pips.Add(El.Div("hud-pip", l < a.Level ? "hud-pip--on" : ""));
+                }
             }
+        }
+
+        private string[] _abilityIds = new string[0];
+
+        /// <summary>True (and remembers the new set) when the hero's ability ids differ from the ones on screen.</summary>
+        private bool AbilitiesChanged(AbilityView[] abilities)
+        {
+            bool same = _abilityIds.Length == abilities.Length;
+            for (int i = 0; same && i < abilities.Length; i++) same = _abilityIds[i] == abilities[i].Id;
+            if (same) return false;
+            _abilityIds = new string[abilities.Length];
+            for (int i = 0; i < abilities.Length; i++) _abilityIds[i] = abilities[i].Id;
+            return true;
         }
 
         private VisualElement CreateAbilitySlot(int index, AbilityDef def)
@@ -934,8 +1017,9 @@ namespace Bloodfall.Client.UI.Screens
         private void UpdateBuffs(EntityState hero)
         {
             // Rebuild only when the set changes (cheap: few statuses).
-            string key = string.Join(",", hero.Statuses.Select(s => s.Id + ":" + s.Stacks));
-            if (_buffs.userData as string == key)
+            int key = 17;
+            unchecked { foreach (var st in hero.Statuses) key = (key * 31 + (st.Id?.GetHashCode() ?? 0)) * 31 + st.Stacks; }
+            if (_buffs.userData is int shown && shown == key)
             {
                 int i = 0;
                 foreach (var s in hero.Statuses)
